@@ -1,0 +1,28 @@
+[package]
+name = "subtle"
+version = "0.1.0"
+authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
+           "Henry de Valence <hdevalence@hdevalence.ca>"]
+readme = "README.md"
+license = "CC0-1.0"
+repository = "https://github.com/isislovecruft/subtle"
+documentation = "https://docs.rs/subtle"
+categories = ["cryptography", "no-std"]
+keywords = ["cryptography", "constant-time", "utilities"]
+description = "Pure-Rust traits and utilities for constant-time cryptographic implementations."
+exclude = [
+    ".gitignore",
+    ".travis.yml",
+]
+
+[badges]
+travis-ci = { repository = "isislovecruft/subtle", branch = "master"}
+
+[dependencies.num-traits]
+optional = true
+version = "^0.1"
+
+[features]
+default = ["std"]
+std = ["num-traits"]
+bench = []

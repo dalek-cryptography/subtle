@@ -1,0 +1,12 @@
+target/
+**/*.rs.bk
+Cargo.lock
+
+*~
+\#*
+.\#*
+*.swp
+*.orig
+*.bak
+
+*.s
