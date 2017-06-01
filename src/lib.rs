@@ -44,11 +44,44 @@ pub type Mask = u8;
 
 /// Trait for items which can be conditionally assigned in constant time.
 pub trait CTAssignable {
-    /// If `choice == 1u8`, assign `other` to `self`.
-    /// Otherwise, leave `self` unchanged.
-    /// Executes in constant time.
+    /// Conditionally assign `other` to `self` in constant time.
+    ///
+    /// If `choice == 1u8`, assign `other` to `self`.  Otherwise, leave `self`
+    /// unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use subtle;
+    /// # use subtle::CTAssignable;
+    /// #
+    /// let mut x: u8 = 13;
+    /// let y:     u8 = 42;
+    ///
+    /// x.conditional_assign(&y, 0);
+    /// assert_eq!(x, 13);
+    /// x.conditional_assign(&y, 1);
+    /// assert_eq!(x, 42);
+    /// ```
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
+
+macro_rules! generate_integer_conditional_assign {
+    ($($t:ty)*) => ($(
+        impl CTAssignable for $t {
+            #[inline(always)]
+            fn conditional_assign(&mut self, other: &$t, choice: Mask) {
+                // if choice = 0u8, mask = (-0i8) as u8 = 00000000
+                // if choice = 1u8, mask = (-1i8) as u8 = 11111111
+                let mask = -(choice as i8) as u8;
+                *self = *self ^ ((mask as $t) & (*self ^ *other));
+            }
+         }
+    )*)
+}
+
+generate_integer_conditional_assign!(u8 u16 u32 u64);
+generate_integer_conditional_assign!(i8 i16 i32 i64);
 
 /// Trait for items whose equality to another item may be tested in constant time.
 pub trait CTEq {
@@ -284,5 +317,23 @@ mod test {
 
         assert_eq!(conditional_select(c, d, 0), d);
         assert_eq!(conditional_select(c, d, 1), c);
+    }
+
+    macro_rules! generate_integer_conditional_assign_tests {
+        ($($t:ty)*) => ($(
+            let mut x: $t = 13;
+            let     y: $t = 42;
+
+            x.conditional_assign(&y, 0);
+            assert_eq!(x, 13);
+            x.conditional_assign(&y, 1);
+            assert_eq!(x, 42);
+        )*)
+    }
+
+    #[test]
+    fn integer_conditional_assign() {
+        generate_integer_conditional_assign_tests!(u8 u16 u32 u64);
+        generate_integer_conditional_assign_tests!(i8 i16 i32 i64);
     }
 }
