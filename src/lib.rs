@@ -242,7 +242,13 @@ pub fn arrays_equal(a: &[u8], b: &[u8]) -> Mask {
 
     let mut x: u8 = 0;
 
-    for i in 0 .. a.len() {
+    // These useless slices make the optimizer elide the bounds checks.
+    // See the comment in clone_from_slice() added on Rust commit 6a7bc47.
+    let len = a.len();
+    let a = &a[..len];
+    let b = &b[..len];
+
+    for i in 0 .. len {
         x |= a[i] ^ b[i];
     }
     bytes_equal(x, 0)
