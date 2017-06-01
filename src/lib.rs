@@ -46,10 +46,27 @@ pub type Mask = u8;
 pub trait CTAssignable {
     /// Conditionally assign `other` to `self` in constant time.
     ///
-    /// If `choice == 1u8`, assign `other` to `self`.  Otherwise, leave `self`
+    /// If `choice == 1`, assign `other` to `self`.  Otherwise, leave `self`
     /// unchanged.
     ///
     /// # Examples
+    ///
+    /// Several implementations of constant-time conditional assignment are
+    /// provided within `subtle`.
+    ///
+    /// ## Integer Types
+    ///
+    /// This crate includes implementations of `CTAssignable` for the following
+    /// integer types:
+    ///
+    ///  * `u8`,
+    ///  * `u16`,
+    ///  * `u32`,
+    ///  * `u64`,
+    ///  * `i8`,
+    ///  * `i16`,
+    ///  * `i32`, and
+    ///  * `i64`.
     ///
     /// ```
     /// # use subtle;
@@ -63,9 +80,22 @@ pub trait CTAssignable {
     /// x.conditional_assign(&y, 1);
     /// assert_eq!(x, 42);
     /// ```
+    ///
+    /// If you need it for a different integer type, such as `u128` or`i128` (on
+    /// Rust nightly), you can generate these with:
+    ///
+    /// ```rust,ignore
+    /// #![feature(i128_type)]
+    ///
+    /// #[macro_use]
+    /// extern crate subtle;
+    ///
+    /// generate_integer_conditional_assign!(u128 i128);
+    /// ```
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
 
+#[macro_export]
 macro_rules! generate_integer_conditional_assign {
     ($($t:ty)*) => ($(
         impl CTAssignable for $t {
