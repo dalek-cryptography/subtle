@@ -1,12 +1,12 @@
 [package]
-name = "subtle"
+name = "subtle-derive"
 version = "0.1.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
 license = "CC0-1.0"
-repository = "https://github.com/isislovecruft/subtle"
-documentation = "https://docs.rs/subtle"
+repository = "https://github.com/isislovecruft/subtle-derive"
+documentation = "https://docs.rs/subtle-derive"
 categories = ["cryptography", "no-std"]
 keywords = ["cryptography", "constant-time", "utilities"]
 description = "Pure-Rust traits and utilities for constant-time cryptographic implementations."
@@ -15,18 +15,9 @@ exclude = [
     ".travis.yml",
 ]
 
-[badges]
-travis-ci = { repository = "isislovecruft/subtle", branch = "master"}
-
-[dependencies.num-traits]
-optional = true
-version = "^0.1"
+[lib]
+proc-macro = true
 
 [dependencies]
-subtle-derive = { path = "derive" }
-
-[features]
-default = ["std"]
-std = ["num-traits"]
-bench = []
-nightly = []
+syn = "^0.10"
+quote = "^0.3"
