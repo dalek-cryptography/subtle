@@ -12,6 +12,11 @@
 //! Pure-Rust traits and utilities for constant-time cryptographic implementations.
 
 
+#![deny(missing_docs)]
+#![deny(unsafe_code)]
+#![deny(fat_ptr_transmutes)]
+
+
 extern crate core;
 
 #[cfg(feature = "std")]
