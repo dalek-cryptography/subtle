@@ -26,3 +26,4 @@ version = "^0.1"
 default = ["std"]
 std = ["num-traits"]
 bench = []
+nightly = []

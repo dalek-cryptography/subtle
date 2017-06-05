@@ -16,6 +16,8 @@
 #![deny(unsafe_code)]
 #![deny(fat_ptr_transmutes)]
 
+#![cfg_attr(feature = "nightly", feature(i128_types))]
+
 
 extern crate core;
 
@@ -81,16 +83,17 @@ pub trait CTAssignable {
     /// assert_eq!(x, 42);
     /// ```
     ///
-    /// If you need it for a different integer type, such as `u128` or`i128` (on
-    /// Rust nightly), you can generate these with:
+    /// If you need conditional assignment for `u128` or`i128` on Rust nightly,
+    /// these definitions are provided if you compile `subtle` with the
+    /// `nightly` feature:
     ///
-    /// ```rust,ignore
-    /// #![feature(i128_type)]
+    /// ```ignore
+    /// [dependencies.subtle]
+    /// features = ["nightly"]
+    /// ```
     ///
-    /// #[macro_use]
-    /// extern crate subtle;
     ///
-    /// generate_integer_conditional_assign!(u128 i128);
+    ///
     /// ```
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
@@ -112,6 +115,9 @@ macro_rules! generate_integer_conditional_assign {
 
 generate_integer_conditional_assign!(u8 u16 u32 u64);
 generate_integer_conditional_assign!(i8 i16 i32 i64);
+
+#[cfg(feature = "nightly")]
+generate_integer_conditional_assign!(u128 i128);
 
 /// Trait for items whose equality to another item may be tested in constant time.
 pub trait CTEq {
@@ -365,5 +371,8 @@ mod test {
     fn integer_conditional_assign() {
         generate_integer_conditional_assign_tests!(u8 u16 u32 u64);
         generate_integer_conditional_assign_tests!(i8 i16 i32 i64);
+
+        #[cfg(feature = "nightly")]
+        generate_integer_conditional_assign_tests!(u128 i128);
     }
 }
