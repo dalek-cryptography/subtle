@@ -117,7 +117,6 @@ pub trait CTAssignable {
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
 
-#[macro_export]
 macro_rules! generate_integer_conditional_assign {
     ($($t:ty)*) => ($(
         impl CTAssignable for $t {
