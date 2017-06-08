@@ -409,29 +409,29 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
     (x & 1)
 }
 
-/// Check equality of two arrays, `a` and `b`, in constant time.
+/// Check equality of two slices, `a` and `b`, in constant time.
 ///
-/// There is an `assert!` that the two arrays are of equal length.  For
+/// There is an `assert!` that the two slices are of equal length.  For
 /// example, the following code is a programming error and will panic:
 ///
 /// ```rust,ignore
 /// let a: [u8; 3] = [0, 0, 0];
 /// let b: [u8; 4] = [0, 0, 0, 0];
 ///
-/// assert!(arrays_equal(&a, &b) == 1);
+/// assert!(slices_equal(&a, &b) == 1);
 /// ```
 ///
-/// However, if the arrays are equal length, but their contents do *not* match,
+/// However, if the slices are equal length, but their contents do *not* match,
 /// `0u8` will be returned:
 ///
 /// ```
 /// # extern crate subtle;
-/// # use subtle::arrays_equal;
+/// # use subtle::slices_equal;
 /// # fn main() {
 /// let a: [u8; 3] = [0, 1, 2];
 /// let b: [u8; 3] = [1, 2, 3];
 ///
-/// assert!(arrays_equal(&a, &b) == 0);
+/// assert!(slices_equal(&a, &b) == 0);
 /// # }
 /// ```
 ///
@@ -439,12 +439,12 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
 ///
 /// ```
 /// # extern crate subtle;
-/// # use subtle::arrays_equal;
+/// # use subtle::slices_equal;
 /// # fn main() {
 /// let a: [u8; 3] = [0, 1, 2];
 /// let b: [u8; 3] = [0, 1, 2];
 ///
-/// assert!(arrays_equal(&a, &b) == 1);
+/// assert!(slices_equal(&a, &b) == 1);
 /// # }
 /// ```
 ///
@@ -456,7 +456,7 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
 ///
 /// Returns `1u8` if `a == b` and `0u8` otherwise.
 #[inline(always)]
-pub fn arrays_equal(a: &[u8], b: &[u8]) -> Mask {
+pub fn slices_equal(a: &[u8], b: &[u8]) -> Mask {
     assert_eq!(a.len(), b.len());
 
     let mut x: u8 = 0;
@@ -473,11 +473,11 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn arrays_equal_different_lengths() {
+    fn slices_equal_different_lengths() {
         let a: [u8; 3] = [0, 0, 0];
         let b: [u8; 4] = [0, 0, 0, 0];
 
-        assert!(arrays_equal(&a, &b) == 1);
+        assert!(slices_equal(&a, &b) == 1);
     }
 
     #[test]
