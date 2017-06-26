@@ -45,7 +45,7 @@ use num_traits::Signed;
 pub type Mask = u8;
 
 /// Trait for items which can be conditionally assigned in constant time.
-pub trait CTAssignable {
+pub trait ConditionallyAssignable {
     /// Conditionally assign `other` to `self` in constant time.
     ///
     /// If `choice == 1`, assign `other` to `self`.  Otherwise, leave `self`
@@ -58,8 +58,8 @@ pub trait CTAssignable {
     ///
     /// ## Integer Types
     ///
-    /// This crate includes implementations of `CTAssignable` for the following
-    /// integer types:
+    /// This crate includes implementations of `ConditionallyAssignable` for the
+    /// following integer types:
     ///
     ///  * `u8`,
     ///  * `u16`,
@@ -72,7 +72,7 @@ pub trait CTAssignable {
     ///
     /// ```
     /// # use subtle;
-    /// # use subtle::CTAssignable;
+    /// # use subtle::ConditionallyAssignable;
     /// #
     /// let mut x: u8 = 13;
     /// let y:     u8 = 42;
@@ -100,7 +100,7 @@ pub trait CTAssignable {
     ///
     /// ```
     /// # use subtle;
-    /// # use subtle::CTAssignable;
+    /// # use subtle::ConditionallyAssignable;
     /// #
     /// let mut x: [u32; 17] = [13; 17];
     /// let y:     [u32; 17] = [42; 17];
@@ -119,7 +119,7 @@ pub trait CTAssignable {
 
 macro_rules! generate_integer_conditional_assign {
     ($($t:ty)*) => ($(
-        impl CTAssignable for $t {
+        impl ConditionallyAssignable for $t {
             #[inline(always)]
             fn conditional_assign(&mut self, other: &$t, choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
@@ -143,7 +143,7 @@ generate_integer_conditional_assign!(u128 i128);
 #[macro_export]
 macro_rules! generate_array_conditional_assign {
     ($([$t:ty; $n:expr]),*) => ($(
-        impl CTAssignable for [$t; $n] {
+        impl ConditionallyAssignable for [$t; $n] {
             #[inline(always)]
             fn conditional_assign(&mut self, other: &[$t; $n], choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
@@ -284,7 +284,7 @@ pub trait CTNegatable {
 }
 
 impl<T> CTNegatable for T
-    where T: CTAssignable, for<'a> &'a T: Neg<Output=T>
+    where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output=T>
 {
     fn conditional_negate(&mut self, choice: Mask) {
         // Need to cast to eliminate mutability
