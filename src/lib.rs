@@ -11,12 +11,16 @@
 
 //! Pure-Rust traits and utilities for constant-time cryptographic implementations.
 
-
 extern crate core;
 
 #[cfg(feature = "std")]
 extern crate num_traits;
 
+pub mod cteq;
+pub mod common;
+
+pub use common::*;
+pub use cteq::*;
 
 #[cfg(feature = "std")]
 use core::ops::BitAnd;
@@ -34,25 +38,12 @@ use num_traits::One;
 #[cfg(feature = "std")]
 use num_traits::Signed;
 
-/// A `Mask` represents a choice which is not a boolean.
-pub type Mask = u8;
-
 /// Trait for items which can be conditionally assigned in constant time.
 pub trait CTAssignable {
     /// If `choice == 1u8`, assign `other` to `self`.
     /// Otherwise, leave `self` unchanged.
     /// Executes in constant time.
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
-}
-
-/// Trait for items whose equality to another item may be tested in constant time.
-pub trait CTEq {
-    /// Determine if two items are equal in constant time.
-    ///
-    /// # Returns
-    ///
-    /// `1u8` if the two items are equal, and `0u8` otherwise.
-    fn ct_eq(&self, other: &Self) -> Mask;
 }
 
 /// Trait for items which can be conditionally negated in constant time.
@@ -133,36 +124,6 @@ pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     (!(choice - T::one()) & a) | ((choice - T::one()) & b)
 }
 
-/// Check equality of two bytes in constant time.
-///
-/// # Return
-///
-/// Returns `1u8` if `a == b` and `0u8` otherwise.
-///
-/// # Examples
-///
-/// ```
-/// # extern crate subtle;
-/// # use subtle::bytes_equal;
-/// # fn main() {
-/// let a: u8 = 0xDE;
-/// let b: u8 = 0xAD;
-///
-/// assert_eq!(bytes_equal(a, b), 0);
-/// assert_eq!(bytes_equal(a, a), 1);
-/// # }
-/// ```
-#[inline(always)]
-pub fn bytes_equal(a: u8, b: u8) -> Mask {
-    let mut x: u8;
-
-    x  = !(a ^ b);
-    x &= x >> 4;
-    x &= x >> 2;
-    x &= x >> 1;
-    x
-}
-
 /// Test if a byte is non-zero in constant time.
 ///
 /// ```
@@ -190,76 +151,9 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
     (x & 1)
 }
 
-/// Check equality of two arrays, `a` and `b`, in constant time.
-///
-/// There is an `assert!` that the two arrays are of equal length.  For
-/// example, the following code is a programming error and will panic:
-///
-/// ```rust,ignore
-/// let a: [u8; 3] = [0, 0, 0];
-/// let b: [u8; 4] = [0, 0, 0, 0];
-///
-/// assert!(arrays_equal(&a, &b) == 1);
-/// ```
-///
-/// However, if the arrays are equal length, but their contents do *not* match,
-/// `0u8` will be returned:
-///
-/// ```
-/// # extern crate subtle;
-/// # use subtle::arrays_equal;
-/// # fn main() {
-/// let a: [u8; 3] = [0, 1, 2];
-/// let b: [u8; 3] = [1, 2, 3];
-///
-/// assert!(arrays_equal(&a, &b) == 0);
-/// # }
-/// ```
-///
-/// And finally, if the contents *do* match, `1u8` is returned:
-///
-/// ```
-/// # extern crate subtle;
-/// # use subtle::arrays_equal;
-/// # fn main() {
-/// let a: [u8; 3] = [0, 1, 2];
-/// let b: [u8; 3] = [0, 1, 2];
-///
-/// assert!(arrays_equal(&a, &b) == 1);
-/// # }
-/// ```
-///
-/// This function is commonly used in various cryptographic applications, such
-/// as [signature verification](https://github.com/isislovecruft/ed25519-dalek/blob/0.3.2/src/ed25519.rs#L280),
-/// among many other applications.
-///
-/// # Return
-///
-/// Returns `1u8` if `a == b` and `0u8` otherwise.
-#[inline(always)]
-pub fn arrays_equal(a: &[u8], b: &[u8]) -> Mask {
-    assert_eq!(a.len(), b.len());
-
-    let mut x: u8 = 0;
-
-    for i in 0 .. a.len() {
-        x |= a[i] ^ b[i];
-    }
-    bytes_equal(x, 0)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    #[should_panic]
-    fn arrays_equal_different_lengths() {
-        let a: [u8; 3] = [0, 0, 0];
-        let b: [u8; 4] = [0, 0, 0, 0];
-
-        assert!(arrays_equal(&a, &b) == 1);
-    }
 
     #[test]
     #[cfg(feature = "std")]

@@ -1,6 +1,6 @@
 [package]
 name = "subtle"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
@@ -21,6 +21,9 @@ travis-ci = { repository = "isislovecruft/subtle", branch = "master"}
 [dependencies.num-traits]
 optional = true
 version = "^0.1"
+
+[dev-dependencies]
+rand = "0.3"
 
 [features]
 default = ["std"]
