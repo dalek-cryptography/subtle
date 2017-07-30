@@ -11,6 +11,7 @@
 
 //! Pure-Rust traits and utilities for constant-time cryptographic implementations.
 
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
@@ -19,6 +20,7 @@
 #![cfg_attr(feature = "nightly", feature(i128_types))]
 
 
+#[cfg(feature = "std")]
 extern crate core;
 
 #[cfg(feature = "std")]
