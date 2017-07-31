@@ -304,7 +304,7 @@ pub trait ConditionallyNegatable {
 }
 
 impl<T> ConditionallyNegatable for T
-    where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output=T>
+    where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output = T>
 {
     fn conditional_negate(&mut self, choice: Mask) {
         // Need to cast to eliminate mutability
@@ -457,6 +457,7 @@ pub fn slices_equal(a: &[u8], b: &[u8]) -> Mask {
     }
     bytes_equal(x, 0)
 }
+
 
 #[cfg(test)]
 mod test {
