@@ -454,7 +454,7 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
 ///
 /// let empty: [u8; 0] = [];
 ///
-/// assert!(arrays_equal(&empty, &empty) == 1);
+/// assert!(slices_equal(&empty, &empty) == 1);
 /// # }
 /// ```
 ///
