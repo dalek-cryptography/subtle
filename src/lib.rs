@@ -372,6 +372,21 @@ pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     (!(choice - T::one()) & a) | ((choice - T::one()) & b)
 }
 
+/// Trait for testing if something is non-zero in constant time.
+pub trait IsNonZero {
+    /// Test if `self` is non-zero in constant time.
+    ///
+    /// # TODO
+    ///
+    /// * Implement `IsNonZero` for builtin types.
+    /// * Rewrite `byte_is_nonzero()` to use `IsNonZero`.
+    ///
+    /// # Returns
+    ///
+    /// * If `self != 0`, returns `1`.
+    /// * If `self == 0`, returns `0`.
+    fn is_nonzero(&self) -> Mask;
+}
 
 /// Test if a byte is non-zero in constant time.
 ///
