@@ -17,7 +17,7 @@
 #![deny(unsafe_code)]
 #![deny(fat_ptr_transmutes)]
 
-#![cfg_attr(feature = "nightly", feature(i128_types))]
+#![cfg_attr(feature = "nightly", feature(i128_type))]
 
 
 #[cfg(feature = "std")]
