@@ -18,7 +18,7 @@
 #![deny(fat_ptr_transmutes)]
 
 #![cfg_attr(feature = "nightly", feature(i128_type))]
-
+#![cfg_attr(feature = "bench",   feature(test))]
 
 #[cfg(feature = "std")]
 extern crate core;
@@ -611,5 +611,29 @@ mod test {
         generate_arrays_equal_1_through_32_tests!(u8, u16, u32, u64);
         #[cfg(feature = "nightly")]
         generate_arrays_equal_1_through_32_tests!(u128);
+    }
+}
+
+#[cfg(all(test, feature = "bench"))]
+mod bench {
+    extern crate test;
+
+    use self::test::Bencher;
+    use super::*;
+
+    #[bench]
+    fn slices_equal_unequal(b: &mut Bencher) {
+        let x: [u8; 32] = [13; 32];
+        let y: [u8; 32] = [42; 32];
+
+        b.iter(| | slices_equal(&x, &y));
+    }
+
+    #[bench]
+    fn slices_equal_equal(b: &mut Bencher) {
+        let x: [u8; 32] = [13; 32];
+        let y: [u8; 32] = [13; 32];
+
+        b.iter(| | slices_equal(&x, &y));
     }
 }
