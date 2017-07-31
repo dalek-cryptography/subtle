@@ -9,7 +9,7 @@ repository = "https://github.com/isislovecruft/subtle-derive"
 documentation = "https://docs.rs/subtle-derive"
 categories = ["cryptography", "no-std"]
 keywords = ["cryptography", "constant-time", "utilities"]
-description = "Pure-Rust traits and utilities for constant-time cryptographic implementations."
+description = "Procedural macros for deriving subtle¹ trait implementations. ¹ https://github.com/isislovecruft/subtle"
 exclude = [
     ".gitignore",
     ".travis.yml",
