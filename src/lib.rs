@@ -216,112 +216,22 @@ macro_rules! generate_array_conditional_assign {
     )*)
 }
 
-generate_array_conditional_assign!([u8;  1], [u8;  2], [u8;  3], [u8;  4]);
-generate_array_conditional_assign!([u8;  5], [u8;  6], [u8;  7], [u8;  8]);
-generate_array_conditional_assign!([u8;  9], [u8; 10], [u8; 11], [u8; 12]);
-generate_array_conditional_assign!([u8; 13], [u8; 14], [u8; 15], [u8; 16]);
-generate_array_conditional_assign!([u8; 17], [u8; 18], [u8; 19], [u8; 20]);
-generate_array_conditional_assign!([u8; 21], [u8; 22], [u8; 23], [u8; 24]);
-generate_array_conditional_assign!([u8; 25], [u8; 26], [u8; 27], [u8; 28]);
-generate_array_conditional_assign!([u8; 29], [u8; 30], [u8; 31], [u8; 32]);
+macro_rules! generate_array_conditional_assign_1_through_32 {
+    ($($t:ty),*) => ($(
+        generate_array_conditional_assign!([$t;  1], [$t;  2], [$t;  3], [$t;  4]);
+        generate_array_conditional_assign!([$t;  5], [$t;  6], [$t;  7], [$t;  8]);
+        generate_array_conditional_assign!([$t;  9], [$t; 10], [$t; 11], [$t; 12]);
+        generate_array_conditional_assign!([$t; 13], [$t; 14], [$t; 15], [$t; 16]);
+        generate_array_conditional_assign!([$t; 17], [$t; 18], [$t; 19], [$t; 20]);
+        generate_array_conditional_assign!([$t; 21], [$t; 22], [$t; 23], [$t; 24]);
+        generate_array_conditional_assign!([$t; 25], [$t; 26], [$t; 27], [$t; 28]);
+        generate_array_conditional_assign!([$t; 29], [$t; 30], [$t; 31], [$t; 32]);
+    )*)
+}
 
-generate_array_conditional_assign!([u16;  1], [u16;  2], [u16;  3], [u16;  4]);
-generate_array_conditional_assign!([u16;  5], [u16;  6], [u16;  7], [u16;  8]);
-generate_array_conditional_assign!([u16;  9], [u16; 10], [u16; 11], [u16; 12]);
-generate_array_conditional_assign!([u16; 13], [u16; 14], [u16; 15], [u16; 16]);
-generate_array_conditional_assign!([u16; 17], [u16; 18], [u16; 19], [u16; 20]);
-generate_array_conditional_assign!([u16; 21], [u16; 22], [u16; 23], [u16; 24]);
-generate_array_conditional_assign!([u16; 25], [u16; 26], [u16; 27], [u16; 28]);
-generate_array_conditional_assign!([u16; 29], [u16; 30], [u16; 31], [u16; 32]);
-
-generate_array_conditional_assign!([u32;  1], [u32;  2], [u32;  3], [u32;  4]);
-generate_array_conditional_assign!([u32;  5], [u32;  6], [u32;  7], [u32;  8]);
-generate_array_conditional_assign!([u32;  9], [u32; 10], [u32; 11], [u32; 12]);
-generate_array_conditional_assign!([u32; 13], [u32; 14], [u32; 15], [u32; 16]);
-generate_array_conditional_assign!([u32; 17], [u32; 18], [u32; 19], [u32; 20]);
-generate_array_conditional_assign!([u32; 21], [u32; 22], [u32; 23], [u32; 24]);
-generate_array_conditional_assign!([u32; 25], [u32; 26], [u32; 27], [u32; 28]);
-generate_array_conditional_assign!([u32; 29], [u32; 30], [u32; 31], [u32; 32]);
-
-generate_array_conditional_assign!([u64;  1], [u64;  2], [u64;  3], [u64;  4]);
-generate_array_conditional_assign!([u64;  5], [u64;  6], [u64;  7], [u64;  8]);
-generate_array_conditional_assign!([u64;  9], [u64; 10], [u64; 11], [u64; 12]);
-generate_array_conditional_assign!([u64; 13], [u64; 14], [u64; 15], [u64; 16]);
-generate_array_conditional_assign!([u64; 17], [u64; 18], [u64; 19], [u64; 20]);
-generate_array_conditional_assign!([u64; 21], [u64; 22], [u64; 23], [u64; 24]);
-generate_array_conditional_assign!([u64; 25], [u64; 26], [u64; 27], [u64; 28]);
-generate_array_conditional_assign!([u64; 29], [u64; 30], [u64; 31], [u64; 32]);
-
-generate_array_conditional_assign!([i8;  1], [i8;  2], [i8;  3], [i8;  4]);
-generate_array_conditional_assign!([i8;  5], [i8;  6], [i8;  7], [i8;  8]);
-generate_array_conditional_assign!([i8;  9], [i8; 10], [i8; 11], [i8; 12]);
-generate_array_conditional_assign!([i8; 13], [i8; 14], [i8; 15], [i8; 16]);
-generate_array_conditional_assign!([i8; 17], [i8; 18], [i8; 19], [i8; 20]);
-generate_array_conditional_assign!([i8; 21], [i8; 22], [i8; 23], [i8; 24]);
-generate_array_conditional_assign!([i8; 25], [i8; 26], [i8; 27], [i8; 28]);
-generate_array_conditional_assign!([i8; 29], [i8; 30], [i8; 31], [i8; 32]);
-
-generate_array_conditional_assign!([i16;  1], [i16;  2], [i16;  3], [i16;  4]);
-generate_array_conditional_assign!([i16;  5], [i16;  6], [i16;  7], [i16;  8]);
-generate_array_conditional_assign!([i16;  9], [i16; 10], [i16; 11], [i16; 12]);
-generate_array_conditional_assign!([i16; 13], [i16; 14], [i16; 15], [i16; 16]);
-generate_array_conditional_assign!([i16; 17], [i16; 18], [i16; 19], [i16; 20]);
-generate_array_conditional_assign!([i16; 21], [i16; 22], [i16; 23], [i16; 24]);
-generate_array_conditional_assign!([i16; 25], [i16; 26], [i16; 27], [i16; 28]);
-generate_array_conditional_assign!([i16; 29], [i16; 30], [i16; 31], [i16; 32]);
-
-generate_array_conditional_assign!([i32;  1], [i32;  2], [i32;  3], [i32;  4]);
-generate_array_conditional_assign!([i32;  5], [i32;  6], [i32;  7], [i32;  8]);
-generate_array_conditional_assign!([i32;  9], [i32; 10], [i32; 11], [i32; 12]);
-generate_array_conditional_assign!([i32; 13], [i32; 14], [i32; 15], [i32; 16]);
-generate_array_conditional_assign!([i32; 17], [i32; 18], [i32; 19], [i32; 20]);
-generate_array_conditional_assign!([i32; 21], [i32; 22], [i32; 23], [i32; 24]);
-generate_array_conditional_assign!([i32; 25], [i32; 26], [i32; 27], [i32; 28]);
-generate_array_conditional_assign!([i32; 29], [i32; 30], [i32; 31], [i32; 32]);
-
-generate_array_conditional_assign!([i64;  1], [i64;  2], [i64;  3], [i64;  4]);
-generate_array_conditional_assign!([i64;  5], [i64;  6], [i64;  7], [i64;  8]);
-generate_array_conditional_assign!([i64;  9], [i64; 10], [i64; 11], [i64; 12]);
-generate_array_conditional_assign!([i64; 13], [i64; 14], [i64; 15], [i64; 16]);
-generate_array_conditional_assign!([i64; 17], [i64; 18], [i64; 19], [i64; 20]);
-generate_array_conditional_assign!([i64; 21], [i64; 22], [i64; 23], [i64; 24]);
-generate_array_conditional_assign!([i64; 25], [i64; 26], [i64; 27], [i64; 28]);
-generate_array_conditional_assign!([i64; 29], [i64; 30], [i64; 31], [i64; 32]);
-
+generate_array_conditional_assign_1_through_32!(u8, u16, u32, u64);
 #[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128;  1], [u128;  2], [u128;  3], [u128;  4]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128;  5], [u128;  6], [u128;  7], [u128;  8]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128;  9], [u128; 10], [u128; 11], [u128; 12]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128; 13], [u128; 14], [u128; 15], [u128; 16]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128; 17], [u128; 18], [u128; 19], [u128; 20]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128; 21], [u128; 22], [u128; 23], [u128; 24]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128; 25], [u128; 26], [u128; 27], [u128; 28]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([u128; 29], [u128; 30], [u128; 31], [u128; 32]);
-
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128;  1], [i128;  2], [i128;  3], [i128;  4]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128;  5], [i128;  6], [i128;  7], [i128;  8]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128;  9], [i128; 10], [i128; 11], [i128; 12]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128; 13], [i128; 14], [i128; 15], [i128; 16]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128; 17], [i128; 18], [i128; 19], [i128; 20]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128; 21], [i128; 22], [i128; 23], [i128; 24]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128; 25], [i128; 26], [i128; 27], [i128; 28]);
-#[cfg(feature = "nightly")]
-generate_array_conditional_assign!([i128; 29], [i128; 30], [i128; 31], [i128; 32]);
-
+generate_array_conditional_assign_1_through_32!(u128);
 
 /// Generate a constant time equality testing method for an array of type
 /// `[$t; $n]`, where `$t` is a type which implements `core::ops::BitXor`
@@ -614,113 +524,24 @@ mod test {
         )*)
     }
 
+    macro_rules! generate_array_conditional_assign_1_through_32_tests {
+        ($($t:ty),*) => ($(
+            generate_array_conditional_assign_tests!([$t;  1], [$t;  2], [$t;  3], [$t;  4]);
+            generate_array_conditional_assign_tests!([$t;  5], [$t;  6], [$t;  7], [$t;  8]);
+            generate_array_conditional_assign_tests!([$t;  9], [$t; 10], [$t; 11], [$t; 12]);
+            generate_array_conditional_assign_tests!([$t; 13], [$t; 14], [$t; 15], [$t; 16]);
+            generate_array_conditional_assign_tests!([$t; 17], [$t; 18], [$t; 19], [$t; 20]);
+            generate_array_conditional_assign_tests!([$t; 21], [$t; 22], [$t; 23], [$t; 24]);
+            generate_array_conditional_assign_tests!([$t; 25], [$t; 26], [$t; 27], [$t; 28]);
+            generate_array_conditional_assign_tests!([$t; 29], [$t; 30], [$t; 31], [$t; 32]);
+        )*)
+    }
+
     #[test]
     fn array_conditional_assign() {
-        generate_array_conditional_assign_tests!([u8;  1], [u8;  2], [u8;  3], [u8;  4]);
-        generate_array_conditional_assign_tests!([u8;  5], [u8;  6], [u8;  7], [u8;  8]);
-        generate_array_conditional_assign_tests!([u8;  9], [u8; 10], [u8; 11], [u8; 12]);
-        generate_array_conditional_assign_tests!([u8; 13], [u8; 14], [u8; 15], [u8; 16]);
-        generate_array_conditional_assign_tests!([u8; 17], [u8; 18], [u8; 19], [u8; 20]);
-        generate_array_conditional_assign_tests!([u8; 21], [u8; 22], [u8; 23], [u8; 24]);
-        generate_array_conditional_assign_tests!([u8; 25], [u8; 26], [u8; 27], [u8; 28]);
-        generate_array_conditional_assign_tests!([u8; 29], [u8; 30], [u8; 31], [u8; 32]);
-
-        generate_array_conditional_assign_tests!([u16;  1], [u16;  2], [u16;  3], [u16;  4]);
-        generate_array_conditional_assign_tests!([u16;  5], [u16;  6], [u16;  7], [u16;  8]);
-        generate_array_conditional_assign_tests!([u16;  9], [u16; 10], [u16; 11], [u16; 12]);
-        generate_array_conditional_assign_tests!([u16; 13], [u16; 14], [u16; 15], [u16; 16]);
-        generate_array_conditional_assign_tests!([u16; 17], [u16; 18], [u16; 19], [u16; 20]);
-        generate_array_conditional_assign_tests!([u16; 21], [u16; 22], [u16; 23], [u16; 24]);
-        generate_array_conditional_assign_tests!([u16; 25], [u16; 26], [u16; 27], [u16; 28]);
-        generate_array_conditional_assign_tests!([u16; 29], [u16; 30], [u16; 31], [u16; 32]);
-
-        generate_array_conditional_assign_tests!([u32;  1], [u32;  2], [u32;  3], [u32;  4]);
-        generate_array_conditional_assign_tests!([u32;  5], [u32;  6], [u32;  7], [u32;  8]);
-        generate_array_conditional_assign_tests!([u32;  9], [u32; 10], [u32; 11], [u32; 12]);
-        generate_array_conditional_assign_tests!([u32; 13], [u32; 14], [u32; 15], [u32; 16]);
-        generate_array_conditional_assign_tests!([u32; 17], [u32; 18], [u32; 19], [u32; 20]);
-        generate_array_conditional_assign_tests!([u32; 21], [u32; 22], [u32; 23], [u32; 24]);
-        generate_array_conditional_assign_tests!([u32; 25], [u32; 26], [u32; 27], [u32; 28]);
-        generate_array_conditional_assign_tests!([u32; 29], [u32; 30], [u32; 31], [u32; 32]);
-
-        generate_array_conditional_assign_tests!([u64;  1], [u64;  2], [u64;  3], [u64;  4]);
-        generate_array_conditional_assign_tests!([u64;  5], [u64;  6], [u64;  7], [u64;  8]);
-        generate_array_conditional_assign_tests!([u64;  9], [u64; 10], [u64; 11], [u64; 12]);
-        generate_array_conditional_assign_tests!([u64; 13], [u64; 14], [u64; 15], [u64; 16]);
-        generate_array_conditional_assign_tests!([u64; 17], [u64; 18], [u64; 19], [u64; 20]);
-        generate_array_conditional_assign_tests!([u64; 21], [u64; 22], [u64; 23], [u64; 24]);
-        generate_array_conditional_assign_tests!([u64; 25], [u64; 26], [u64; 27], [u64; 28]);
-        generate_array_conditional_assign_tests!([u64; 29], [u64; 30], [u64; 31], [u64; 32]);
-
-        generate_array_conditional_assign_tests!([i8;  1], [i8;  2], [i8;  3], [i8;  4]);
-        generate_array_conditional_assign_tests!([i8;  5], [i8;  6], [i8;  7], [i8;  8]);
-        generate_array_conditional_assign_tests!([i8;  9], [i8; 10], [i8; 11], [i8; 12]);
-        generate_array_conditional_assign_tests!([i8; 13], [i8; 14], [i8; 15], [i8; 16]);
-        generate_array_conditional_assign_tests!([i8; 17], [i8; 18], [i8; 19], [i8; 20]);
-        generate_array_conditional_assign_tests!([i8; 21], [i8; 22], [i8; 23], [i8; 24]);
-        generate_array_conditional_assign_tests!([i8; 25], [i8; 26], [i8; 27], [i8; 28]);
-        generate_array_conditional_assign_tests!([i8; 29], [i8; 30], [i8; 31], [i8; 32]);
-
-        generate_array_conditional_assign_tests!([i16;  1], [i16;  2], [i16;  3], [i16;  4]);
-        generate_array_conditional_assign_tests!([i16;  5], [i16;  6], [i16;  7], [i16;  8]);
-        generate_array_conditional_assign_tests!([i16;  9], [i16; 10], [i16; 11], [i16; 12]);
-        generate_array_conditional_assign_tests!([i16; 13], [i16; 14], [i16; 15], [i16; 16]);
-        generate_array_conditional_assign_tests!([i16; 17], [i16; 18], [i16; 19], [i16; 20]);
-        generate_array_conditional_assign_tests!([i16; 21], [i16; 22], [i16; 23], [i16; 24]);
-        generate_array_conditional_assign_tests!([i16; 25], [i16; 26], [i16; 27], [i16; 28]);
-        generate_array_conditional_assign_tests!([i16; 29], [i16; 30], [i16; 31], [i16; 32]);
-
-        generate_array_conditional_assign_tests!([i32;  1], [i32;  2], [i32;  3], [i32;  4]);
-        generate_array_conditional_assign_tests!([i32;  5], [i32;  6], [i32;  7], [i32;  8]);
-        generate_array_conditional_assign_tests!([i32;  9], [i32; 10], [i32; 11], [i32; 12]);
-        generate_array_conditional_assign_tests!([i32; 13], [i32; 14], [i32; 15], [i32; 16]);
-        generate_array_conditional_assign_tests!([i32; 17], [i32; 18], [i32; 19], [i32; 20]);
-        generate_array_conditional_assign_tests!([i32; 21], [i32; 22], [i32; 23], [i32; 24]);
-        generate_array_conditional_assign_tests!([i32; 25], [i32; 26], [i32; 27], [i32; 28]);
-        generate_array_conditional_assign_tests!([i32; 29], [i32; 30], [i32; 31], [i32; 32]);
-
-        generate_array_conditional_assign_tests!([i64;  1], [i64;  2], [i64;  3], [i64;  4]);
-        generate_array_conditional_assign_tests!([i64;  5], [i64;  6], [i64;  7], [i64;  8]);
-        generate_array_conditional_assign_tests!([i64;  9], [i64; 10], [i64; 11], [i64; 12]);
-        generate_array_conditional_assign_tests!([i64; 13], [i64; 14], [i64; 15], [i64; 16]);
-        generate_array_conditional_assign_tests!([i64; 17], [i64; 18], [i64; 19], [i64; 20]);
-        generate_array_conditional_assign_tests!([i64; 21], [i64; 22], [i64; 23], [i64; 24]);
-        generate_array_conditional_assign_tests!([i64; 25], [i64; 26], [i64; 27], [i64; 28]);
-        generate_array_conditional_assign_tests!([i64; 29], [i64; 30], [i64; 31], [i64; 32]);
-
+        generate_array_conditional_assign_1_through_32_tests!(u8, u16, u32, u64);
         #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128;  1], [u128;  2], [u128;  3], [u128;  4]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128;  5], [u128;  6], [u128;  7], [u128;  8]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128;  9], [u128; 10], [u128; 11], [u128; 12]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128; 13], [u128; 14], [u128; 15], [u128; 16]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128; 17], [u128; 18], [u128; 19], [u128; 20]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128; 21], [u128; 22], [u128; 23], [u128; 24]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128; 25], [u128; 26], [u128; 27], [u128; 28]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([u128; 29], [u128; 30], [u128; 31], [u128; 32]);
-
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128;  1], [i128;  2], [i128;  3], [i128;  4]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128;  5], [i128;  6], [i128;  7], [i128;  8]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128;  9], [i128; 10], [i128; 11], [i128; 12]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128; 13], [i128; 14], [i128; 15], [i128; 16]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128; 17], [i128; 18], [i128; 19], [i128; 20]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128; 21], [i128; 22], [i128; 23], [i128; 24]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128; 25], [i128; 26], [i128; 27], [i128; 28]);
-        #[cfg(feature = "nightly")]
-        generate_array_conditional_assign_tests!([i128; 29], [i128; 30], [i128; 31], [i128; 32]);
+        generate_array_conditional_assign_1_through_32_tests!(u128);
     }
 
     macro_rules! generate_integer_equal_tests {
