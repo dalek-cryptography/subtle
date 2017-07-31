@@ -46,6 +46,63 @@ use num_traits::Signed;
 /// A `Mask` represents a choice which is not a boolean.
 pub type Mask = u8;
 
+/// Trait for items whose equality to another item may be tested in constant time.
+pub trait Equal {
+    /// Determine if two items are equal in constant time.
+    ///
+    /// # Returns
+    ///
+    /// `1u8` if the two items are equal, and `0u8` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use subtle::Equal;
+    /// let x: u8 = 5;
+    /// let y: u8 = 13;
+    ///
+    /// assert!(x.ct_eq(&y) == 0);
+    /// assert!(x.ct_eq(&5) == 1);
+    fn ct_eq(&self, other: &Self) -> Mask;
+}
+
+/// Generate a constant time equality testing method for integer of type $t,
+/// where `$t` is an unsigned integer type which implements `core::ops::Not`,
+/// `core::ops::Shr`, `core::ops::BitAndAssign`, `core::ops::Xor`, and
+/// `core::ops::Div`.
+macro_rules! generate_integer_equal {
+    ($t:ty, $maxshift:expr) => (
+        impl Equal for $t {
+            #[inline(always)]
+            fn ct_eq(&self, other: &$t) -> Mask {
+                let mut x: $t = !(self ^ other);
+                let mut shift: $t = $maxshift;
+
+                /// e.g. for a u8, do:
+                ///
+                ///    x &= x >> 4;
+                ///    x &= x >> 2;
+                ///    x &= x >> 1;
+                ///
+                /// This is variable only in the max size of the integer.
+                while shift >= 1 {
+                    x &= x >> shift;
+                    shift /= 2;
+                }
+                x as Mask
+            }
+         }
+    )
+}
+
+generate_integer_equal!( u8,  4u8);
+generate_integer_equal!(u16,  8u16);
+generate_integer_equal!(u32, 16u32);
+generate_integer_equal!(u64, 32u64);
+
+#[cfg(feature = "nightly")]
+generate_integer_equal!(u128, 64u128);
+
 /// Trait for items which can be conditionally assigned in constant time.
 pub trait ConditionallyAssignable {
     /// Conditionally assign `other` to `self` in constant time.
@@ -266,14 +323,65 @@ generate_array_conditional_assign!([i128; 25], [i128; 26], [i128; 27], [i128; 28
 generate_array_conditional_assign!([i128; 29], [i128; 30], [i128; 31], [i128; 32]);
 
 
-/// Trait for items whose equality to another item may be tested in constant time.
-pub trait CTEq {
-    /// Determine if two items are equal in constant time.
-    ///
-    /// # Returns
-    ///
-    /// `1u8` if the two items are equal, and `0u8` otherwise.
-    fn ct_eq(&self, other: &Self) -> Mask;
+/// Generate a constant time equality testing method for an array of type
+/// `[$t; $n]`, where `$t` is a type which implements `core::ops::BitXor`
+/// and `core::ops::BitOrAssign`, and `$n` is an expression which evaluates to
+/// an integer.
+macro_rules! generate_arrays_equal {
+    ($([$t:ty; $n:expr]),*) => ($(
+        impl Equal for [$t; $n] {
+            #[inline(always)]
+            fn ct_eq(&self, other: &[$t; $n]) -> Mask {
+                let mut x: $t = 0;
+
+                for i in 0 .. $n {
+                    x |= self[i] ^ other[i];
+                }
+                x.ct_eq(&0)
+            }
+         }
+    )*)
+}
+
+macro_rules! generate_arrays_equal_1_through_32 {
+    ($($t:ty),*) => ($(
+        generate_arrays_equal!([$t;  1], [$t;  2], [$t;  3], [$t;  4]);
+        generate_arrays_equal!([$t;  5], [$t;  6], [$t;  7], [$t;  8]);
+        generate_arrays_equal!([$t;  9], [$t; 10], [$t; 11], [$t; 12]);
+        generate_arrays_equal!([$t; 13], [$t; 14], [$t; 15], [$t; 16]);
+        generate_arrays_equal!([$t; 17], [$t; 18], [$t; 19], [$t; 20]);
+        generate_arrays_equal!([$t; 21], [$t; 22], [$t; 23], [$t; 24]);
+        generate_arrays_equal!([$t; 25], [$t; 26], [$t; 27], [$t; 28]);
+        generate_arrays_equal!([$t; 29], [$t; 30], [$t; 31], [$t; 32]);
+    )*)
+}
+
+generate_arrays_equal_1_through_32!(u8, u16, u32, u64);
+#[cfg(feature = "nightly")]
+generate_arrays_equal_1_through_32!(u128);
+
+/// Check equality of two bytes in constant time.
+///
+/// # Return
+///
+/// Returns `1u8` if `a == b` and `0u8` otherwise.
+///
+/// # Examples
+///
+/// ```
+/// # extern crate subtle;
+/// # use subtle::bytes_equal;
+/// # fn main() {
+/// let a: u8 = 0xDE;
+/// let b: u8 = 0xAD;
+///
+/// assert_eq!(bytes_equal(a, b), 0);
+/// assert_eq!(bytes_equal(a, a), 1);
+/// # }
+/// ```
+#[inline(always)]
+pub fn bytes_equal(a: u8, b: u8) -> Mask {
+    a.ct_eq(&b)
 }
 
 /// Trait for items which can be conditionally negated in constant time.
@@ -354,35 +462,6 @@ pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     (!(choice - T::one()) & a) | ((choice - T::one()) & b)
 }
 
-/// Check equality of two bytes in constant time.
-///
-/// # Return
-///
-/// Returns `1u8` if `a == b` and `0u8` otherwise.
-///
-/// # Examples
-///
-/// ```
-/// # extern crate subtle;
-/// # use subtle::bytes_equal;
-/// # fn main() {
-/// let a: u8 = 0xDE;
-/// let b: u8 = 0xAD;
-///
-/// assert_eq!(bytes_equal(a, b), 0);
-/// assert_eq!(bytes_equal(a, a), 1);
-/// # }
-/// ```
-#[inline(always)]
-pub fn bytes_equal(a: u8, b: u8) -> Mask {
-    let mut x: u8;
-
-    x  = !(a ^ b);
-    x &= x >> 4;
-    x &= x >> 2;
-    x &= x >> 1;
-    x
-}
 
 /// Test if a byte is non-zero in constant time.
 ///
@@ -642,5 +721,54 @@ mod test {
         generate_array_conditional_assign_tests!([i128; 25], [i128; 26], [i128; 27], [i128; 28]);
         #[cfg(feature = "nightly")]
         generate_array_conditional_assign_tests!([i128; 29], [i128; 30], [i128; 31], [i128; 32]);
+    }
+
+    macro_rules! generate_integer_equal_tests {
+        ($($t:ty),*) => ($(
+            let x: $t = 13;
+            let y: $t = 42;
+            let z: $t = 13;
+
+            assert_eq!(x.ct_eq(&y), 0);
+            assert_eq!(x.ct_eq(&z), 1);
+        )*)
+    }
+
+    #[test]
+    fn integer_equal() {
+        generate_integer_equal_tests!(u8, u16, u32, u64);
+        #[cfg(feature = "nightly")]
+        generate_integer_equal_tests!(u128);
+    }
+
+    macro_rules! generate_arrays_equal_tests {
+        ($([$t:ty; $n:expr]),*) => ($(
+            let x: [$t; $n] = [13; $n];
+            let y: [$t; $n] = [42; $n];
+            let z: [$t; $n] = [13; $n];
+
+            assert_eq!(x.ct_eq(&y), 0);
+            assert_eq!(x.ct_eq(&z), 1);
+        )*)
+    }
+
+    macro_rules! generate_arrays_equal_1_through_32_tests {
+        ($($t:ty),*) => ($(
+            generate_arrays_equal_tests!([$t;  1], [$t;  2], [$t;  3], [$t;  4]);
+            generate_arrays_equal_tests!([$t;  5], [$t;  6], [$t;  7], [$t;  8]);
+            generate_arrays_equal_tests!([$t;  9], [$t; 10], [$t; 11], [$t; 12]);
+            generate_arrays_equal_tests!([$t; 13], [$t; 14], [$t; 15], [$t; 16]);
+            generate_arrays_equal_tests!([$t; 17], [$t; 18], [$t; 19], [$t; 20]);
+            generate_arrays_equal_tests!([$t; 21], [$t; 22], [$t; 23], [$t; 24]);
+            generate_arrays_equal_tests!([$t; 25], [$t; 26], [$t; 27], [$t; 28]);
+            generate_arrays_equal_tests!([$t; 29], [$t; 30], [$t; 31], [$t; 32]);
+        )*)
+    }
+
+    #[test]
+    fn arrays_equal() {
+        generate_arrays_equal_1_through_32_tests!(u8, u16, u32, u64);
+        #[cfg(feature = "nightly")]
+        generate_arrays_equal_1_through_32_tests!(u128);
     }
 }
