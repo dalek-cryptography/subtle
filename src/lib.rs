@@ -298,12 +298,12 @@ pub fn bytes_equal(a: u8, b: u8) -> Mask {
 ///
 /// Note: it is not necessary to implement this trait, as a generic
 /// implementation is provided.
-pub trait CTNegatable {
+pub trait ConditionallyNegatable {
     /// Conditionally negate an element if `choice == 1u8`.
     fn conditional_negate(&mut self, choice: Mask);
 }
 
-impl<T> CTNegatable for T
+impl<T> ConditionallyNegatable for T
     where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output=T>
 {
     fn conditional_negate(&mut self, choice: Mask) {
