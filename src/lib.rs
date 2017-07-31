@@ -629,16 +629,16 @@ mod bench {
 
     #[bench]
     fn slices_equal_unequal(b: &mut Bencher) {
-        let x: [u8; 32] = [13; 32];
-        let y: [u8; 32] = [42; 32];
+        let x: [u8; 100_000] = [13; 100_000];
+        let y: [u8; 100_000] = [42; 100_000];
 
         b.iter(| | slices_equal(&x, &y));
     }
 
     #[bench]
     fn slices_equal_equal(b: &mut Bencher) {
-        let x: [u8; 32] = [13; 32];
-        let y: [u8; 32] = [13; 32];
+        let x: [u8; 100_000] = [13; 100_000];
+        let y: [u8; 100_000] = [13; 100_000];
 
         b.iter(| | slices_equal(&x, &y));
     }
