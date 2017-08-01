@@ -1,5 +1,5 @@
 
-# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crate/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/isislovecruft/subtle.svg?branch=master)](https://travis-ci.org/isislovecruft/subtle)
+# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/isislovecruft/subtle.svg?branch=master)](https://travis-ci.org/isislovecruft/subtle)
 
 **Pure-Rust traits and utilities for constant-time cryptographic implementations.**
 
