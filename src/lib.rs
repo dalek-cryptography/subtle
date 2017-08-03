@@ -103,6 +103,17 @@ generate_integer_equal!(u64, 32u64);
 #[cfg(feature = "nightly")]
 generate_integer_equal!(u128, 64u128);
 
+// Implement Equal for all slices over T where T implements Equal
+impl<T: Equal> Equal for [T] {
+    #[inline(always)]
+    fn ct_eq(&self, other: &[T]) -> Mask {
+        assert_eq!(self.len(), other.len());
+
+        // AND all the elements together
+        self.iter().zip(other.iter()).fold(1u8, |x, (a, b)| x & a.ct_eq(b))
+    }
+}
+
 /// Trait for items which can be conditionally assigned in constant time.
 pub trait ConditionallyAssignable {
     /// Conditionally assign `other` to `self` in constant time.
