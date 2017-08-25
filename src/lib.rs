@@ -40,8 +40,6 @@ use core::ops::Neg;
 
 #[cfg(feature = "std")]
 use num_traits::One;
-#[cfg(feature = "std")]
-use num_traits::Signed;
 
 /// A `Mask` represents a choice which is not a boolean.
 pub type Mask = u8;
@@ -367,9 +365,32 @@ impl<T> ConditionallyNegatable for T
 #[cfg(feature = "std")]
 pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     where T: PartialEq + PartialOrd + Copy +
-             One + Signed + Sub<T, Output = T> + Not<Output = T> +
+             One + Sub<T, Output = T> + Not<Output = T> +
              BitAnd<T, Output = T> + BitOr<T, Output = T> {
     (!(choice - T::one()) & a) | ((choice - T::one()) & b)
+}
+
+
+/// Trait for things which are conditionally swappable in constant time.
+pub trait ConditionallySwappable {
+    /// Conditionally swap `self` and `other` if `choice == 1`; otherwise,
+    /// reassign both unto themselves.
+    ///
+    /// # Note
+    ///
+    /// This trait is generically implemented for any type which implements
+    /// `ConditionallyAssignable`.
+    fn conditional_swap(&mut self, other: &mut Self, choice: Mask);
+}
+
+impl<T> ConditionallySwappable for T
+    where T: ConditionallyAssignable + Copy
+{
+    fn conditional_swap(&mut self, other: &mut T, choice: Mask) {
+        let temp: T = *self;
+        self.conditional_assign(&other, choice);
+        other.conditional_assign(&temp, choice);
+    }
 }
 
 /// Trait for testing if something is non-zero in constant time.
