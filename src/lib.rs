@@ -27,18 +27,19 @@ extern crate core;
 extern crate num_traits;
 
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 use core::ops::BitAnd;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 use core::ops::BitOr;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 use core::ops::Not;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 use core::ops::Sub;
 
+#[cfg(all(feature = "generic-impls"))]
 use core::ops::Neg;
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 use num_traits::One;
 
 /// A `Mask` represents a choice which is not a boolean.
@@ -301,6 +302,7 @@ pub trait ConditionallyNegatable {
     fn conditional_negate(&mut self, choice: Mask);
 }
 
+#[cfg(feature = "generic-impls")]
 impl<T> ConditionallyNegatable for T
     where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output = T>
 {
@@ -362,7 +364,7 @@ impl<T> ConditionallyNegatable for T
 /// find some other way to only implement it for types which we know work
 /// correctly.
 #[inline(always)]
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "generic-impls"))]
 pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     where T: PartialEq + PartialOrd + Copy +
              One + Sub<T, Output = T> + Not<Output = T> +
@@ -383,6 +385,9 @@ pub trait ConditionallySwappable {
     fn conditional_swap(&mut self, other: &mut Self, choice: Mask);
 }
 
+// Feature gated because the generic implementation is likely not as
+// fast as a custom impl for many types and in many use cases.
+#[cfg(feature = "generic-impls")]
 impl<T> ConditionallySwappable for T
     where T: ConditionallyAssignable + Copy
 {
@@ -519,7 +524,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "std")]
+    #[cfg(all(feature = "std", feature = "generic-impls"))]
     fn conditional_select_i32() {
         let a: i32 = 5;
         let b: i32 = 13;
@@ -529,7 +534,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "std")]
+    #[cfg(all(feature = "std", feature = "generic-impls"))]
     fn conditional_select_i64() {
         let c: i64 = 2343249123;
         let d: i64 = 8723884895;
