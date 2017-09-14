@@ -32,16 +32,11 @@ use core::ops::BitAnd;
 #[cfg(feature = "std")]
 use core::ops::BitOr;
 #[cfg(feature = "std")]
-use core::ops::BitXor;
-#[cfg(feature = "std")]
 use core::ops::Not;
 #[cfg(feature = "std")]
 use core::ops::Sub;
 
 use core::ops::Neg;
-
-#[cfg(feature = "std")]
-use std::num::Wrapping;
 
 #[cfg(feature = "std")]
 use num_traits::One;
@@ -368,12 +363,11 @@ impl<T> ConditionallyNegatable for T
 /// correctly.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn conditional_select<T>(a: T, b: T, choice: Wrapping<T>) -> T
+pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
     where T: PartialEq + PartialOrd + Copy +
              One + Sub<T, Output = T> + Not<Output = T> +
              BitAnd<T, Output = T> + BitOr<T, Output = T> {
-    let chosen: T = choice - T::one();
-    (!chosen & a) | (chosen & b)
+    (!(choice - T::one()) & a) | ((choice - T::one()) & b)
 }
 
 
@@ -397,37 +391,6 @@ impl<T> ConditionallySwappable for T
         self.conditional_assign(&other, choice);
         other.conditional_assign(&temp, choice);
     }
-}
-
-/// Conditionally swap `a` and `b` if `choice == 1`, otherwise, reassign both
-/// unto themselves.
-///
-/// # TODO
-///
-/// I'm not sure if this is the most optimal way to do conditional swapping.  It
-/// might be more efficient to do tricks even more similar to those done in
-/// `conditional_select()`.
-#[inline(always)]
-#[cfg(feature = "std")]
-pub fn conditional_swap<T>(a: T, b: T, choice: T)
-    where T: One + Sub<Wrapping<T>> +
-             BitAnd<T, Output = T> +
-             BitXor<T, Output = T>
-{
-    // 0. If choice was 1, make it 0b00000000. If choice was 0, make it 0b11111111.
-    let chosen: T = choice - T::one();
-
-    // 1. If choice was 1, choice_a will be 0. If choice was 0, choice_a will be a.
-    // 2. If choice was 1, choice_b will be 0. If choice was 0, choice_b will be b.
-    let choice_a: T = chosen & a;
-    let choice_b: T = chosen & b;
-
-    // 3. If choice was 1, a now equals a+b.   If choice was 0, a now equals a.
-    // 4. If choice was 1, b now equals a.     If choice was 0, b now equals b.
-    // 5. If choice was 1, a now equals b.     If choice was 0, a now equals a.
-    a = a ^ b ^ choice_b;
-    b = a ^ b ^ choice_a;
-    a = a ^ b ^ choice_b;
 }
 
 /// Trait for testing if something is non-zero in constant time.
