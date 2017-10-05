@@ -1,5 +1,5 @@
 
-# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crate/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/isislovecruft/subtle.svg?branch=master)](https://travis-ci.org/isislovecruft/subtle)
+# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/isislovecruft/subtle.svg?branch=master)](https://travis-ci.org/isislovecruft/subtle)
 
 **Pure-Rust traits and utilities for constant-time cryptographic implementations.**
 
@@ -39,7 +39,7 @@ Extensive documentation is available [here](https://docs.rs/subtle).
 To install, add the following to the dependencies section of your project's
 `Cargo.toml`:
 
-    subtle = "^0.1"
+    subtle = "^0.3"
 
 Then, in your library or executable source, add:
 
