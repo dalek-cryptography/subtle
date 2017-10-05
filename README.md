@@ -39,7 +39,7 @@ Extensive documentation is available [here](https://docs.rs/subtle).
 To install, add the following to the dependencies section of your project's
 `Cargo.toml`:
 
-    subtle = "^0.1"
+    subtle = "^0.3"
 
 Then, in your library or executable source, add:
 
