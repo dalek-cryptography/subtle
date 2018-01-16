@@ -75,13 +75,13 @@ macro_rules! generate_integer_equal {
                 let mut x: $t = !(self ^ other);
                 let mut shift: $t = $maxshift;
 
-                /// e.g. for a u8, do:
-                ///
-                ///    x &= x >> 4;
-                ///    x &= x >> 2;
-                ///    x &= x >> 1;
-                ///
-                /// This is variable only in the max size of the integer.
+                // e.g. for a u8, do:
+                //
+                //    x &= x >> 4;
+                //    x &= x >> 2;
+                //    x &= x >> 1;
+                //
+                // This is variable only in the max size of the integer.
                 while shift >= 1 {
                     x &= x >> shift;
                     shift /= 2;
