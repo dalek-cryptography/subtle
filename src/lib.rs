@@ -15,7 +15,6 @@
 
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
-#![deny(fat_ptr_transmutes)]
 
 #![cfg_attr(feature = "nightly", feature(i128_type))]
 #![cfg_attr(feature = "bench",   feature(test))]
