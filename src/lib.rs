@@ -279,8 +279,12 @@ pub fn bytes_equal(a: u8, b: u8) -> Mask {
 
 /// Trait for items which can be conditionally negated in constant time.
 ///
-/// Note: it is not necessary to implement this trait, as a generic
-/// implementation is provided.
+/// # Note
+///
+/// A generic implementation of `ConditionallyNegatable` is provided for types
+/// which are `ConditionallyNegatable` + `Neg`, but this generic implementation
+/// is feature-gated on the "generic-impls" feature in order to allow users to
+/// make custom implementations without clashing with the orphan rules.
 pub trait ConditionallyNegatable {
     /// Conditionally negate an element if `choice == 1u8`.
     fn conditional_negate(&mut self, choice: Mask);
