@@ -377,7 +377,9 @@ pub trait ConditionallySwappable {
     /// # Note
     ///
     /// This trait is generically implemented for any type which implements
-    /// `ConditionallyAssignable`.
+    /// `ConditionallyAssignable` + `Copy`, but is feature-gated on the
+    /// "generic-impls" feature, in order to allow more fast/efficient
+    /// implementations without clashing with the orphan rules.
     fn conditional_swap(&mut self, other: &mut Self, choice: Mask);
 }
 
