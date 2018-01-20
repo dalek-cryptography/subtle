@@ -19,13 +19,9 @@ exclude = [
 [badges]
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
-[dependencies.num-traits]
-optional = true
-version = "^0.1"
-
 [features]
 default = ["std"]
-std = ["num-traits"]
+std = []
 bench = []
 nightly = []
 # Enables generic implementations of ConditionallyNegatable, conditional_select(), and ConditionallySwappable

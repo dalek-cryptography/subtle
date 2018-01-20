@@ -22,24 +22,9 @@
 #[cfg(feature = "std")]
 extern crate core;
 
-#[cfg(feature = "std")]
-extern crate num_traits;
-
-
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-use core::ops::BitAnd;
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-use core::ops::BitOr;
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-use core::ops::Not;
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-use core::ops::Sub;
-
 #[cfg(all(feature = "generic-impls"))]
 use core::ops::Neg;
 
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-use num_traits::One;
 
 /// A `Mask` represents a choice which is not a boolean.
 pub type Mask = u8;
@@ -319,9 +304,8 @@ impl<T> ConditionallyNegatable for T
 /// * `a`, `b`, and `choice` must be types for which bitwise-AND, and
 ///   bitwise-OR, bitwise-complement, subtraction, multiplicative identity,
 ///   copying, partial equality, and partial order comparison are defined.
-/// * `choice`: If `choice` is equal to the multiplicative identity of the type
-///   (i.e. `1u8` for `u8`, etc.), then `a` is returned.  If `choice` is equal
-///   to the additive identity (i.e. `0u8` for `u8`, etc.) then `b` is returned.
+/// * `choice`: If `choice` is equal to `1` then `a` is returned.  If `choice`
+///   is equal to `0` then `b` is returned.
 ///
 /// # Warning
 ///
@@ -334,43 +318,56 @@ impl<T> ConditionallyNegatable for T
 ///
 /// # Examples
 ///
-/// This function should work for signed integer types:
+/// This function is implemented via a macro for signed integer types:
 ///
 /// ```
 /// # extern crate subtle;
-/// # use subtle::conditional_select;
+/// # use subtle::ConditionallySelectable;
 /// # fn main() {
 /// let a: i32 = 5;
 /// let b: i32 = 13;
 ///
-/// assert!(conditional_select(a, b, 0) == 13);
-/// assert!(conditional_select(a, b, 1) == 5);
+/// assert!(i32::conditional_select(a, b, 0) == 13);
+/// assert!(i32::conditional_select(a, b, 1) == 5);
 ///
 /// let c: i64 = 2343249123;
 /// let d: i64 = 8723884895;
 ///
-/// assert!(conditional_select(c, d, 0) == d);
-/// assert!(conditional_select(c, d, 1) == c);
+/// assert!(i64::conditional_select(c, d, 0) == d);
+/// assert!(i64::conditional_select(c, d, 1) == c);
 /// # }
 /// ```
-///
-/// It does not work with `i128`s, however, because the `num` crate doesn't
-/// implement `num::traits::Signed` for `i128`.
-///
-/// # TODO
-///
-/// Once `#[feature(specialization)]` is finished, we should rewrite this.  Or
-/// find some other way to only implement it for types which we know work
-/// correctly.
-#[inline(always)]
-#[cfg(all(feature = "std", feature = "generic-impls"))]
-pub fn conditional_select<T>(a: T, b: T, choice: T) -> T
-    where T: PartialEq + PartialOrd + Copy +
-             One + Sub<T, Output = T> + Not<Output = T> +
-             BitAnd<T, Output = T> + BitOr<T, Output = T> {
-    (!(choice - T::one()) & a) | ((choice - T::one()) & b)
+pub trait ConditionallySelectable {
+    /// Select `a` if `choice == 1` or select `b` if `choice == 0`, in constant time.
+    ///
+    /// # Inputs
+    ///
+    /// * `a`, `b`, and `choice` must be types for which bitwise-AND, and
+    ///   bitwise-OR, bitwise-complement, subtraction, multiplicative identity,
+    ///   copying, partial equality, and partial order comparison are defined.
+    /// * `choice`: If `choice` is equal to `1` then `a` is returned.  If `choice`
+    ///   is equal to `0` then `b` is returned.
+    fn conditional_select(a: Self, b: Self, choice: Mask) -> Self;
 }
 
+/// Generate a constant time `conditional_select()` method for a signed integer
+/// type.
+macro_rules! generate_integer_conditional_select {
+    ($($t:ty)*) => ($(
+        impl ConditionallySelectable for $t {
+            #[inline(always)]
+            fn conditional_select(a: $t, b: $t, choice: Mask) -> $t {
+                let choice = choice as $t;
+                let one = 1u8 as $t;
+                (!(choice - one) & a) | ((choice - one) & b)
+            }
+         }
+    )*)
+}
+
+generate_integer_conditional_select!(i8 i16 i32 i64);
+#[cfg(feature = "nightly")]
+generate_integer_conditional_select!(i128);
 
 /// Trait for things which are conditionally swappable in constant time.
 pub trait ConditionallySwappable {
@@ -523,23 +520,21 @@ mod test {
     }
 
     #[test]
-    #[cfg(all(feature = "std", feature = "generic-impls"))]
     fn conditional_select_i32() {
         let a: i32 = 5;
         let b: i32 = 13;
 
-        assert_eq!(conditional_select(a, b, 0), 13);
-        assert_eq!(conditional_select(a, b, 1), 5);
+        assert_eq!(i32::conditional_select(a, b, 0), 13);
+        assert_eq!(i32::conditional_select(a, b, 1), 5);
     }
 
     #[test]
-    #[cfg(all(feature = "std", feature = "generic-impls"))]
     fn conditional_select_i64() {
         let c: i64 = 2343249123;
         let d: i64 = 8723884895;
 
-        assert_eq!(conditional_select(c, d, 0), d);
-        assert_eq!(conditional_select(c, d, 1), c);
+        assert_eq!(i64::conditional_select(c, d, 0), d);
+        assert_eq!(i64::conditional_select(c, d, 1), c);
     }
 
     macro_rules! generate_integer_conditional_assign_tests {
