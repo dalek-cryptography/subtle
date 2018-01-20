@@ -6,6 +6,7 @@ authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
 readme = "README.md"
 license = "CC0-1.0"
 repository = "https://github.com/dalek-cryptography/subtle"
+homepage = "https://dalek.rs/"
 documentation = "https://docs.rs/subtle"
 categories = ["cryptography", "no-std"]
 keywords = ["cryptography", "constant-time", "utilities"]
