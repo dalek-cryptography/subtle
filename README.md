@@ -40,7 +40,7 @@ To install, add the following to the dependencies section of your project's
 `Cargo.toml`:
 
 ```toml
-subtle = "^0.4"
+subtle = "^0.5"
 ```
 
 Then, in your library or executable source, add:
