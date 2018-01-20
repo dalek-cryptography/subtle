@@ -1,11 +1,12 @@
 [package]
 name = "subtle"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
 license = "CC0-1.0"
-repository = "https://github.com/isislovecruft/subtle"
+repository = "https://github.com/dalek-cryptography/subtle"
+homepage = "https://dalek.rs/"
 documentation = "https://docs.rs/subtle"
 categories = ["cryptography", "no-std"]
 keywords = ["cryptography", "constant-time", "utilities"]
@@ -16,7 +17,7 @@ exclude = [
 ]
 
 [badges]
-travis-ci = { repository = "isislovecruft/subtle", branch = "master"}
+travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
 [dependencies.num-traits]
 optional = true
@@ -27,3 +28,5 @@ default = ["std"]
 std = ["num-traits"]
 bench = []
 nightly = []
+# Enables generic implementations of ConditionallyNegatable, conditional_select(), and ConditionallySwappable
+generic-impls = []
