@@ -4,11 +4,11 @@ If you have questions or comments, please feel free to email the
 authors. 
 
 For feature requests, suggestions, and bug reports, please open an
-issue on [our Github](https://github.com/isislovecruft/subtle).  (Or,
+issue on [our Github](https://github.com/dalek-cryptography/subtle).  (Or,
 send us an email if you're opposed to using Github for whatever reason.)
 
 Patches are welcomed as pull requests on
-[our Github](https://github.com/isislovecruft/subtle), as well as by
+[our Github](https://github.com/dalek-cryptography/subtle), as well as by
 email (preferably sent to all of the authors listed in `Cargo.toml`).
 
 We're happy to take generalised utility code, provided the code is:
