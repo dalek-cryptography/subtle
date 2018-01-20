@@ -5,7 +5,7 @@ authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
 license = "CC0-1.0"
-repository = "https://github.com/isislovecruft/subtle"
+repository = "https://github.com/dalek-cryptography/subtle"
 documentation = "https://docs.rs/subtle"
 categories = ["cryptography", "no-std"]
 keywords = ["cryptography", "constant-time", "utilities"]
@@ -16,7 +16,7 @@ exclude = [
 ]
 
 [badges]
-travis-ci = { repository = "isislovecruft/subtle", branch = "master"}
+travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
 [dependencies.num-traits]
 optional = true

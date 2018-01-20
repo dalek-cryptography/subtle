@@ -479,7 +479,7 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
 /// ```
 ///
 /// This function is commonly used in various cryptographic applications, such
-/// as [signature verification](https://github.com/isislovecruft/ed25519-dalek/blob/0.3.2/src/ed25519.rs#L280),
+/// as [signature verification](https://github.com/dalek-cryptography/ed25519-dalek/blob/0.3.2/src/ed25519.rs#L280),
 /// among many other applications.
 ///
 /// # Return

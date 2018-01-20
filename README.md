@@ -1,5 +1,5 @@
 
-# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/isislovecruft/subtle.svg?branch=master)](https://travis-ci.org/isislovecruft/subtle)
+# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/dalek-cryptography/subtle.svg?branch=master)](https://travis-ci.org/dalek-cryptography/subtle)
 
 **Pure-Rust traits and utilities for constant-time cryptographic implementations.**
 
@@ -25,8 +25,8 @@ library does **not** provide much in the way of assurance against deliberate
 misuse.  Instead, it is a low-level library, mostly of bit-flipping tricks,
 intended for other cryptographers who would like to implement their own
 constant-time libraries.  (For an example usage of this library, please see
-[curve25519-dalek](https://github.com/isislovecruft/curve25519-dalek) and
-[ed25519-dalek](https://github.com/isislovecruft/ed25519-dalek).)
+[curve25519-dalek](https://github.com/dalek-cryptography/curve25519-dalek) and
+[ed25519-dalek](https://github.com/dalek-cryptography/ed25519-dalek).)
 
 **USE AT YOUR OWN RISK**
 
