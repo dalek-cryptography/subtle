@@ -158,16 +158,28 @@ pub trait ConditionallyAssignable {
     /// `nightly` feature (as above).
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
+macro_rules! toSignedInt {
+    (u8) => {i8};
+    (u16) => {i16};
+    (u32) => {i32};
+    (u64) => {i64};
+    (u128) => {i128};
+    (i8) => {i8};
+    (i16) => {i16};
+    (i32) => {i32};
+    (i64) => {i64};
+    (i128) => {i128};
+}
 
 macro_rules! generate_integer_conditional_assign {
-    ($($t:ty)*) => ($(
+    ($($t:tt)*) => ($(
         impl ConditionallyAssignable for $t {
             #[inline(always)]
             fn conditional_assign(&mut self, other: &$t, choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
                 // if choice = 1u8, mask = (-1i8) as u8 = 11111111
-                let mask = -(choice as i8) as u8;
-                *self = *self ^ ((mask as $t) & (*self ^ *other));
+                let mask = -(choice as toSignedInt!($t)) as $t;
+                *self = *self ^ ((mask) & (*self ^ *other));
             }
          }
     )*)
@@ -184,15 +196,15 @@ generate_integer_conditional_assign!(u128 i128);
 /// `core::ops::BitXor` and `$n` is an expression which evaluates to an integer.
 #[macro_export]
 macro_rules! generate_array_conditional_assign {
-    ($([$t:ty; $n:expr]),*) => ($(
+    ($([$t:tt; $n:expr]),*) => ($(
         impl ConditionallyAssignable for [$t; $n] {
             #[inline(always)]
             fn conditional_assign(&mut self, other: &[$t; $n], choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
                 // if choice = 1u8, mask = (-1i8) as u8 = 11111111
-                let mask = -(choice as i8) as u8;
+                let mask = -(choice as toSignedInt!($t)) as $t;
                 for i in 0 .. $n {
-                    self[i] = self[i] ^ ((mask as $t) & (self[i] ^ other[i]));
+                    self[i] = self[i] ^ (mask & (self[i] ^ other[i]));
                 }
             }
          }
@@ -200,7 +212,7 @@ macro_rules! generate_array_conditional_assign {
 }
 
 macro_rules! generate_array_conditional_assign_1_through_32 {
-    ($($t:ty),*) => ($(
+    ($($t:tt),*) => ($(
         generate_array_conditional_assign!([$t;  1], [$t;  2], [$t;  3], [$t;  4]);
         generate_array_conditional_assign!([$t;  5], [$t;  6], [$t;  7], [$t;  8]);
         generate_array_conditional_assign!([$t;  9], [$t; 10], [$t; 11], [$t; 12]);
@@ -594,6 +606,28 @@ mod test {
         generate_array_conditional_assign_1_through_32_tests!(u8, u16, u32, u64);
         #[cfg(feature = "nightly")]
         generate_array_conditional_assign_1_through_32_tests!(u128);
+    }
+
+    #[test]
+    fn custom_conditional_assign_i16() {
+        let mut x: i16 = 257;
+        let y:     i16 = 514;
+
+        x.conditional_assign(&y, 0);
+        assert_eq!(x, 257);
+        x.conditional_assign(&y, 1);
+        assert_eq!(x, 514);
+    }
+
+    #[test]
+    fn custom_conditional_assign_u32_17() {
+        let mut x: [u32; 17] = [257; 17];
+        let y:     [u32; 17] = [514; 17];
+
+        x.conditional_assign(&y, 0);
+        assert_eq!(x, [257; 17]);
+        x.conditional_assign(&y, 1);
+        assert_eq!(x, [514; 17]);
     }
 
     macro_rules! generate_integer_equal_tests {
