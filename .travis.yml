@@ -6,12 +6,15 @@ rust:
 
 env:
   - TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
+  - TEST_COMMAND=test EXTRA_FLAGS='' FEATURES='generic-impls'
 
 matrix:
   include:
     # Also run the default tests on nightly.
     - rust: nightly
       env: TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
+    - rust: nightly
+      env: TEST_COMMAND=test EXTRA_FLAGS='' FEATURES='generic-impls'
     # Run benchmarks only on nightly.
     - rust: nightly
       env: TEST_COMMAND=bench EXTRA_FLAGS='' FEATURES='bench'
