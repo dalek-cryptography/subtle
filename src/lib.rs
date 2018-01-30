@@ -158,6 +158,7 @@ pub trait ConditionallyAssignable {
     /// `nightly` feature (as above).
     fn conditional_assign(&mut self, other: &Self, choice: Mask);
 }
+
 macro_rules! toSignedInt {
     (u8) => {i8};
     (u16) => {i16};
