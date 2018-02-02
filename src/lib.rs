@@ -14,7 +14,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #![deny(missing_docs)]
-#![deny(unsafe_code)]
+
+#![feature(asm)]
 
 #![cfg_attr(feature = "nightly", feature(i128_type))]
 #![cfg_attr(feature = "bench",   feature(test))]
@@ -26,8 +27,33 @@ extern crate core;
 use core::ops::Neg;
 
 
-/// A `Mask` represents a choice which is not a boolean.
-pub type Mask = u8;
+/// No-Op(timisations, Please)
+///
+/// Prevent optimisers from treating types like `Mask` (which should only ever
+/// have a value of 0 or 1) as an i1/boolean instead of an integer.
+#[cfg(not(any(target_arch = "asmjs", target_arch = "wasm32")))]
+pub fn noop(input: u8) -> u8 {
+    // Pretend to access the register pointing to the input.  We "volatile" here
+    // because some optimisers treat assembly templates without output operands
+    // as "volatile" while others do not.
+    unsafe { asm!("" :: "r"(&input) :: "volatile") }
+
+    input
+}
+#[cfg(any(target_arch = "asmjs", target_arch = "wasm32"))]
+#[inline(never)]
+pub fn noop(input: u8) -> u8 {
+    input
+}
+
+/// A `Mask` represents a choice which is _not_ a boolean.
+pub struct Mask(u8);
+
+impl From<u8> for Mask {
+    fn from(input: u8) -> Mask {
+        Mask(noop(input))
+    }
+}
 
 /// Trait for items whose equality to another item may be tested in constant time.
 pub trait Equal {
@@ -72,7 +98,7 @@ macro_rules! generate_integer_equal {
                     x &= x >> shift;
                     shift /= 2;
                 }
-                x as Mask
+                Mask::from(x)
             }
          }
     )
@@ -179,7 +205,7 @@ macro_rules! generate_integer_conditional_assign {
             fn conditional_assign(&mut self, other: &$t, choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
                 // if choice = 1u8, mask = (-1i8) as u8 = 11111111
-                let mask = -(choice as toSignedInt!($t)) as $t;
+                let mask = -(choice.0 as toSignedInt!($t)) as $t;
                 *self = *self ^ ((mask) & (*self ^ *other));
             }
          }
@@ -203,7 +229,7 @@ macro_rules! generate_array_conditional_assign {
             fn conditional_assign(&mut self, other: &[$t; $n], choice: Mask) {
                 // if choice = 0u8, mask = (-0i8) as u8 = 00000000
                 // if choice = 1u8, mask = (-1i8) as u8 = 11111111
-                let mask = -(choice as toSignedInt!($t)) as $t;
+                let mask = -(choice.0 as toSignedInt!($t)) as $t;
                 for i in 0 .. $n {
                     self[i] = self[i] ^ (mask & (self[i] ^ other[i]));
                 }
@@ -374,7 +400,7 @@ macro_rules! generate_integer_conditional_select {
         impl ConditionallySelectable for $t {
             #[inline(always)]
             fn conditional_select(a: $t, b: $t, choice: Mask) -> $t {
-                let choice = choice as $t;
+                let choice = choice.0 as $t;
                 let one = 1u8 as $t;
                 (!(choice - one) & a) | ((choice - one) & b)
             }
@@ -453,7 +479,7 @@ pub fn byte_is_nonzero(b: u8) -> Mask {
     x |= x >> 4;
     x |= x >> 2;
     x |= x >> 1;
-    (x & 1)
+    Mask::from(x & 1)
 }
 
 /// Check equality of two slices, `a` and `b`, in constant time.
