@@ -42,6 +42,36 @@ impl Choice {
     }
 }
 
+use core::ops::{BitAnd, BitOr, BitXor, Not};
+
+impl BitAnd for Choice {
+    type Output = Choice;
+    fn bitand(self, rhs: Choice) -> Choice {
+        (self.0 & rhs.0).into()
+    }
+}
+
+impl BitOr for Choice {
+    type Output = Choice;
+    fn bitor(self, rhs: Choice) -> Choice {
+        (self.0 | rhs.0).into()
+    }
+}
+
+impl BitXor for Choice {
+    type Output = Choice;
+    fn bitxor(self, rhs: Choice) -> Choice {
+        (self.0 ^ rhs.0).into()
+    }
+}
+
+impl Not for Choice {
+    type Output = Choice;
+    fn not(self) -> Choice {
+        (1u8 & (!self.0)).into()
+    }
+}
+
 #[cfg(feature = "nightly")]
 extern crate test;
 
