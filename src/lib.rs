@@ -126,6 +126,21 @@ impl<T: Equal> Equal for [T] {
     /// This function short-circuits if the lengths of the input slices
     /// are different.  Otherwise, it should execute in time independent
     /// of the slice contents.
+    ///
+    /// Since arrays coerce to slices, this function works with fixed-size arrays:
+    ///
+    /// ```
+    /// # use subtle::Equal;
+    /// #
+    /// let a: [u8; 8] = [0,1,2,3,4,5,6,7];
+    /// let b: [u8; 8] = [0,1,2,3,0,1,2,3];
+    ///
+    /// let a_eq_a = a.ct_eq(&a);
+    /// let a_eq_b = a.ct_eq(&b);
+    ///
+    /// assert_eq!(a_eq_a.unwrap_u8(), 1);
+    /// assert_eq!(a_eq_b.unwrap_u8(), 0);
+    /// ```
     fn ct_eq(&self, _rhs: &[T]) -> Choice {
         let len = self.len();
 
@@ -136,9 +151,9 @@ impl<T: Equal> Equal for [T] {
         // This loop shouldn't be shortcircuitable, since the compiler
         // shouldn't be able to reason about the value of the `u8`
         // unwrapped from the `ct_eq` result.
-        let mut x = 0u8;
+        let mut x = 1u8;
         for (ai, bi) in self.iter().zip(_rhs.iter()) {
-            x |= ai.ct_eq(bi).unwrap_u8();
+            x &= ai.ct_eq(bi).unwrap_u8();
         }
 
         x.into()
@@ -349,6 +364,23 @@ impl<T> ConditionallySwappable for T
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn slices_equal() {
+        let a: [u8; 8] = [1,2,3,4,5,6,7,8];
+        let b: [u8; 8] = [1,2,3,4,4,3,2,1];
+
+        let a_eq_a = (&a).ct_eq(&a);
+        let a_eq_b = (&a).ct_eq(&b);
+
+        assert_eq!(a_eq_a.unwrap_u8(), 1);
+        assert_eq!(a_eq_b.unwrap_u8(), 0);
+
+        let c: [u8; 16] = [0u8; 16];
+
+        let a_eq_c = (&a).ct_eq(&c);
+        assert_eq!(a_eq_c.unwrap_u8(), 0);
+    }
 
     #[test]
     fn conditional_select_i64() {
