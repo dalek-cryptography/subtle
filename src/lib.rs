@@ -37,6 +37,7 @@ pub struct Choice(u8);
 
 impl Choice {
     /// Unwrap the `Choice` wrapper to reveal the underlying `u8`.
+    #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
     }
@@ -46,6 +47,7 @@ use core::ops::{BitAnd, BitOr, BitXor, Not};
 
 impl BitAnd for Choice {
     type Output = Choice;
+    #[inline]
     fn bitand(self, rhs: Choice) -> Choice {
         (self.0 & rhs.0).into()
     }
@@ -53,6 +55,7 @@ impl BitAnd for Choice {
 
 impl BitOr for Choice {
     type Output = Choice;
+    #[inline]
     fn bitor(self, rhs: Choice) -> Choice {
         (self.0 | rhs.0).into()
     }
@@ -60,6 +63,7 @@ impl BitOr for Choice {
 
 impl BitXor for Choice {
     type Output = Choice;
+    #[inline]
     fn bitxor(self, rhs: Choice) -> Choice {
         (self.0 ^ rhs.0).into()
     }
@@ -67,6 +71,7 @@ impl BitXor for Choice {
 
 impl Not for Choice {
     type Output = Choice;
+    #[inline]
     fn not(self) -> Choice {
         (1u8 & (!self.0)).into()
     }
@@ -77,6 +82,7 @@ extern crate test;
 
 impl From<u8> for Choice {
     #[cfg(feature = "nightly")]
+    #[inline]
     fn from(c: u8) -> Choice {
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
@@ -86,6 +92,7 @@ impl From<u8> for Choice {
         Choice(black_box(c))
     }
     #[cfg(not(feature = "nightly"))]
+    #[inline]
     fn from(c: u8) -> Choice {
         // XXX if/when Rust stabilizes an optimization barrier, we can
         // do better than this.
@@ -115,6 +122,7 @@ pub trait Equal {
     ///
     /// * `Choice(1u8)` if `self == other`;
     /// * `Choice(0u8)` if `self != other`.
+    #[inline]
     fn ct_eq(&self, other: &Self) -> Choice;
 }
 
@@ -141,6 +149,7 @@ impl<T: Equal> Equal for [T] {
     /// assert_eq!(a_eq_a.unwrap_u8(), 1);
     /// assert_eq!(a_eq_b.unwrap_u8(), 0);
     /// ```
+    #[inline]
     fn ct_eq(&self, _rhs: &[T]) -> Choice {
         let len = self.len();
 
@@ -226,6 +235,7 @@ pub trait ConditionallyAssignable {
     /// assert_eq!(x, 42);
     /// ```
     ///
+    #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice);
 }
 
@@ -245,7 +255,7 @@ macro_rules! to_signed_int {
 macro_rules! generate_integer_conditional_assign {
     ($($t:tt)*) => ($(
         impl ConditionallyAssignable for $t {
-            #[inline(always)]
+            #[inline]
             fn conditional_assign(&mut self, other: &$t, choice: Choice) {
                 // if choice = 0, mask = (-0) = 0000...0000
                 // if choice = 1, mask = (-1) = 1111...1111
@@ -276,6 +286,7 @@ pub trait ConditionallyNegatable {
     /// unchanged.
     ///
     /// This function should execute in constant time.
+    #[inline]
     fn conditional_negate(&mut self, choice: Choice);
 }
 
@@ -288,6 +299,7 @@ where
     T: ConditionallyAssignable,
     for<'a> &'a T: Neg<Output = T>,
 {
+    #[inline]
     fn conditional_negate(&mut self, choice: Choice) {
         // Need to cast to eliminate mutability
         let self_neg: T = -(self as &T);
@@ -320,6 +332,7 @@ pub trait ConditionallySelectable {
     /// * `b` if `choice == Choice(1)`.
     ///
     /// This function should execute in constant time.
+    #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 }
 
@@ -328,6 +341,7 @@ impl<T> ConditionallySelectable for T
 where
     T: Copy + ConditionallyAssignable
 {
+    #[inline]
     fn conditional_select(a: &T, b: &T, choice: Choice) -> T {
         // XXX this generic should be the other way around
         let mut tmp = *a;
@@ -347,6 +361,7 @@ pub trait ConditionallySwappable {
     /// `ConditionallyAssignable` + `Copy`, but is feature-gated on the
     /// "generic-impls" feature, in order to allow more fast/efficient
     /// implementations without clashing with the orphan rules.
+    #[inline]
     fn conditional_swap(&mut self, other: &mut Self, choice: Choice);
 }
 
@@ -354,6 +369,7 @@ pub trait ConditionallySwappable {
 impl<T> ConditionallySwappable for T
     where T: ConditionallyAssignable + Copy
 {
+    #[inline]
     fn conditional_swap(&mut self, other: &mut T, choice: Choice) {
         let temp: T = *self;
         self.conditional_assign(&other, choice);
