@@ -46,6 +46,7 @@ pub trait Equal {
     ///
     /// assert!(x.ct_eq(&y) == 0);
     /// assert!(x.ct_eq(&5) == 1);
+    /// ```
     fn ct_eq(&self, other: &Self) -> Mask;
 }
 
