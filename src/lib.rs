@@ -319,13 +319,16 @@ impl<T> ConditionallyNegatable for T
 /// # extern crate subtle;
 /// use subtle::ConditionallySelectable;
 /// use subtle::Choice;
-/// # fn main() {
+/// # #[cfg(features = "generic-impls")]
+/// # fn do_test() {
 /// let a: i32 = 5;
 /// let b: i32 = 13;
 ///
 /// assert_eq!(i32::conditional_select(&a, &b, Choice::from(0)), a);
 /// assert_eq!(i32::conditional_select(&a, &b, Choice::from(1)), b);
 /// # }
+/// # #[cfg(not(features = "generic-impls"))]
+/// # fn main () { }
 /// ```
 pub trait ConditionallySelectable {
     /// Select `a` or `b` according to `choice`.
@@ -411,6 +414,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "generic-impls")]
     fn conditional_select_i32() {
         let a: i32 = 5;
         let b: i32 = 13;
@@ -420,6 +424,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "generic-impls")]
     fn conditional_select_i64() {
         let c: i64 = 2343249123;
         let d: i64 = 8723884895;
