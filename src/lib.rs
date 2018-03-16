@@ -115,14 +115,14 @@ impl From<u8> for Choice {
 /// # Example
 ///
 /// ```
-/// use subtle::Equal;
+/// use subtle::ConstantTimeEq;
 /// let x: u8 = 5;
 /// let y: u8 = 13;
 ///
 /// assert_eq!(x.ct_eq(&y).unwrap_u8(), 0);
 /// assert_eq!(x.ct_eq(&x).unwrap_u8(), 1);
 /// ```
-pub trait Equal {
+pub trait ConstantTimeEq {
     /// Determine if two items are equal.
     ///
     /// The `ct_eq` function should execute in constant time.
@@ -135,8 +135,8 @@ pub trait Equal {
     fn ct_eq(&self, other: &Self) -> Choice;
 }
 
-impl<T: Equal> Equal for [T] {
-    /// Check whether two slices of `Equal` types are equal.
+impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
+    /// Check whether two slices of `ConstantTimeEq` types are equal.
     ///
     /// # Note
     ///
@@ -147,7 +147,7 @@ impl<T: Equal> Equal for [T] {
     /// Since arrays coerce to slices, this function works with fixed-size arrays:
     ///
     /// ```
-    /// # use subtle::Equal;
+    /// # use subtle::ConstantTimeEq;
     /// #
     /// let a: [u8; 8] = [0,1,2,3,4,5,6,7];
     /// let b: [u8; 8] = [0,1,2,3,0,1,2,3];
@@ -180,10 +180,10 @@ impl<T: Equal> Equal for [T] {
 
 /// Given the bit-width `$bit_width` and the corresponding primitive
 /// unsigned and signed types `$t_u` and `$t_i` respectively, generate
-/// an `Equal` implementation.
+/// an `ConstantTimeEq` implementation.
 macro_rules! generate_integer_equal {
     ($t_u:ty, $t_i:ty, $bit_width:expr) => (
-        impl Equal for $t_u {
+        impl ConstantTimeEq for $t_u {
             #[inline]
             fn ct_eq(&self, other: &$t_u) -> Choice {
                 // First construct x such that self == other iff all bits of x are 1
@@ -206,7 +206,7 @@ macro_rules! generate_integer_equal {
                 (x as u8).into()
             }
         }
-        impl Equal for $t_i {
+        impl ConstantTimeEq for $t_i {
             #[inline]
             fn ct_eq(&self, other: &$t_i) -> Choice {
                 // Bitcast to unsigned and call that implementation.
