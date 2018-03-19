@@ -6,7 +6,7 @@ rust:
 
 env:
   - TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
-  - TEST_COMMAND=test EXTRA_FLAGS='' FEATURES='generic-impls'
+  - TEST_COMMAND=test EXTRA_FLAGS='--no-default-features' FEATURES='std'
 
 matrix:
   include:
@@ -14,11 +14,8 @@ matrix:
     - rust: nightly
       env: TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
     - rust: nightly
-      env: TEST_COMMAND=test EXTRA_FLAGS='' FEATURES='generic-impls'
-    # Run benchmarks only on nightly.
-    - rust: nightly
-      env: TEST_COMMAND=bench EXTRA_FLAGS='' FEATURES='bench'
-    # Test no-std only on nightly.
+      env: TEST_COMMAND=test EXTRA_FLAGS='--no-default-features' FEATURES='std'
+    # Test building no-std only on nightly.
     - rust: nightly
       env: TEST_COMMAND=build EXTRA_FLAGS=--no-default-features FEATURES=''
 

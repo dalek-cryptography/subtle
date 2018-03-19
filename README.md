@@ -1,21 +1,40 @@
-
 # subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/dalek-cryptography/subtle.svg?branch=master)](https://travis-ci.org/dalek-cryptography/subtle)
 
 **Pure-Rust traits and utilities for constant-time cryptographic implementations.**
 
-Significant portions of this code are based upon Golang's "crypto/subtle"
-module, and this library aims to be that library's Rust equivalent¹, plus more.
+This crate represents a "best-effort" attempt, since side-channels
+are ultimately a property of a deployed cryptographic system
+including the hardware it runs on, not just of software.
 
-¹ The only function in Golang's "crypto/subtle" module which we do not implement
-is `ConstantTimeLessOrEq`.  This is for two reasons: first, that
-`ConstantTimeLessOrEq`, as far as this author knows, is only used to implement
-the RSA encryption padding scheme defined in the (now outdated) PKCS#1 v1.5
-standard (superseded by the newer RSA-OAEP mode).  Not only should use of this
-outdated mode cease to continue, it is known to be dangerous for encrypting
-anything other than a symmetric session key.  Second, without other constant-time
-comparison functions (e.g. "greater or equal"), this author feels that
-providing solely `ConstantTimeLessOrEq` would provide a
-weird/incomplete API.
+It consists of a `Choice` type, a wrapper around a `u8` that holds a
+`0` or `1`, and a collection of traits using `Choice` instead of
+`bool`.  Implementations of these traits are provided for primitive
+types.
+
+```toml
+[dependencies.subtle]
+version = "^0.6"
+features = ["nightly"]
+```
+
+## Features
+
+* The `nightly` feature enables `u128`/`i128` support and the use of
+the `test::black_box` optimization barrier to protect the `Choice`
+type.
+
+* The `generic-impls` feature (enabled by default) provides generic
+impls of some traits.  It can be disabled to allow specialized impls
+without impl conflicts.
+
+## Documentation
+
+Documentation is available [here](https://docs.rs/subtle).
+
+## About
+
+Significant portions of this code were based upon Golang's "crypto/subtle"
+module, and this library aims to be that library's Rust equivalent.
 
 ## Warning
 
@@ -30,21 +49,3 @@ constant-time libraries.  (For an example usage of this library, please see
 
 **USE AT YOUR OWN RISK**
 
-## Documentation
-
-Extensive documentation is available [here](https://docs.rs/subtle).
-
-# Installation
-
-To install, add the following to the dependencies section of your project's
-`Cargo.toml`:
-
-```toml
-subtle = "^0.5"
-```
-
-Then, in your library or executable source, add:
-
-```rust
-extern crate subtle;
-```
