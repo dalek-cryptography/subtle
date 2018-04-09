@@ -79,14 +79,15 @@ impl Not for Choice {
     }
 }
 
-/// No-Op(timisations, Please)
+/// This function is a best-effort attempt to prevent the compiler
+/// from knowing anything about the value of the returned `u8`, other
+/// than its type.
 ///
-/// Our goal is to prevent the compiler from inferring that `Choice`
-/// (which should only ever have a value of 0 or 1) as an `i1`/boolean
-/// instead of an `i8`.
+/// Uses inline asm when available, otherwise it's a no-op.
 #[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
-pub fn noop(input: u8) -> u8 {
+fn black_box(input: u8) -> u8 {
     debug_assert!( input == 0u8 || input == 1u8 );
+
     // Pretend to access a register containing the input.  We "volatile" here
     // because some optimisers treat assembly templates without output operands
     // as "volatile" while others do not.
@@ -96,8 +97,11 @@ pub fn noop(input: u8) -> u8 {
 }
 #[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
 #[inline(never)]
-pub fn noop(input: u8) -> u8 {
+fn black_box(input: u8) -> u8 {
     debug_assert!( input == 0u8 || input == 1u8 );
+    // We don't have access to inline assembly or test::black_box or ...
+    //
+    // Bailing out, hopefully the compiler doesn't use the fact that `input` is 0 or 1.
     input
 }
 
@@ -106,7 +110,7 @@ impl From<u8> for Choice {
     fn from(input: u8) -> Choice {
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
-        Choice(noop(input))
+        Choice(black_box(input))
     }
 }
 
