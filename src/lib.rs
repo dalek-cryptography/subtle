@@ -36,11 +36,21 @@ use core::ops::Neg;
 /// `Choice` passes the value through an optimization barrier, as a
 /// best-effort attempt to prevent the compiler from inferring that the
 /// `Choice` value is a boolean.
+///
+/// The `Choice` struct implements operators for AND, OR, XOR, and
+/// NOT, to allow combining `Choice` values.
+/// These operations do not short-circuit.
 #[derive(Copy, Clone)]
 pub struct Choice(u8);
 
 impl Choice {
     /// Unwrap the `Choice` wrapper to reveal the underlying `u8`.
+    ///
+    /// # Note
+    ///
+    /// This function only exists as an escape hatch for the rare case
+    /// where it's not possible to use one of the `subtle`-provided
+    /// trait impls.
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
