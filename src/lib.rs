@@ -18,6 +18,11 @@
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(feature = "nightly", feature(asm))]
 
+#![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
+
+//! Note that docs will only build on nightly Rust until
+//! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
+
 #[cfg(feature = "std")]
 extern crate core;
 
