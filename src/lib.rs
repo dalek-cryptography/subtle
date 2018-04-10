@@ -38,11 +38,16 @@ use core::ops::Neg;
 /// With the `nightly` feature enabled, the conversion from `u8` to
 /// `Choice` passes the value through an optimization barrier, as a
 /// best-effort attempt to prevent the compiler from inferring that the
-/// `Choice` value is a boolean.
+/// `Choice` value is a boolean.  This strategy is based on Tim
+/// Maclean's [work on `rust-timing-shield`][rust-timing-shield],
+/// which attempts to provide a more comprehensive approach for
+/// preventing software side-channels in Rust code.
 ///
 /// The `Choice` struct implements operators for AND, OR, XOR, and
 /// NOT, to allow combining `Choice` values.
 /// These operations do not short-circuit.
+///
+/// [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 #[derive(Copy, Clone)]
 pub struct Choice(u8);
 
