@@ -1,15 +1,26 @@
-# subtle  [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://docs.rs/subtle/badge.svg)](https://docs.rs/subtle) [![](https://travis-ci.org/dalek-cryptography/subtle.svg?branch=master)](https://travis-ci.org/dalek-cryptography/subtle)
+# subtle [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://img.shields.io/badge/dynamic/json.svg?label=docs&uri=https%3A%2F%2Fcrates.io%2Fapi%2Fv1%2Fcrates%2Fsubtle%2Fversions&query=%24.versions%5B0%5D.num&colorB=4F74A6)](https://doc.dalek.rs/subtle) [![](https://travis-ci.org/dalek-cryptography/subtle.svg?branch=master)](https://travis-ci.org/dalek-cryptography/subtle)
 
 **Pure-Rust traits and utilities for constant-time cryptographic implementations.**
 
-This crate represents a "best-effort" attempt, since side-channels
+This crate represents a “best-effort” attempt, since side-channels
 are ultimately a property of a deployed cryptographic system
 including the hardware it runs on, not just of software.
 
-It consists of a `Choice` type, a wrapper around a `u8` that holds a
-`0` or `1`, and a collection of traits using `Choice` instead of
-`bool`.  Implementations of these traits are provided for primitive
-types.
+It consists of a `Choice` type, and a collection of traits using `Choice`
+instead of `bool` which are intended to execute in constant-time.  The `Choice`
+type is a wrapper around a `u8` that holds a `0` or `1`.
+
+The traits are implemented using bitwise operations, and should execute in
+constant time provided that a) the bitwise operations are constant-time and b)
+the operations are not optimized into a branch.
+
+To prevent this, when using the `nightly` feature (recommended), the crate
+attempts to hide the value of a `Choice`'s inner `u8` from the optimizer, by
+passing it through an inline assembly block.  For more information, see the
+_About_ section below.
+
+When not using the `nightly` feature, there is no protection against b).  This
+is unfortunate, but is no worse than C code.
 
 ```toml
 [dependencies.subtle]
@@ -20,32 +31,33 @@ features = ["nightly"]
 ## Features
 
 * The `nightly` feature enables `u128`/`i128` support and the use of
-the `test::black_box` optimization barrier to protect the `Choice`
-type.
+an optimization barrier to protect the `Choice` type.
+_Using the `nightly` feature is recommended for security_.
 
 * The `generic-impls` feature (enabled by default) provides generic
 impls of some traits.  It can be disabled to allow specialized impls
-without impl conflicts.
+without violating the orphan rules.
 
 ## Documentation
 
-Documentation is available [here](https://docs.rs/subtle).
+Documentation is available [here](docs).
 
 ## About
 
-Significant portions of this code were based upon Golang's "crypto/subtle"
-module, and this library aims to be that library's Rust equivalent.
+This library aims to be the Rust equivalent of Go’s `crypto/subtle` module.
+
+The optimization barrier in `impl From<u8> for Choice` was based on Tim
+Maclean's [work on `rust-timing-shield`][rust-timing-shield], which attempts to
+provide a more comprehensive approach for preventing software side-channels in
+Rust code.
 
 ## Warning
 
-This code has **not** yet received sufficient peer review by other qualified
-cryptographers to be considered in any way, shape, or form, safe.  Further, this
-library does **not** provide much in the way of assurance against deliberate
-misuse.  Instead, it is a low-level library, mostly of bit-flipping tricks,
-intended for other cryptographers who would like to implement their own
-constant-time libraries.  (For an example usage of this library, please see
-[curve25519-dalek](https://github.com/dalek-cryptography/curve25519-dalek) and
-[ed25519-dalek](https://github.com/dalek-cryptography/ed25519-dalek).)
+This code is a low-level library, intended for specific use-cases implementing
+cryptographic protocols.  It represents a best-effort attempt to protect
+against some software side-channels.
 
 **USE AT YOUR OWN RISK**
 
+[docs]: https://doc.dalek.rs/subtle
+[rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
