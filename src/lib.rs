@@ -10,11 +10,7 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(feature = "nightly", feature(i128_type))]
-#![cfg_attr(feature = "nightly", feature(test))]
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(feature = "nightly", feature(asm))]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
 
@@ -530,6 +526,6 @@ mod test {
         generate_integer_equal_tests!(u8, u16, u32, u64);
         generate_integer_equal_tests!(i8, i16, i32, i64);
         #[cfg(feature = "nightly")]
-        generate_integer_equal_tests!(i128 u128);
+        generate_integer_equal_tests!(i128, u128);
     }
 }
