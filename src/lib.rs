@@ -10,13 +10,14 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![cfg_attr(not(feature = "std"), no_std)]
-
-#![cfg_attr(feature = "nightly", feature(i128_type))]
-#![cfg_attr(feature = "nightly", feature(test))]
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
+#![cfg_attr(feature = "nightly", feature(asm))]
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(feature = "nightly", feature(asm))]
+#![cfg_attr(feature = "nightly", deny(missing_docs))]
+#![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
+
+//! Note that docs will only build on nightly Rust until
+//! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
 #[cfg(feature = "std")]
 extern crate core;
@@ -35,12 +36,27 @@ use core::ops::Neg;
 /// With the `nightly` feature enabled, the conversion from `u8` to
 /// `Choice` passes the value through an optimization barrier, as a
 /// best-effort attempt to prevent the compiler from inferring that the
-/// `Choice` value is a boolean.
+/// `Choice` value is a boolean.  This strategy is based on Tim
+/// Maclean's [work on `rust-timing-shield`][rust-timing-shield],
+/// which attempts to provide a more comprehensive approach for
+/// preventing software side-channels in Rust code.
+///
+/// The `Choice` struct implements operators for AND, OR, XOR, and
+/// NOT, to allow combining `Choice` values.
+/// These operations do not short-circuit.
+///
+/// [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 #[derive(Copy, Clone)]
 pub struct Choice(u8);
 
 impl Choice {
     /// Unwrap the `Choice` wrapper to reveal the underlying `u8`.
+    ///
+    /// # Note
+    ///
+    /// This function only exists as an escape hatch for the rare case
+    /// where it's not possible to use one of the `subtle`-provided
+    /// trait impls.
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
@@ -79,14 +95,15 @@ impl Not for Choice {
     }
 }
 
-/// No-Op(timisations, Please)
+/// This function is a best-effort attempt to prevent the compiler
+/// from knowing anything about the value of the returned `u8`, other
+/// than its type.
 ///
-/// Our goal is to prevent the compiler from inferring that `Choice`
-/// (which should only ever have a value of 0 or 1) as an `i1`/boolean
-/// instead of an `i8`.
+/// Uses inline asm when available, otherwise it's a no-op.
 #[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
-pub fn noop(input: u8) -> u8 {
-    debug_assert!( input == 0u8 || input == 1u8 );
+fn black_box(input: u8) -> u8 {
+    debug_assert!(input == 0u8 || input == 1u8);
+
     // Pretend to access a register containing the input.  We "volatile" here
     // because some optimisers treat assembly templates without output operands
     // as "volatile" while others do not.
@@ -96,8 +113,11 @@ pub fn noop(input: u8) -> u8 {
 }
 #[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
 #[inline(never)]
-pub fn noop(input: u8) -> u8 {
-    debug_assert!( input == 0u8 || input == 1u8 );
+fn black_box(input: u8) -> u8 {
+    debug_assert!(input == 0u8 || input == 1u8);
+    // We don't have access to inline assembly or test::black_box or ...
+    //
+    // Bailing out, hopefully the compiler doesn't use the fact that `input` is 0 or 1.
     input
 }
 
@@ -106,7 +126,7 @@ impl From<u8> for Choice {
     fn from(input: u8) -> Choice {
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
-        Choice(noop(input))
+        Choice(black_box(input))
     }
 }
 
@@ -164,7 +184,9 @@ impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
 
         // Short-circuit on the *lengths* of the slices, not their
         // contents.
-        if len != _rhs.len() { return Choice::from(0); }
+        if len != _rhs.len() {
+            return Choice::from(0);
+        }
 
         // This loop shouldn't be shortcircuitable, since the compiler
         // shouldn't be able to reason about the value of the `u8`
@@ -182,7 +204,7 @@ impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
 /// unsigned and signed types `$t_u` and `$t_i` respectively, generate
 /// an `ConstantTimeEq` implementation.
 macro_rules! generate_integer_equal {
-    ($t_u:ty, $t_i:ty, $bit_width:expr) => (
+    ($t_u:ty, $t_i:ty, $bit_width:expr) => {
         impl ConstantTimeEq for $t_u {
             #[inline]
             fn ct_eq(&self, other: &$t_u) -> Choice {
@@ -213,14 +235,13 @@ macro_rules! generate_integer_equal {
                 (*self as $t_u).ct_eq(&(*other as $t_u))
             }
         }
-    )
+    };
 }
 
-generate_integer_equal!(  u8,   i8,   8);
-generate_integer_equal!( u16,  i16,  16);
-generate_integer_equal!( u32,  i32,  32);
-generate_integer_equal!( u64,  i64,  64);
-#[cfg(feature = "nightly")]
+generate_integer_equal!(u8, i8, 8);
+generate_integer_equal!(u16, i16, 16);
+generate_integer_equal!(u32, i32, 32);
+generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
 
 /// Select one of two inputs according to a `Choice` in constant time.
@@ -251,16 +272,36 @@ pub trait ConditionallySelectable {
 }
 
 macro_rules! to_signed_int {
-    (u8) => {i8};
-    (u16) => {i16};
-    (u32) => {i32};
-    (u64) => {i64};
-    (u128) => {i128};
-    (i8) => {i8};
-    (i16) => {i16};
-    (i32) => {i32};
-    (i64) => {i64};
-    (i128) => {i128};
+    (u8) => {
+        i8
+    };
+    (u16) => {
+        i16
+    };
+    (u32) => {
+        i32
+    };
+    (u64) => {
+        i64
+    };
+    (u128) => {
+        i128
+    };
+    (i8) => {
+        i8
+    };
+    (i16) => {
+        i16
+    };
+    (i32) => {
+        i32
+    };
+    (i64) => {
+        i64
+    };
+    (i128) => {
+        i128
+    };
 }
 
 macro_rules! generate_integer_conditional_select {
@@ -281,7 +322,6 @@ generate_integer_conditional_select!(  u8   i8);
 generate_integer_conditional_select!( u16  i16);
 generate_integer_conditional_select!( u32  i32);
 generate_integer_conditional_select!( u64  i64);
-#[cfg(feature = "nightly")]
 generate_integer_conditional_select!(u128 i128);
 
 /// A type which can be conditionally negated in constant time.
@@ -303,7 +343,9 @@ pub trait ConditionallyNegatable {
 
 #[cfg(feature = "generic-impls")]
 impl<T> ConditionallyNegatable for T
-    where T: ConditionallyAssignable, for<'a> &'a T: Neg<Output = T>
+where
+    T: ConditionallyAssignable,
+    for<'a> &'a T: Neg<Output = T>,
 {
     #[inline]
     fn conditional_negate(&mut self, choice: Choice) {
@@ -345,7 +387,8 @@ pub trait ConditionallyAssignable {
 
 #[cfg(feature = "generic-impls")]
 impl<T> ConditionallyAssignable for T
-    where T: Copy + ConditionallySelectable
+where
+    T: Copy + ConditionallySelectable,
 {
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice) {
@@ -370,7 +413,8 @@ pub trait ConditionallySwappable {
 
 #[cfg(feature = "generic-impls")]
 impl<T> ConditionallySwappable for T
-    where T: ConditionallyAssignable + Copy
+where
+    T: ConditionallyAssignable + Copy,
 {
     #[inline]
     fn conditional_swap(&mut self, other: &mut T, choice: Choice) {
@@ -395,8 +439,8 @@ mod test {
 
     #[test]
     fn slices_equal() {
-        let a: [u8; 8] = [1,2,3,4,5,6,7,8];
-        let b: [u8; 8] = [1,2,3,4,4,3,2,1];
+        let a: [u8; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
+        let b: [u8; 8] = [1, 2, 3, 4, 4, 3, 2, 1];
 
         let a_eq_a = (&a).ct_eq(&a);
         let a_eq_b = (&a).ct_eq(&b);
@@ -414,7 +458,7 @@ mod test {
     #[cfg(feature = "generic-impls")]
     fn conditional_assign_i32() {
         let mut a: i32 = 5;
-        let     b: i32 = 13;
+        let b: i32 = 13;
 
         a.conditional_assign(&b, 0.into());
         assert_eq!(a, 5);
@@ -426,7 +470,7 @@ mod test {
     #[cfg(feature = "generic-impls")]
     fn conditional_assign_i64() {
         let mut c: i64 = 2343249123;
-        let     d: i64 = 8723884895;
+        let d: i64 = 8723884895;
 
         c.conditional_assign(&d, 0.into());
         assert_eq!(c, 2343249123);
@@ -446,11 +490,8 @@ mod test {
 
     #[test]
     fn integer_conditional_select() {
-        generate_integer_conditional_select_tests!(u8 u16 u32 u64);
-        generate_integer_conditional_select_tests!(i8 i16 i32 i64);
-
-        #[cfg(feature = "nightly")]
-        generate_integer_conditional_select_tests!(u128 i128);
+        generate_integer_conditional_select_tests!(u8 u16 u32 u64 u128);
+        generate_integer_conditional_select_tests!(i8 i16 i32 i64 i128);
     }
 
     #[test]
@@ -476,10 +517,7 @@ mod test {
 
     #[test]
     fn integer_equal() {
-        generate_integer_equal_tests!(u8, u16, u32, u64);
-        generate_integer_equal_tests!(i8, i16, i32, i64);
-        #[cfg(feature = "nightly")]
-        generate_integer_equal_tests!(i128 u128);
+        generate_integer_equal_tests!(u8, u16, u32, u64, u128);
+        generate_integer_equal_tests!(i8, i16, i32, i64, i128);
     }
 }
-
