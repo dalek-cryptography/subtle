@@ -30,7 +30,7 @@ features = ["nightly"]
 
 ## Features
 
-* The `nightly` feature enables `u128`/`i128` support and the use of
+* The `nightly` feature enables the use of
 an optimization barrier to protect the `Choice` type.
 _Using the `nightly` feature is recommended for security_.
 

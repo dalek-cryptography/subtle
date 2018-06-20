@@ -10,12 +10,10 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(feature = "nightly", feature(i128_type))]
-#![cfg_attr(feature = "nightly", feature(test))]
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
+#![cfg_attr(feature = "nightly", feature(asm))]
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(feature = "nightly", feature(asm))]
+#![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
 
 //! Note that docs will only build on nightly Rust until
@@ -244,7 +242,6 @@ generate_integer_equal!(u8, i8, 8);
 generate_integer_equal!(u16, i16, 16);
 generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
-#[cfg(feature = "nightly")]
 generate_integer_equal!(u128, i128, 128);
 
 /// A type which can be conditionally assigned in constant time.
@@ -323,7 +320,6 @@ generate_integer_conditional_assign!(  u8   i8);
 generate_integer_conditional_assign!( u16  i16);
 generate_integer_conditional_assign!( u32  i32);
 generate_integer_conditional_assign!( u64  i64);
-#[cfg(feature = "nightly")]
 generate_integer_conditional_assign!(u128 i128);
 
 /// A type which can be conditionally negated in constant time.
@@ -495,11 +491,8 @@ mod test {
 
     #[test]
     fn integer_conditional_assign() {
-        generate_integer_conditional_assign_tests!(u8 u16 u32 u64);
-        generate_integer_conditional_assign_tests!(i8 i16 i32 i64);
-
-        #[cfg(feature = "nightly")]
-        generate_integer_conditional_assign_tests!(u128 i128);
+        generate_integer_conditional_assign_tests!(u8 u16 u32 u64 u128);
+        generate_integer_conditional_assign_tests!(i8 i16 i32 i64 i128);
     }
 
     #[test]
@@ -527,9 +520,7 @@ mod test {
 
     #[test]
     fn integer_equal() {
-        generate_integer_equal_tests!(u8, u16, u32, u64);
-        generate_integer_equal_tests!(i8, i16, i32, i64);
-        #[cfg(feature = "nightly")]
-        generate_integer_equal_tests!(i128 u128);
+        generate_integer_equal_tests!(u8, u16, u32, u64, u128);
+        generate_integer_equal_tests!(i8, i16, i32, i64, i128);
     }
 }
