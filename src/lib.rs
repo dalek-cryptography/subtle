@@ -46,7 +46,7 @@ use core::ops::Neg;
 /// These operations do not short-circuit.
 ///
 /// [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Choice(u8);
 
 impl Choice {
