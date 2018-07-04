@@ -24,7 +24,7 @@ is unfortunate, but is no worse than C code.
 
 ```toml
 [dependencies.subtle]
-version = "^0.6"
+version = "^0.7"
 features = ["nightly"]
 ```
 
