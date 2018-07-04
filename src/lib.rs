@@ -9,7 +9,7 @@
 // - Isis Agora Lovecruft <isis@patternsinthevoid.net>
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![cfg_attr(feature = "nightly", feature(asm))]
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
@@ -20,7 +20,7 @@
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
 #[cfg(feature = "std")]
-extern crate core;
+extern crate std;
 
 use core::ops::{BitAnd, BitOr, BitXor, Not};
 
@@ -46,7 +46,7 @@ use core::ops::Neg;
 /// These operations do not short-circuit.
 ///
 /// [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Choice(u8);
 
 impl Choice {
@@ -244,29 +244,31 @@ generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
 
-/// A type which can be conditionally assigned in constant time.
-pub trait ConditionallyAssignable {
-    /// Conditionally assign `other` to `self`, according to `choice`.
+/// Select one of two inputs according to a `Choice` in constant time.
+///
+/// # Examples
+///
+/// ```
+/// # use subtle;
+/// use subtle::ConditionallySelectable;
+/// use subtle::Choice;
+/// let a: i32 = 5;
+/// let b: i32 = 13;
+///
+/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(0)), a);
+/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(1)), b);
+/// ```
+pub trait ConditionallySelectable {
+    /// Select `a` or `b` according to `choice`.
+    ///
+    /// # Returns
+    ///
+    /// * `a` if `choice == Choice(0)`;
+    /// * `b` if `choice == Choice(1)`.
     ///
     /// This function should execute in constant time.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use subtle;
-    /// # use subtle::ConditionallyAssignable;
-    /// #
-    /// let mut x: u8 = 13;
-    /// let y:     u8 = 42;
-    ///
-    /// x.conditional_assign(&y, 0.into());
-    /// assert_eq!(x, 13);
-    /// x.conditional_assign(&y, 1.into());
-    /// assert_eq!(x, 42);
-    /// ```
-    ///
     #[inline]
-    fn conditional_assign(&mut self, other: &Self, choice: Choice);
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 }
 
 macro_rules! to_signed_int {
@@ -302,25 +304,25 @@ macro_rules! to_signed_int {
     };
 }
 
-macro_rules! generate_integer_conditional_assign {
+macro_rules! generate_integer_conditional_select {
     ($($t:tt)*) => ($(
-        impl ConditionallyAssignable for $t {
+        impl ConditionallySelectable for $t {
             #[inline]
-            fn conditional_assign(&mut self, other: &$t, choice: Choice) {
+            fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
                 // if choice = 0, mask = (-0) = 0000...0000
                 // if choice = 1, mask = (-1) = 1111...1111
                 let mask = -(choice.unwrap_u8() as to_signed_int!($t)) as $t;
-                *self = *self ^ ((mask) & (*self ^ *other));
+                a ^ ((mask) & (a ^ b))
             }
          }
     )*)
 }
 
-generate_integer_conditional_assign!(  u8   i8);
-generate_integer_conditional_assign!( u16  i16);
-generate_integer_conditional_assign!( u32  i32);
-generate_integer_conditional_assign!( u64  i64);
-generate_integer_conditional_assign!(u128 i128);
+generate_integer_conditional_select!(  u8   i8);
+generate_integer_conditional_select!( u16  i16);
+generate_integer_conditional_select!( u32  i32);
+generate_integer_conditional_select!( u64  i64);
+generate_integer_conditional_select!(u128 i128);
 
 /// A type which can be conditionally negated in constant time.
 ///
@@ -353,49 +355,44 @@ where
     }
 }
 
-/// Select one of two inputs according to a `Choice` in constant time.
-///
-/// # Examples
-///
-/// ```
-/// # extern crate subtle;
-/// use subtle::ConditionallySelectable;
-/// use subtle::Choice;
-/// # #[cfg(features = "generic-impls")]
-/// # fn do_test() {
-/// let a: i32 = 5;
-/// let b: i32 = 13;
-///
-/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(0)), a);
-/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(1)), b);
-/// # }
-/// # #[cfg(not(features = "generic-impls"))]
-/// # fn main () { }
-/// ```
-pub trait ConditionallySelectable {
-    /// Select `a` or `b` according to `choice`.
-    ///
-    /// # Returns
-    ///
-    /// * `a` if `choice == Choice(0)`;
-    /// * `b` if `choice == Choice(1)`.
+/// A type which can be conditionally assigned in constant time.
+pub trait ConditionallyAssignable {
+    /// Conditionally assign `other` to `self`, according to `choice`.
     ///
     /// This function should execute in constant time.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallyAssignable;
+    /// #
+    /// # #[cfg(features = "generic-impls")]
+    /// # fn do_test() {
+    /// let mut x: u8 = 13;
+    /// let y:     u8 = 42;
+    ///
+    /// x.conditional_assign(&y, 0.into());
+    /// assert_eq!(x, 13);
+    /// x.conditional_assign(&y, 1.into());
+    /// assert_eq!(x, 42);
+    /// # }
+    /// # #[cfg(not(features = "generic-impls"))]
+    /// # fn main () { }
+    /// ```
+    ///
     #[inline]
-    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
+    fn conditional_assign(&mut self, other: &Self, choice: Choice);
 }
 
 #[cfg(feature = "generic-impls")]
-impl<T> ConditionallySelectable for T
+impl<T> ConditionallyAssignable for T
 where
-    T: Copy + ConditionallyAssignable,
+    T: Copy + ConditionallySelectable,
 {
     #[inline]
-    fn conditional_select(a: &T, b: &T, choice: Choice) -> T {
-        // XXX this generic should be the other way around
-        let mut tmp = *a;
-        tmp.conditional_assign(b, choice);
-        tmp
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        *self = T::conditional_select(self, other, choice);
     }
 }
 
@@ -459,51 +456,51 @@ mod test {
 
     #[test]
     #[cfg(feature = "generic-impls")]
-    fn conditional_select_i32() {
-        let a: i32 = 5;
+    fn conditional_assign_i32() {
+        let mut a: i32 = 5;
         let b: i32 = 13;
 
-        assert_eq!(i32::conditional_select(&a, &b, 0.into()), a);
-        assert_eq!(i32::conditional_select(&a, &b, 1.into()), b);
+        a.conditional_assign(&b, 0.into());
+        assert_eq!(a, 5);
+        a.conditional_assign(&b, 1.into());
+        assert_eq!(a, 13);
     }
 
     #[test]
     #[cfg(feature = "generic-impls")]
-    fn conditional_select_i64() {
-        let c: i64 = 2343249123;
+    fn conditional_assign_i64() {
+        let mut c: i64 = 2343249123;
         let d: i64 = 8723884895;
 
-        assert_eq!(i64::conditional_select(&c, &d, 0.into()), c);
-        assert_eq!(i64::conditional_select(&c, &d, 1.into()), d);
+        c.conditional_assign(&d, 0.into());
+        assert_eq!(c, 2343249123);
+        c.conditional_assign(&d, 1.into());
+        assert_eq!(c, 8723884895);
     }
 
-    macro_rules! generate_integer_conditional_assign_tests {
+    macro_rules! generate_integer_conditional_select_tests {
         ($($t:ty)*) => ($(
-            let mut x: $t = 0;  // all 0 bits
-            let     y: $t = !0; // all 1 bits
+            let x: $t = 0;  // all 0 bits
+            let y: $t = !0; // all 1 bits
 
-            x.conditional_assign(&y, 0.into());
-            assert_eq!(x, 0);
-            x.conditional_assign(&y, 1.into());
-            assert_eq!(x, y);
+            assert_eq!(<$t>::conditional_select(&x, &y, 0.into()), 0);
+            assert_eq!(<$t>::conditional_select(&x, &y, 1.into()), y);
         )*)
     }
 
     #[test]
-    fn integer_conditional_assign() {
-        generate_integer_conditional_assign_tests!(u8 u16 u32 u64 u128);
-        generate_integer_conditional_assign_tests!(i8 i16 i32 i64 i128);
+    fn integer_conditional_select() {
+        generate_integer_conditional_select_tests!(u8 u16 u32 u64 u128);
+        generate_integer_conditional_select_tests!(i8 i16 i32 i64 i128);
     }
 
     #[test]
-    fn custom_conditional_assign_i16() {
-        let mut x: i16 = 257;
+    fn custom_conditional_select_i16() {
+        let x: i16 = 257;
         let y: i16 = 514;
 
-        x.conditional_assign(&y, 0.into());
-        assert_eq!(x, 257);
-        x.conditional_assign(&y, 1.into());
-        assert_eq!(x, 514);
+        assert_eq!(i16::conditional_select(&x, &y, 0.into()), 257);
+        assert_eq!(i16::conditional_select(&x, &y, 1.into()), 514);
     }
 
     macro_rules! generate_integer_equal_tests {
