@@ -358,10 +358,6 @@ generate_tuple_conditional_select! {
     (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9)
     (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10)
     (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10 11 T11)
-    (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10 11 T11 12 T12)
-    (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10 11 T11 12 T12 13 T13)
-    (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10 11 T11 12 T12 13 T13 14 T14)
-    (0 T0 1 T1 2 T2 3 T3 4 T4 5 T5 6 T6 7 T7 8 T8 9 T9 10 T10 11 T11 12 T12 13 T13 14 T14 15 T15)
 }
 
 
@@ -437,6 +433,49 @@ where
     }
 }
 
+impl<T> ConditionallyAssignable for [T]
+where
+    T: ConditionallyAssignable,
+{
+    /// Conditionally assign the contents of `other` to `self` if `choice == 1`;
+    /// otherwise, reassign the contents of `self` to `self`.
+    ///
+    /// # Note
+    ///
+    /// In `debug` mode, this function panics if the lengths of the input slices
+    /// are different. In `release` mode, it conditionally assigns the contents of
+    /// the shorter slice to the equivalent locations in the longer slice.
+    /// It does this in time independent of the slice contents.
+    ///
+    /// Since arrays coerce to slices, this function works with fixed-size arrays:
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallyAssignable;
+    /// #
+    /// # #[cfg(feature = "generic-impls")]
+    /// # fn main() {
+    ///
+    /// let mut a: [u8; 8] = [0,1,2,3,4,5,6,7];
+    /// let b: [u8; 8] = [0,1,2,3,0,1,2,3];
+    ///
+    /// a.conditional_assign(&b, 0.into());
+    /// assert_eq!(a, [0,1,2,3,4,5,6,7]);
+    /// a.conditional_assign(&b, 1.into());
+    /// assert_eq!(a, b);
+    /// # }
+    /// # #[cfg(not(feature = "generic-impls"))]
+    /// # fn main () {}
+    /// ```
+    #[inline]
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        debug_assert_eq!(self.len(), other.len());
+        for (a, b) in self.iter_mut().zip(other.iter()) {
+            a.conditional_assign(b, choice);
+        }
+    }
+}
+
 /// A type which is conditionally swappable in constant time.
 pub trait ConditionallySwappable {
     /// Conditionally swap `self` and `other` if `choice == 1`; otherwise,
@@ -462,6 +501,51 @@ where
         let temp: T = *self;
         self.conditional_assign(&other, choice);
         other.conditional_assign(&temp, choice);
+    }
+}
+
+impl<T> ConditionallySwappable for [T]
+where
+    T: ConditionallySwappable,
+{
+    /// Conditionally swap the contents of `self` and `other` if `choice == 1`;
+    /// otherwise, reassign both unto themselves.
+    ///
+    /// # Note
+    ///
+    /// In `debug` mode, this function panics if the lengths of the input slices
+    /// are different. In `release` mode, it conditionally swaps the contents of
+    /// the shorter slice into the equivalent locations in the longer slice.
+    /// It does this in time independent of the slice contents.
+    ///
+    /// Since arrays coerce to slices, this function works with fixed-size arrays:
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallySwappable;
+    /// #
+    /// # #[cfg(feature = "generic-impls")]
+    /// # fn main() {
+    /// let mut a: [u8; 8] = [0,1,2,3,4,5,6,7];
+    /// let mut b: [u8; 8] = [0,1,2,3,0,1,2,3];
+    ///
+    /// a.conditional_swap(&mut b, 0.into());
+    /// assert_eq!(a, [0,1,2,3,4,5,6,7]);
+    /// assert_eq!(b, [0,1,2,3,0,1,2,3]);
+    ///
+    /// a.conditional_swap(&mut b, 1.into());
+    /// assert_eq!(a, [0,1,2,3,0,1,2,3]);
+    /// assert_eq!(b, [0,1,2,3,4,5,6,7]);
+    /// # }
+    /// # #[cfg(not(feature = "generic-impls"))]
+    /// # fn main () { }
+    /// ```
+    #[inline]
+    fn conditional_swap(&mut self, other: &mut Self, choice: Choice) {
+        debug_assert_eq!(self.len(), other.len());
+        for (a, b) in self.iter_mut().zip(other.iter_mut()) {
+            T::conditional_swap(a, b, choice);
+        }
     }
 }
 
@@ -563,13 +647,8 @@ mod test {
             (0  0  0  0  0  0  0  0  0  0 )
             (0  0  0  0  0  0  0  0  0  0  0 )
             (0  0  0  0  0  0  0  0  0  0  0  0 )
-            // (0  0  0  0  0  0  0  0  0  0  0  0  0 )
-            // (0  0  0  0  0  0  0  0  0  0  0  0  0  0 )
-            // (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 )
-            // (0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 )
         }
     }
-
 
     #[test]
     fn custom_conditional_select_i16() {
