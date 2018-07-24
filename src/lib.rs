@@ -404,8 +404,8 @@ pub trait ConditionallyAssignable {
     /// # extern crate subtle;
     /// use subtle::ConditionallyAssignable;
     /// #
-    /// # #[cfg(features = "generic-impls")]
-    /// # fn do_test() {
+    /// # #[cfg(feature = "generic-impls")]
+    /// # fn main() {
     /// let mut x: u8 = 13;
     /// let y:     u8 = 42;
     ///
@@ -414,7 +414,7 @@ pub trait ConditionallyAssignable {
     /// x.conditional_assign(&y, 1.into());
     /// assert_eq!(x, 42);
     /// # }
-    /// # #[cfg(not(features = "generic-impls"))]
+    /// # #[cfg(not(feature = "generic-impls"))]
     /// # fn main () { }
     /// ```
     ///
