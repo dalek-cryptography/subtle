@@ -1,12 +1,11 @@
 // -*- mode: rust; -*-
 //
-// To the extent possible under law, the authors have waived all copyright and
-// related or neighboring rights to subtle, using the Creative Commons "CC0"
-// public domain dedication.  See
-// <http://creativecommons.org/publicdomain/zero/.0/> for full details.
+// This file is part of x25519-dalek.
+// Copyright (c) 2016-2018 isis lovecruft, Henry de Valence
+// See LICENSE for licensing information.
 //
 // Authors:
-// - Isis Agora Lovecruft <isis@patternsinthevoid.net>
+// - isis agora lovecruft <isis@patternsinthevoid.net>
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
