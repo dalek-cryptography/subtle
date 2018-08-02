@@ -1,8 +1,12 @@
 [package]
 name = "merlin"
 version = "0.1.0"
-authors = ["Henry de Valence <hdevalence@hdevalence.ca>"]
+authors = ["Henry de Valence <hdevalence@hdevalence.ca>",
+           "isis agora lovecruft <isis@patternsinthevoid.net>"]
 
 [dependencies]
 keccak = "0.1.0"
 byteorder = "1.2.4"
+
+[dev-dependencies]
+strobe-rs = "0.3"
