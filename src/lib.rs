@@ -66,15 +66,8 @@ mod tests {
     impl TestTranscript {
         /// Strobe init; meta-AD(label)
         pub fn new(label: &[u8]) -> TestTranscript {
-            let mut data: Vec<u8> = Vec::with_capacity(label.len());
-            data.extend_from_slice(label);
-
             // XXX the new() method is doing an AD[label]() operation
-            let mut strobe: Strobe = Strobe::new(data.clone(), SecParam::B128);
-
-            // XXX what the ever loving fuck is this API
-            let flags: OpFlags = OpFlags::A | OpFlags::M;
-            let _ = strobe.ad(data.clone(), Some((flags, data.clone())), false);
+            let mut strobe: Strobe = Strobe::new(label.to_vec(), SecParam::B128);
 
             TestTranscript { state: strobe }
         }
