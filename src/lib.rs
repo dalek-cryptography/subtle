@@ -96,16 +96,17 @@ mod tests {
             self.state.ad(msg, None, false);
         }
 
-        /// Strobe op: meta-PRF(label || len(challenge_bytes)); PRF into challenge_bytes
+        /// Strobe op: meta-AD(label || len(challenge_bytes)); PRF into challenge_bytes
         pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
             let mut data: Vec<u8> = Vec::with_capacity(label.len() + 4);
             data.extend_from_slice(label);
             data.extend_from_slice(&encode_usize(challenge_bytes.len()));
 
-            let flags: OpFlags = OpFlags::I | OpFlags::A | OpFlags::C | OpFlags::M;
+            let flags: OpFlags = OpFlags::A | OpFlags::M;
             let _ = self
                 .state
-                .prf(challenge_bytes.len(), Some((flags, data)), false);
+                .ad(data.clone(), Some((flags, data.clone())), false);
+
             let bytes: Vec<u8> = self.state.prf(challenge_bytes.len(), None, false);
 
             challenge_bytes.copy_from_slice(&bytes[..]);
