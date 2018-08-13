@@ -70,7 +70,7 @@ mod tests {
             data.extend_from_slice(label);
 
             // XXX the new() method is doing an AD[label]() operation
-            let mut strobe: Strobe = Strobe::new(data.clone(), SecParam::B256);
+            let mut strobe: Strobe = Strobe::new(data.clone(), SecParam::B128);
 
             // XXX what the ever loving fuck is this API
             let flags: OpFlags = OpFlags::A | OpFlags::M;
