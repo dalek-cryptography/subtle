@@ -115,18 +115,18 @@ mod tests {
 
     #[test]
     fn commit_and_challenge_should_match() {
-        let mut real_transcript: Transcript = Transcript::new(b"test protocol");
-        let mut test_transcript: TestTranscript = TestTranscript::new(b"test protocol");
+        let mut real_transcript = Transcript::new(b"test protocol");
+        let mut test_transcript = TestTranscript::new(b"test protocol");
 
         real_transcript.commit(b"some label", b"some data");
         test_transcript.commit(b"some label", b"some data");
 
-        let mut real_challenge: [u8; 32] = [0u8; 32];
-        let mut test_challenge: [u8; 32] = [0u8; 32];
+        let mut real_challenge = [0u8; 32];
+        let mut test_challenge = [0u8; 32];
 
         real_transcript.challenge(b"challenge", &mut real_challenge);
         test_transcript.challenge(b"challenge", &mut test_challenge);
 
-        assert!(real_challenge == test_challenge);
+        assert_eq!(real_challenge, test_challenge);
     }
 }
