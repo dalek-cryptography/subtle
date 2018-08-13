@@ -1,18 +1,16 @@
-
+extern crate byteorder;
 extern crate core;
+extern crate keccak;
 
 #[cfg(test)]
 extern crate strobe_rs;
-
-extern crate byteorder;
-extern crate keccak;
 
 mod strobe;
 
 use strobe::Strobe128;
 
 fn encode_usize(x: usize) -> [u8; 4] {
-    use byteorder::{LittleEndian, ByteOrder};
+    use byteorder::{ByteOrder, LittleEndian};
 
     assert!(x < (u32::max_value() as usize));
 
@@ -30,7 +28,7 @@ impl Transcript {
     /// Initialize a new transcript with the supplied label.
     pub fn new(label: &[u8]) -> Transcript {
         Transcript {
-            strobe: Strobe128::new(label)
+            strobe: Strobe128::new(label),
         }
     }
 
@@ -66,9 +64,7 @@ mod tests {
     }
 
     fn u32_to_4u8s(x: u32) -> [u8; 4] {
-        unsafe {
-            ::core::mem::transmute::<u32, [u8; 4]>(x)
-        }
+        unsafe { ::core::mem::transmute::<u32, [u8; 4]>(x) }
     }
 
     impl TestTranscript {
@@ -84,7 +80,7 @@ mod tests {
             let flags: OpFlags = OpFlags::A | OpFlags::M;
             let _ = strobe.ad(data.clone(), Some((flags, data.clone())), false);
 
-            TestTranscript{ state: strobe }
+            TestTranscript { state: strobe }
         }
 
         /// Strobe op: meta-AD(label || len(message)); AD(message)
@@ -94,7 +90,9 @@ mod tests {
             data.extend_from_slice(&u32_to_4u8s(message.len() as u32));
 
             let flags: OpFlags = OpFlags::A | OpFlags::M;
-            let _ = self.state.ad(data.clone(), Some((flags, data.clone())), false);
+            let _ = self
+                .state
+                .ad(data.clone(), Some((flags, data.clone())), false);
 
             let mut msg: Vec<u8> = Vec::with_capacity(message.len());
             msg.extend_from_slice(message);
@@ -109,7 +107,9 @@ mod tests {
             data.extend_from_slice(&u32_to_4u8s(challenge_bytes.len() as u32));
 
             let flags: OpFlags = OpFlags::I | OpFlags::A | OpFlags::C | OpFlags::M;
-            let _ = self.state.prf(challenge_bytes.len(), Some((flags, data)), false);
+            let _ = self
+                .state
+                .prf(challenge_bytes.len(), Some((flags, data)), false);
             let bytes: Vec<u8> = self.state.prf(challenge_bytes.len(), None, false);
 
             challenge_bytes.copy_from_slice(&bytes[..]);
