@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Henry de Valence <hdevalence@hdevalence.ca>"]
 
 [dependencies]
+keccak = "0.1.0"
+byteorder = "1.2.4"
