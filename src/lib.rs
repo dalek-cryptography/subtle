@@ -63,10 +63,6 @@ mod tests {
         state: Strobe,
     }
 
-    fn u32_to_4u8s(x: u32) -> [u8; 4] {
-        unsafe { ::core::mem::transmute::<u32, [u8; 4]>(x) }
-    }
-
     impl TestTranscript {
         /// Strobe init; meta-AD(label)
         pub fn new(label: &[u8]) -> TestTranscript {
@@ -87,7 +83,7 @@ mod tests {
         pub fn commit(&mut self, label: &[u8], message: &[u8]) {
             let mut data: Vec<u8> = Vec::with_capacity(label.len() + 4);
             data.extend_from_slice(label);
-            data.extend_from_slice(&u32_to_4u8s(message.len() as u32));
+            data.extend_from_slice(&encode_usize(message.len()));
 
             let flags: OpFlags = OpFlags::A | OpFlags::M;
             let _ = self
@@ -104,7 +100,7 @@ mod tests {
         pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
             let mut data: Vec<u8> = Vec::with_capacity(label.len() + 4);
             data.extend_from_slice(label);
-            data.extend_from_slice(&u32_to_4u8s(challenge_bytes.len() as u32));
+            data.extend_from_slice(&encode_usize(challenge_bytes.len()));
 
             let flags: OpFlags = OpFlags::I | OpFlags::A | OpFlags::C | OpFlags::M;
             let _ = self
