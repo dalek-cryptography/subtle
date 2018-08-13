@@ -74,35 +74,28 @@ mod tests {
 
         /// Strobe op: meta-AD(label || len(message)); AD(message)
         pub fn commit(&mut self, label: &[u8], message: &[u8]) {
-            let mut data: Vec<u8> = Vec::with_capacity(label.len() + 4);
-            data.extend_from_slice(label);
-            data.extend_from_slice(&encode_usize(message.len()));
+            // metadata = label || len(message);
+            let metaflags: OpFlags = OpFlags::A | OpFlags::M;
+            let mut metadata: Vec<u8> = Vec::with_capacity(label.len() + 4);
+            metadata.extend_from_slice(label);
+            metadata.extend_from_slice(&encode_usize(message.len()));
 
-            let flags: OpFlags = OpFlags::A | OpFlags::M;
-            let _ = self
-                .state
-                .ad(data.clone(), Some((flags, data.clone())), false);
-
-            let mut msg: Vec<u8> = Vec::with_capacity(message.len());
-            msg.extend_from_slice(message);
-
-            self.state.ad(msg, None, false);
+            self.state
+                .ad(message.to_vec(), Some((metaflags, metadata)), false);
         }
 
         /// Strobe op: meta-AD(label || len(challenge_bytes)); PRF into challenge_bytes
         pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
-            let mut data: Vec<u8> = Vec::with_capacity(label.len() + 4);
-            data.extend_from_slice(label);
-            data.extend_from_slice(&encode_usize(challenge_bytes.len()));
+            let prf_len = challenge_bytes.len();
 
-            let flags: OpFlags = OpFlags::A | OpFlags::M;
-            let _ = self
-                .state
-                .ad(data.clone(), Some((flags, data.clone())), false);
+            // metadata = label || len(challenge_bytes);
+            let metaflags: OpFlags = OpFlags::A | OpFlags::M;
+            let mut metadata: Vec<u8> = Vec::with_capacity(label.len() + 4);
+            metadata.extend_from_slice(label);
+            metadata.extend_from_slice(&encode_usize(prf_len));
 
-            let bytes: Vec<u8> = self.state.prf(challenge_bytes.len(), None, false);
-
-            challenge_bytes.copy_from_slice(&bytes[..]);
+            let bytes = self.state.prf(prf_len, Some((metaflags, metadata)), false);
+            challenge_bytes.copy_from_slice(&bytes);
         }
     }
 
