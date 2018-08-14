@@ -10,3 +10,7 @@ byteorder = "1.2.4"
 
 [dev-dependencies]
 strobe-rs = "0.3"
+
+[features]
+# Used for doc includes
+nightly = []
