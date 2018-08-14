@@ -87,6 +87,7 @@ impl Strobe128 {
     fn squeeze(&mut self, data: &mut [u8], force_f: bool) {
         for byte in data {
             *byte = self.state[self.pos as usize];
+            self.state[self.pos as usize] = 0;
             self.pos += 1;
             if self.pos == STROBE_R {
                 self.run_f();
