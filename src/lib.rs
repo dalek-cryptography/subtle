@@ -99,8 +99,9 @@ mod tests {
         }
     }
 
+    /// Test a simple protocol with one message and one challenge
     #[test]
-    fn commit_and_challenge_should_match() {
+    fn equivalence_simple() {
         let mut real_transcript = Transcript::new(b"test protocol");
         let mut test_transcript = TestTranscript::new(b"test protocol");
 
@@ -114,5 +115,35 @@ mod tests {
         test_transcript.challenge(b"challenge", &mut test_challenge);
 
         assert_eq!(real_challenge, test_challenge);
+    }
+
+    /// Test a complex protocol with multiple messages and challenges,
+    /// with messages long enough to wrap around the sponge state, and
+    /// with multiple rounds of messages and challenges.
+    #[test]
+    fn equivalence_complex() {
+        let mut real_transcript = Transcript::new(b"test protocol");
+        let mut test_transcript = TestTranscript::new(b"test protocol");
+
+        let data = vec![99; 1024];
+
+        real_transcript.commit(b"step1", b"some data");
+        test_transcript.commit(b"step1", b"some data");
+
+        let mut real_challenge = [0u8; 32];
+        let mut test_challenge = [0u8; 32];
+
+        for i in 0..32 {
+            real_transcript.challenge(b"challenge", &mut real_challenge);
+            test_transcript.challenge(b"challenge", &mut test_challenge);
+
+            assert_eq!(real_challenge, test_challenge);
+
+            real_transcript.commit(b"bigdata", &data);
+            test_transcript.commit(b"bigdata", &data);
+
+            real_transcript.commit(b"challengedata", &real_challenge);
+            test_transcript.commit(b"challengedata", &test_challenge);
+        }
     }
 }
