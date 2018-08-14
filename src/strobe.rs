@@ -66,8 +66,9 @@ impl Strobe128 {
         self.state[self.pos as usize] ^= self.pos_begin;
         self.state[(self.pos + 1) as usize] ^= 0x04;
         self.state[(STROBE_R + 1) as usize] ^= 0x80;
-
         keccak::f1600(unsafe { ::std::mem::transmute(&mut self.state) });
+        self.pos = 0;
+        self.pos_begin = 0;
     }
 
     fn absorb(&mut self, data: &[u8], force_f: bool) {
