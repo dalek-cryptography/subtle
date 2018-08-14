@@ -20,6 +20,7 @@ fn encode_usize(x: usize) -> [u8; 4] {
 }
 
 /// Transcript of a public coin argument
+#[derive(Clone)]
 pub struct Transcript {
     strobe: Strobe128,
 }

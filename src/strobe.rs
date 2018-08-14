@@ -17,6 +17,7 @@ const FLAG_K: u8 = 1 << 5;
 /// A Strobe context for the 128-bit security level.
 ///
 /// Only `meta-AD`, `AD`, and `PRF` operations are supported.
+#[derive(Clone)]
 pub struct Strobe128 {
     state: [u8; 200],
     pos: u8,
