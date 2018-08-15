@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Henry de Valence <hdevalence@hdevalence.ca>",
            "isis agora lovecruft <isis@patternsinthevoid.net>"]
 
+[package.metadata.docs.rs]
+# We need nightly to build docs
+features = ["nightly"]
+
 [dependencies]
 keccak = "0.1.0"
 byteorder = "1.2.4"
