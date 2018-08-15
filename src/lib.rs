@@ -6,6 +6,7 @@
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
 extern crate byteorder;
+extern crate clear_on_drop;
 extern crate core;
 extern crate keccak;
 
