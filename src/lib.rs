@@ -27,21 +27,98 @@ fn encode_usize(x: usize) -> [u8; 4] {
     buf
 }
 
-/// Transcript of a public coin argument
+/// A transcript of a public-coin argument.
+///
+/// The prover's messages are added to the transcript using `commit`,
+/// and the verifier's challenges can be computed using `challenge`.
+///
+/// # Usage
+///
+/// Implementations of proof protocols should take a `&mut Transcript`
+/// as a parameter, **not** construct one internally.  This provides
+/// three benefits:
+///
+/// 1.  It forces the API client to initialize their own transcript
+/// using `Transcript::new()`.  Since that function takes a domain
+/// separation string, this ensures that all proofs are
+/// domain-separated.
+///
+/// 2.  It ensures that protocols are sequentially composable, by
+/// running them on a common transcript.  (Since transcript instances
+/// are domain-separated, it should not be possible to extract a
+/// sub-protocol's challenges and commitments as a standalone proof).
+///
+/// 3.  It allows API clients to commit contextual data to the
+/// proof statements prior to running the protocol, allowing them to
+/// bind proof statements to arbitrary application data.
+///
+/// # Defining protocol behaviour with extension traits
+///
+/// This API is byte-oriented, while an actual protocol likely
+/// requires typed data — for instance, a protocol probably wants to
+/// receive challenge scalars, not challenge bytes.  The recommended
+/// way to bridge this abstraction gap is to define a
+/// protocol-specific extension trait.
+///
+/// For instance, consider a discrete-log based protocol which commits
+/// to Ristretto points and requires challenge scalars for the
+/// Ristretto group.  This protocol can define a protocol-specific
+/// extension trait in its crate as follows:
+/// ```
+/// extern crate curve25519_dalek;
+/// use curve25519_dalek::ristretto::CompressedRistretto;
+/// use curve25519_dalek::scalar::Scalar;
+///
+/// extern crate merlin;
+/// use merlin::Transcript;
+///
+/// trait TranscriptProtocol {
+///     fn commit_point(&mut self, point: CompressedRistretto);
+///     fn challenge_scalar(&mut self) -> Scalar;
+/// }
+///
+/// impl TranscriptProtocol for Transcript {
+///     fn commit_point(&mut self, point: CompressedRistretto) {
+///         self.commit(b"pt", point.as_bytes());
+///     }
+///
+///     fn challenge_scalar(&mut self) -> Scalar {
+///         let mut buf = [0; 64];
+///         self.challenge(b"sc", &mut buf);
+///         Scalar::from_bytes_mod_order_wide(&buf)
+///     }
+/// }
+/// # fn main() { }
+/// ```
+/// Now, the implementation of the protocol can call the
+/// `challenge_scalar` method on any `Transcript` instance.
+///
+/// However, because the protocol-specific behaviour is defined in a
+/// protocol-specific trait, different protocols can use the same
+/// `Transcript` instance without imposing any extra type constraints.
 #[derive(Clone)]
 pub struct Transcript {
     strobe: Strobe128,
 }
 
 impl Transcript {
-    /// Initialize a new transcript with the supplied label.
+    /// Initialize a new transcript with the supplied `label`, which
+    /// is used as a domain separator.
+    ///
+    /// # Note
+    ///
+    /// This function should be called by a protocol's API consumer,
+    /// and *not* by the protocol implementation.
     pub fn new(label: &[u8]) -> Transcript {
         Transcript {
             strobe: Strobe128::new(label),
         }
     }
 
-    /// Commit a prover's message to the transcript.
+    /// Commit a prover's `message` to the transcript.
+    ///
+    /// The `label` parameter is metadata about the message, and is
+    /// also committed to the transcript.
     pub fn commit(&mut self, label: &[u8], message: &[u8]) {
         let data_len = encode_usize(message.len());
         self.strobe.meta_ad(label, false);
@@ -50,6 +127,9 @@ impl Transcript {
     }
 
     /// Fill the supplied buffer with the verifier's challenge bytes.
+    ///
+    /// The `label` parameter is metadata about the challenge, and is
+    /// also committed to the transcript.
     pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
         let data_len = encode_usize(challenge_bytes.len());
         self.strobe.meta_ad(label, false);
