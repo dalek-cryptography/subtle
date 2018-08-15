@@ -15,6 +15,7 @@ clear_on_drop = "0.2.3"
 
 [dev-dependencies]
 strobe-rs = "0.3"
+curve25519-dalek = "0.19"
 
 [features]
 nightly = ["clear_on_drop/nightly"]
