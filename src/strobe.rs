@@ -25,6 +25,13 @@ pub struct Strobe128 {
     cur_flags: u8,
 }
 
+impl ::core::fmt::Debug for Strobe128 {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        // Ensure that the Strobe state isn't accidentally logged
+        write!(f, "Strobe128: STATE OMITTED")
+    }
+}
+
 impl Drop for Strobe128 {
     fn drop(&mut self) {
         // Ensure that the Strobe state is zeroed on drop
