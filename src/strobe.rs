@@ -27,6 +27,7 @@ pub struct Strobe128 {
 
 impl Drop for Strobe128 {
     fn drop(&mut self) {
+        // Ensure that the Strobe state is zeroed on drop
         use clear_on_drop::clear::Clear;
         self.state.clear();
     }
