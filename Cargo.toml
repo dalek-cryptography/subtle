@@ -3,6 +3,15 @@ name = "merlin"
 version = "0.1.0"
 authors = ["Henry de Valence <hdevalence@hdevalence.ca>",
            "isis agora lovecruft <isis@patternsinthevoid.net>"]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/dalek-cryptography/merlin"
+homepage = "https://docs.rs/merlin"
+documentation = "https://docs.rs/merlin"
+categories = ["cryptography"]
+keywords = ["cryptography", "zero-knowledge", "fiat-shamir", "transcript"]
+description = "Composable proof transcripts for public-coin arguments of knowledge"
+exclude = [".travis.yml", ".gitignore"]
 
 [package.metadata.docs.rs]
 # We need nightly to build docs
