@@ -155,10 +155,9 @@ mod tests {
     impl TestTranscript {
         /// Strobe init; meta-AD(label)
         pub fn new(label: &[u8]) -> TestTranscript {
-            // XXX the new() method is doing an AD[label]() operation
-            let mut strobe: Strobe = Strobe::new(label.to_vec(), SecParam::B128);
-
-            TestTranscript { state: strobe }
+            TestTranscript {
+                state: Strobe::new(label.to_vec(), SecParam::B128),
+            }
         }
 
         /// Strobe op: meta-AD(label || len(message)); AD(message)
@@ -222,7 +221,7 @@ mod tests {
         let mut real_challenge = [0u8; 32];
         let mut test_challenge = [0u8; 32];
 
-        for i in 0..32 {
+        for _ in 0..32 {
             real_transcript.challenge(b"challenge", &mut real_challenge);
             test_transcript.challenge(b"challenge", &mut test_challenge);
 
