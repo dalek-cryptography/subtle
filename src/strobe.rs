@@ -25,6 +25,13 @@ pub struct Strobe128 {
     cur_flags: u8,
 }
 
+impl Drop for Strobe128 {
+    fn drop(&mut self) {
+        use clear_on_drop::clear::Clear;
+        self.state.clear();
+    }
+}
+
 impl Strobe128 {
     pub fn new(protocol_label: &[u8]) -> Strobe128 {
         let initial_state = {

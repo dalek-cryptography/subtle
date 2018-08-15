@@ -7,10 +7,10 @@ authors = ["Henry de Valence <hdevalence@hdevalence.ca>",
 [dependencies]
 keccak = "0.1.0"
 byteorder = "1.2.4"
+clear_on_drop = "0.2.3"
 
 [dev-dependencies]
 strobe-rs = "0.3"
 
 [features]
-# Used for doc includes
-nightly = []
+nightly = ["clear_on_drop/nightly"]
