@@ -49,7 +49,7 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// sub-protocol's challenges and commitments as a standalone proof).
 ///
 /// 3.  It allows API clients to commit contextual data to the
-/// proof statements prior to running the protocol, allowing them to
+/// proof transcript prior to running the protocol, allowing them to
 /// bind proof statements to arbitrary application data.
 ///
 /// # Defining protocol behaviour with extension traits
