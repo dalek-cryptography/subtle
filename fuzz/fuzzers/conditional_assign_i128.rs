@@ -1,5 +1,4 @@
 #![no_main]
-#![feature(i128_type)]
 
 #[macro_use]
 extern crate libfuzzer_sys;
@@ -26,10 +25,10 @@ fuzz_target!(|data: &[u8]| {
                 bytes[8],  bytes[9],  bytes[10], bytes[11],
                 bytes[12], bytes[13], bytes[14], bytes[15]]);
 
-            x.conditional_assign(&y, 0);
+            x.conditional_assign(&y, 0.into());
             assert_eq!(x, 0);
 
-            x.conditional_assign(&y, 1);
+            x.conditional_assign(&y, 1.into());
             assert_eq!(x, y);
         }
     }

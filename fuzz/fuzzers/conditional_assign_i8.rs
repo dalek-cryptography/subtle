@@ -15,10 +15,10 @@ fuzz_target!(|data: &[u8]| {
             let mut x: i8 = 0;
             let y: i8 = transmute::<u8, i8>(*y);
 
-            x.conditional_assign(&y, 0);
+            x.conditional_assign(&y, 0.into());
             assert_eq!(x, 0);
 
-            x.conditional_assign(&y, 1);
+            x.conditional_assign(&y, 1.into());
             assert_eq!(x, y);
         }
     }
