@@ -188,13 +188,11 @@ impl TranscriptRngConstructor {
         self
     }
 
-    /// Use the supplied `rng` to rekey the transcript, so that the
-    /// finalized `TranscriptRng` is a PRF bound to randomness from
-    /// the external RNG, as well as all other transcript data.
-    ///
-    /// The input from the auxiliary RNG is modeled as an additional
-    /// witness variable, and committed using `commit_witness`.
-    pub fn rekey_rng<R>(self, rng: &mut R) -> TranscriptRngConstructor
+    /// Use the supplied external `rng` to rekey the transcript, so
+    /// that the finalized `TranscriptRng` is a PRF bound to
+    /// randomness from the external RNG, as well as all other
+    /// transcript data.
+    pub fn reseed_from_rng<R>(mut self, rng: &mut R) -> TranscriptRng
     where
         R: rand::Rng + rand::CryptoRng,
     {
@@ -204,10 +202,9 @@ impl TranscriptRngConstructor {
             bytes
         };
 
-        self.commit_witness_bytes(b"rng", &random_bytes)
-    }
+        self.strobe.meta_ad(b"rng", false);
+        self.strobe.key(&random_bytes, false);
 
-    pub fn finalize(self) -> TranscriptRng {
         TranscriptRng {
             strobe: self.strobe,
         }
@@ -376,26 +373,22 @@ mod tests {
         let mut r1 = t1
             .fork_transcript()
             .commit_witness_bytes(b"witness", witness1)
-            .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
-            .finalize();
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r2 = t2
             .fork_transcript()
             .commit_witness_bytes(b"witness", witness1)
-            .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
-            .finalize();
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r3 = t3
             .fork_transcript()
             .commit_witness_bytes(b"witness", witness2)
-            .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
-            .finalize();
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r4 = t4
             .fork_transcript()
             .commit_witness_bytes(b"witness", witness2)
-            .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
-            .finalize();
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
 
         let s1 = Scalar::random(&mut r1);
         let s2 = Scalar::random(&mut r2);
