@@ -8,8 +8,6 @@ const STROBE_R: u8 = 166;
 const FLAG_I: u8 = 1 << 0;
 const FLAG_A: u8 = 1 << 1;
 const FLAG_C: u8 = 1 << 2;
-// This implementation does not use the transport flag.
-#[allow(dead_code)]
 const FLAG_T: u8 = 1 << 3;
 const FLAG_M: u8 = 1 << 4;
 const FLAG_K: u8 = 1 << 5;
@@ -122,6 +120,11 @@ impl Strobe128 {
         }
 
         // Skip adjusting direction information (we just use AD, PRF)
+        assert_eq!(
+            flags & FLAG_T,
+            0u8,
+            "You used the T flag, which this implementation doesn't support"
+        );
 
         let old_begin = self.pos_begin;
         self.pos_begin = self.pos + 1;
