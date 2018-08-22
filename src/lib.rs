@@ -175,7 +175,11 @@ impl TranscriptRngConstructor {
     ///
     /// The `label` parameter is metadata about the witness, and is
     /// also committed to the transcript.
-    pub fn commit_witness(mut self, label: &[u8], witness: &[u8]) -> TranscriptRngConstructor {
+    pub fn commit_witness_bytes(
+        mut self,
+        label: &[u8],
+        witness: &[u8],
+    ) -> TranscriptRngConstructor {
         let witness_len = encode_usize(witness.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&witness_len, true);
@@ -200,7 +204,7 @@ impl TranscriptRngConstructor {
             bytes
         };
 
-        self.commit_witness(b"rng", &random_bytes)
+        self.commit_witness_bytes(b"rng", &random_bytes)
     }
 
     pub fn finalize(self) -> TranscriptRng {
@@ -371,25 +375,25 @@ mod tests {
 
         let mut r1 = t1
             .fork_transcript()
-            .commit_witness(b"witness", witness1)
+            .commit_witness_bytes(b"witness", witness1)
             .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
             .finalize();
 
         let mut r2 = t2
             .fork_transcript()
-            .commit_witness(b"witness", witness1)
+            .commit_witness_bytes(b"witness", witness1)
             .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
             .finalize();
 
         let mut r3 = t3
             .fork_transcript()
-            .commit_witness(b"witness", witness2)
+            .commit_witness_bytes(b"witness", witness2)
             .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
             .finalize();
 
         let mut r4 = t4
             .fork_transcript()
-            .commit_witness(b"witness", witness2)
+            .commit_witness_bytes(b"witness", witness2)
             .rekey_rng(&mut ChaChaRng::from_seed([0; 32]))
             .finalize();
 
