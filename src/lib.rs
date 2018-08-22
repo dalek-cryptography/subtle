@@ -235,8 +235,8 @@ impl rand_core::RngCore for TranscriptRng {
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
         // When using the TranscriptRng as a rand::Rng instance, we
-        // don't get to set the label, so just use a fixed one
-        self.labeled_fill_bytes(b"rng", dest);
+        // don't get to set the label, so just use an empty one.
+        self.labeled_fill_bytes(b"", dest);
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
