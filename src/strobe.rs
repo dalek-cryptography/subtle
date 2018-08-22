@@ -8,8 +8,6 @@ const STROBE_R: u8 = 166;
 const FLAG_I: u8 = 1 << 0;
 const FLAG_A: u8 = 1 << 1;
 const FLAG_C: u8 = 1 << 2;
-// This implementation does not use the transport flag.
-#[allow(dead_code)]
 const FLAG_T: u8 = 1 << 3;
 const FLAG_M: u8 = 1 << 4;
 const FLAG_K: u8 = 1 << 5;
@@ -65,17 +63,17 @@ impl Strobe128 {
 
     pub fn meta_ad(&mut self, data: &[u8], more: bool) {
         self.begin_op(FLAG_M | FLAG_A, more);
-        self.absorb(data, false);
+        self.absorb(data);
     }
 
     pub fn ad(&mut self, data: &[u8], more: bool) {
         self.begin_op(FLAG_A, more);
-        self.absorb(data, false);
+        self.absorb(data);
     }
 
     pub fn prf(&mut self, data: &mut [u8], more: bool) {
         self.begin_op(FLAG_I | FLAG_A | FLAG_C, more);
-        self.squeeze(data, false);
+        self.squeeze(data);
     }
 }
 
@@ -89,7 +87,7 @@ impl Strobe128 {
         self.pos_begin = 0;
     }
 
-    fn absorb(&mut self, data: &[u8], force_f: bool) {
+    fn absorb(&mut self, data: &[u8]) {
         for byte in data {
             self.state[self.pos as usize] ^= byte;
             self.pos += 1;
@@ -97,12 +95,9 @@ impl Strobe128 {
                 self.run_f();
             }
         }
-        if force_f && self.pos != 0 {
-            self.run_f();
-        }
     }
 
-    fn squeeze(&mut self, data: &mut [u8], force_f: bool) {
+    fn squeeze(&mut self, data: &mut [u8]) {
         for byte in data {
             *byte = self.state[self.pos as usize];
             self.state[self.pos as usize] = 0;
@@ -110,9 +105,6 @@ impl Strobe128 {
             if self.pos == STROBE_R {
                 self.run_f();
             }
-        }
-        if force_f && self.pos != 0 {
-            self.run_f();
         }
     }
 
@@ -128,14 +120,23 @@ impl Strobe128 {
         }
 
         // Skip adjusting direction information (we just use AD, PRF)
-
-        // Force running F if C or K is set
-        let force_f = 0 != (flags & (FLAG_C | FLAG_K));
+        assert_eq!(
+            flags & FLAG_T,
+            0u8,
+            "You used the T flag, which this implementation doesn't support"
+        );
 
         let old_begin = self.pos_begin;
         self.pos_begin = self.pos + 1;
         self.cur_flags = flags;
 
-        self.absorb(&[old_begin, flags], force_f);
+        self.absorb(&[old_begin, flags]);
+
+        // Force running F if C or K is set
+        let force_f = 0 != (flags & (FLAG_C | FLAG_K));
+
+        if force_f && self.pos != 0 {
+            self.run_f();
+        }
     }
 }
