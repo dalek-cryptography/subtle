@@ -29,8 +29,8 @@ fn encode_usize(x: usize) -> [u8; 4] {
 
 /// A transcript of a public-coin argument.
 ///
-/// The prover's messages are added to the transcript using `commit`,
-/// and the verifier's challenges can be computed using `challenge`.
+/// The prover's messages are added to the transcript using `commit_bytes`,
+/// and the verifier's challenges can be computed using `challenge_bytes`.
 ///
 /// # Usage
 ///
@@ -39,7 +39,7 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// three benefits:
 ///
 /// 1.  It forces the API client to initialize their own transcript
-/// using `Transcript::new()`.  Since that function takes a domain
+/// using [`Transcript::new()`].  Since that function takes a domain
 /// separation string, this ensures that all proofs are
 /// domain-separated.
 ///
@@ -79,23 +79,29 @@ fn encode_usize(x: usize) -> [u8; 4] {
 ///
 /// impl TranscriptProtocol for Transcript {
 ///     fn commit_point(&mut self, point: CompressedRistretto) {
-///         self.commit(b"pt", point.as_bytes());
+///         self.commit_bytes(b"pt", point.as_bytes());
 ///     }
 ///
 ///     fn challenge_scalar(&mut self) -> Scalar {
 ///         let mut buf = [0; 64];
-///         self.challenge(b"sc", &mut buf);
+///         self.challenge_bytes(b"sc", &mut buf);
 ///         Scalar::from_bytes_mod_order_wide(&buf)
 ///     }
 /// }
 /// # fn main() { }
 /// ```
 /// Now, the implementation of the protocol can call the
-/// `challenge_scalar` method on any `Transcript` instance.
+/// `commit_point` and `challenge_scalar` methods on any
+/// [`Transcript`] instance, rather than calling [`commit_bytes`] and
+/// [`challenge_bytes`] directly.  Note that in this example, the
+/// functions in the extension trait don't assign semantic meaning to
+/// the operations, but a better implementation of a real protocol
+/// could define more meaningful functions like `commit_basepoint`,
+/// `commit_pubkey`, etc., each with their own labels.
 ///
 /// However, because the protocol-specific behaviour is defined in a
 /// protocol-specific trait, different protocols can use the same
-/// `Transcript` instance without imposing any extra type constraints.
+/// [`Transcript`] instance without imposing any extra type constraints.
 #[derive(Clone)]
 pub struct Transcript {
     strobe: Strobe128,
@@ -119,7 +125,7 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the message, and is
     /// also committed to the transcript.
-    pub fn commit(&mut self, label: &[u8], message: &[u8]) {
+    pub fn commit_bytes(&mut self, label: &[u8], message: &[u8]) {
         let data_len = encode_usize(message.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
@@ -130,11 +136,11 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the challenge, and is
     /// also committed to the transcript.
-    pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
-        let data_len = encode_usize(challenge_bytes.len());
+    pub fn challenge_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
+        let data_len = encode_usize(dest.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
-        self.strobe.prf(challenge_bytes, false);
+        self.strobe.prf(dest, false);
     }
 }
 
@@ -161,7 +167,7 @@ mod tests {
         }
 
         /// Strobe op: meta-AD(label || len(message)); AD(message)
-        pub fn commit(&mut self, label: &[u8], message: &[u8]) {
+        pub fn commit_bytes(&mut self, label: &[u8], message: &[u8]) {
             // metadata = label || len(message);
             let metaflags: OpFlags = OpFlags::A | OpFlags::M;
             let mut metadata: Vec<u8> = Vec::with_capacity(label.len() + 4);
@@ -172,9 +178,9 @@ mod tests {
                 .ad(message.to_vec(), Some((metaflags, metadata)), false);
         }
 
-        /// Strobe op: meta-AD(label || len(challenge_bytes)); PRF into challenge_bytes
-        pub fn challenge(&mut self, label: &[u8], challenge_bytes: &mut [u8]) {
-            let prf_len = challenge_bytes.len();
+        /// Strobe op: meta-AD(label || len(dest)); PRF into challenge_bytes
+        pub fn challenge_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
+            let prf_len = dest.len();
 
             // metadata = label || len(challenge_bytes);
             let metaflags: OpFlags = OpFlags::A | OpFlags::M;
@@ -183,7 +189,7 @@ mod tests {
             metadata.extend_from_slice(&encode_usize(prf_len));
 
             let bytes = self.state.prf(prf_len, Some((metaflags, metadata)), false);
-            challenge_bytes.copy_from_slice(&bytes);
+            dest.copy_from_slice(&bytes);
         }
     }
 
@@ -193,14 +199,14 @@ mod tests {
         let mut real_transcript = Transcript::new(b"test protocol");
         let mut test_transcript = TestTranscript::new(b"test protocol");
 
-        real_transcript.commit(b"some label", b"some data");
-        test_transcript.commit(b"some label", b"some data");
+        real_transcript.commit_bytes(b"some label", b"some data");
+        test_transcript.commit_bytes(b"some label", b"some data");
 
         let mut real_challenge = [0u8; 32];
         let mut test_challenge = [0u8; 32];
 
-        real_transcript.challenge(b"challenge", &mut real_challenge);
-        test_transcript.challenge(b"challenge", &mut test_challenge);
+        real_transcript.challenge_bytes(b"challenge", &mut real_challenge);
+        test_transcript.challenge_bytes(b"challenge", &mut test_challenge);
 
         assert_eq!(real_challenge, test_challenge);
     }
@@ -215,23 +221,23 @@ mod tests {
 
         let data = vec![99; 1024];
 
-        real_transcript.commit(b"step1", b"some data");
-        test_transcript.commit(b"step1", b"some data");
+        real_transcript.commit_bytes(b"step1", b"some data");
+        test_transcript.commit_bytes(b"step1", b"some data");
 
         let mut real_challenge = [0u8; 32];
         let mut test_challenge = [0u8; 32];
 
         for _ in 0..32 {
-            real_transcript.challenge(b"challenge", &mut real_challenge);
-            test_transcript.challenge(b"challenge", &mut test_challenge);
+            real_transcript.challenge_bytes(b"challenge", &mut real_challenge);
+            test_transcript.challenge_bytes(b"challenge", &mut test_challenge);
 
             assert_eq!(real_challenge, test_challenge);
 
-            real_transcript.commit(b"bigdata", &data);
-            test_transcript.commit(b"bigdata", &data);
+            real_transcript.commit_bytes(b"bigdata", &data);
+            test_transcript.commit_bytes(b"bigdata", &data);
 
-            real_transcript.commit(b"challengedata", &real_challenge);
-            test_transcript.commit(b"challengedata", &test_challenge);
+            real_transcript.commit_bytes(b"challengedata", &real_challenge);
+            test_transcript.commit_bytes(b"challengedata", &test_challenge);
         }
     }
 }
