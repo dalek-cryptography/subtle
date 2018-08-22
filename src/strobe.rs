@@ -14,7 +14,7 @@ const FLAG_K: u8 = 1 << 5;
 
 /// A Strobe context for the 128-bit security level.
 ///
-/// Only `meta-AD`, `AD`, and `PRF` operations are supported.
+/// Only `meta-AD`, `AD`, `KEY`, and `PRF` operations are supported.
 #[derive(Clone)]
 pub struct Strobe128 {
     state: [u8; 200],
@@ -75,6 +75,11 @@ impl Strobe128 {
         self.begin_op(FLAG_I | FLAG_A | FLAG_C, more);
         self.squeeze(data);
     }
+
+    pub fn key(&mut self, data: &[u8], more: bool) {
+        self.begin_op(FLAG_A | FLAG_C, more);
+        self.overwrite(data, false);
+    }
 }
 
 impl Strobe128 {
@@ -90,6 +95,16 @@ impl Strobe128 {
     fn absorb(&mut self, data: &[u8]) {
         for byte in data {
             self.state[self.pos as usize] ^= byte;
+            self.pos += 1;
+            if self.pos == STROBE_R {
+                self.run_f();
+            }
+        }
+    }
+
+    fn overwrite(&mut self, data: &[u8]) {
+        for byte in data {
+            self.state[self.pos as usize] = *byte;
             self.pos += 1;
             if self.pos == STROBE_R {
                 self.run_f();
