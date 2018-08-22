@@ -78,7 +78,7 @@ impl Strobe128 {
 
     pub fn key(&mut self, data: &[u8], more: bool) {
         self.begin_op(FLAG_A | FLAG_C, more);
-        self.overwrite(data, false);
+        self.overwrite(data);
     }
 }
 
