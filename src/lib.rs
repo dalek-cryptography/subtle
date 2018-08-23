@@ -77,11 +77,16 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// use merlin::Transcript;
 ///
 /// trait TranscriptProtocol {
+///     fn domain_sep(&mut self);
 ///     fn commit_point(&mut self, point: CompressedRistretto);
 ///     fn challenge_scalar(&mut self) -> Scalar;
 /// }
 ///
 /// impl TranscriptProtocol for Transcript {
+///     fn domain_sep(&mut self) {
+///         self.commit_bytes(b"dom-sep", b"TranscriptProtocol Example");
+///     }
+///
 ///     fn commit_point(&mut self, point: CompressedRistretto) {
 ///         self.commit_bytes(b"pt", point.as_bytes());
 ///     }
@@ -94,14 +99,17 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// }
 /// # fn main() { }
 /// ```
-/// Now, the implementation of the protocol can call the
-/// `commit_point` and `challenge_scalar` methods on any
-/// [`Transcript`] instance, rather than calling [`commit_bytes`] and
-/// [`challenge_bytes`] directly.  Note that in this example, the
-/// functions in the extension trait don't assign semantic meaning to
-/// the operations, but a better implementation of a real protocol
-/// could define more meaningful functions like `commit_basepoint`,
-/// `commit_pubkey`, etc., each with their own labels.
+/// Now, the implementation of the protocol can use the `domain_sep`
+/// to add domain seperation to an existing `&mut Transcript`, and
+/// then call the `commit_point` and `challenge_scalar` methods,
+/// rather than calling [`commit_bytes`] and [`challenge_bytes`]
+/// directly.
+///
+/// Note that in this example, the functions in the extension trait
+/// don't assign semantic meaning to the operations, but a better
+/// implementation of a real protocol could define more meaningful
+/// functions like `commit_basepoint`, `commit_pubkey`, etc., each
+/// with their own labels.
 ///
 /// However, because the protocol-specific behaviour is defined in a
 /// protocol-specific trait, different protocols can use the same
