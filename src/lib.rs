@@ -375,7 +375,7 @@ impl TranscriptRngConstructor {
 /// generated in the following way: first, the STROBE context is
 /// copied; then, the signer uses a private key `k` to perform the
 /// STROBE operations
-/// ```
+/// ```text,no_run
 /// KEY[sym-key](k);
 /// r <- PRF[sig-determ]()
 /// ```
