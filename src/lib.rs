@@ -158,10 +158,13 @@ impl Transcript {
     }
 }
 
-/// The prover can commit secrets or randomness to the
-/// `TranscriptRngConstructor` before finalizing to obtain a
-/// `TranscriptRng` which is a PRF of the entire transcript as well as
-/// the prover's secrets and randomness.
+/// The prover can commit witness data to the
+/// `TranscriptRngConstructor` before using an external RNG to
+/// finalize to a `TranscriptRng`.
+///
+/// The resulting `TranscriptRng` will be a PRF of the entire public
+/// transcript, as well as of the prover's witness data, as well as of
+/// randomness from the external RNG.
 ///
 /// See the `TranscriptRng` documentation for more details.
 pub struct TranscriptRngConstructor {
@@ -169,11 +172,9 @@ pub struct TranscriptRngConstructor {
 }
 
 impl TranscriptRngConstructor {
-    /// Commit witness data to the transcript, so that the finalized
-    /// `TranscriptRng` is a PRF bound to `witness` as well as all
-    /// other transcript data.
+    /// Rekey the transcript using the provided witness data.
     ///
-    /// The `label` parameter is metadata about the witness, and is
+    /// The `label` parameter is metadata about `witness`, and is
     /// also committed to the transcript.
     pub fn commit_witness_bytes(
         mut self,
