@@ -215,15 +215,6 @@ pub struct TranscriptRng {
     strobe: Strobe128,
 }
 
-impl TranscriptRng {
-    pub fn labeled_fill_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
-        let dest_len = encode_usize(dest.len());
-        self.strobe.meta_ad(label, false);
-        self.strobe.meta_ad(&dest_len, true);
-        self.strobe.prf(dest, false);
-    }
-}
-
 impl rand_core::RngCore for TranscriptRng {
     fn next_u32(&mut self) -> u32 {
         rand_core::impls::next_u32_via_fill(self)
@@ -234,9 +225,9 @@ impl rand_core::RngCore for TranscriptRng {
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        // When using the TranscriptRng as a rand::Rng instance, we
-        // don't get to set the label, so just use an empty one.
-        self.labeled_fill_bytes(b"", dest);
+        let dest_len = encode_usize(dest.len());
+        self.strobe.meta_ad(&dest_len, false);
+        self.strobe.prf(dest, false);
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
