@@ -21,6 +21,8 @@ features = ["nightly"]
 keccak = "0.1.0"
 byteorder = "1.2.4"
 clear_on_drop = "0.2.3"
+rand_core = "0.2"
+rand = "0.5"
 
 [dev-dependencies]
 strobe-rs = "0.3"

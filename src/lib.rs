@@ -9,7 +9,11 @@ extern crate byteorder;
 extern crate clear_on_drop;
 extern crate core;
 extern crate keccak;
+extern crate rand;
+extern crate rand_core;
 
+#[cfg(test)]
+extern crate curve25519_dalek;
 #[cfg(test)]
 extern crate strobe_rs;
 
@@ -142,7 +146,97 @@ impl Transcript {
         self.strobe.meta_ad(&data_len, true);
         self.strobe.prf(dest, false);
     }
+
+    /// Fork the current `Transcript` to construct an RNG whose output is bound
+    /// to the current transcript state as well as prover's secrets.
+    ///
+    /// See the `TranscriptRng` documentation for more details.
+    pub fn fork_transcript(&self) -> TranscriptRngConstructor {
+        TranscriptRngConstructor {
+            strobe: self.strobe.clone(),
+        }
+    }
 }
+
+/// The prover can commit witness data to the
+/// `TranscriptRngConstructor` before using an external RNG to
+/// finalize to a `TranscriptRng`.
+///
+/// The resulting `TranscriptRng` will be a PRF of the entire public
+/// transcript, as well as of the prover's witness data, as well as of
+/// randomness from the external RNG.
+///
+/// See the `TranscriptRng` documentation for more details.
+pub struct TranscriptRngConstructor {
+    strobe: Strobe128,
+}
+
+impl TranscriptRngConstructor {
+    /// Rekey the transcript using the provided witness data.
+    ///
+    /// The `label` parameter is metadata about `witness`, and is
+    /// also committed to the transcript.
+    pub fn commit_witness_bytes(
+        mut self,
+        label: &[u8],
+        witness: &[u8],
+    ) -> TranscriptRngConstructor {
+        let witness_len = encode_usize(witness.len());
+        self.strobe.meta_ad(label, false);
+        self.strobe.meta_ad(&witness_len, true);
+        self.strobe.key(witness, false);
+
+        self
+    }
+
+    /// Use the supplied external `rng` to rekey the transcript, so
+    /// that the finalized `TranscriptRng` is a PRF bound to
+    /// randomness from the external RNG, as well as all other
+    /// transcript data.
+    pub fn reseed_from_rng<R>(mut self, rng: &mut R) -> TranscriptRng
+    where
+        R: rand::Rng + rand::CryptoRng,
+    {
+        let random_bytes = {
+            let mut bytes = [0u8; 32];
+            rng.fill(&mut bytes);
+            bytes
+        };
+
+        self.strobe.meta_ad(b"rng", false);
+        self.strobe.key(&random_bytes, false);
+
+        TranscriptRng {
+            strobe: self.strobe,
+        }
+    }
+}
+
+pub struct TranscriptRng {
+    strobe: Strobe128,
+}
+
+impl rand_core::RngCore for TranscriptRng {
+    fn next_u32(&mut self) -> u32 {
+        rand_core::impls::next_u32_via_fill(self)
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        rand_core::impls::next_u64_via_fill(self)
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        let dest_len = encode_usize(dest.len());
+        self.strobe.meta_ad(&dest_len, false);
+        self.strobe.prf(dest, false);
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        Ok(self.fill_bytes(dest))
+    }
+}
+
+impl rand::CryptoRng for TranscriptRng {}
 
 #[cfg(test)]
 mod tests {
@@ -239,5 +333,76 @@ mod tests {
             real_transcript.commit_bytes(b"challengedata", &real_challenge);
             test_transcript.commit_bytes(b"challengedata", &test_challenge);
         }
+    }
+
+    #[test]
+    fn transcript_rng_is_bound_to_transcript_and_witnesses() {
+        use curve25519_dalek::scalar::Scalar;
+        use rand::prng::chacha::ChaChaRng;
+        use rand::SeedableRng;
+
+        // Check that the TranscriptRng is bound to the transcript and
+        // the witnesses.  This is done by producing a sequence of
+        // transcripts that diverge at different points and checking
+        // that they produce different challenges.
+
+        let protocol_label = b"test TranscriptRng collisions";
+        let commitment1 = b"commitment data 1";
+        let commitment2 = b"commitment data 2";
+        let witness1 = b"witness data 1";
+        let witness2 = b"witness data 2";
+
+        let mut t1 = Transcript::new(protocol_label);
+        let mut t2 = Transcript::new(protocol_label);
+        let mut t3 = Transcript::new(protocol_label);
+        let mut t4 = Transcript::new(protocol_label);
+
+        t1.commit_bytes(b"com", commitment1);
+        t2.commit_bytes(b"com", commitment2);
+        t3.commit_bytes(b"com", commitment2);
+        t4.commit_bytes(b"com", commitment2);
+
+        let mut r1 = t1
+            .fork_transcript()
+            .commit_witness_bytes(b"witness", witness1)
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+
+        let mut r2 = t2
+            .fork_transcript()
+            .commit_witness_bytes(b"witness", witness1)
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+
+        let mut r3 = t3
+            .fork_transcript()
+            .commit_witness_bytes(b"witness", witness2)
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+
+        let mut r4 = t4
+            .fork_transcript()
+            .commit_witness_bytes(b"witness", witness2)
+            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+
+        let s1 = Scalar::random(&mut r1);
+        let s2 = Scalar::random(&mut r2);
+        let s3 = Scalar::random(&mut r3);
+        let s4 = Scalar::random(&mut r4);
+
+        // Transcript t1 has different commitments than t2, t3, t4, so
+        // it should produce distinct challenges from all of them.
+        assert_ne!(s1, s2);
+        assert_ne!(s1, s3);
+        assert_ne!(s1, s4);
+
+        // Transcript t2 has different witness variables from t3, t4,
+        // so it should produce distinct challenges from all of them.
+        assert_ne!(s2, s3);
+        assert_ne!(s2, s4);
+
+        // Transcripts t3 and t4 have the same commitments and
+        // witnesses, so they should give different challenges only
+        // based on the RNG. Checking that they're equal in the
+        // presence of a bad RNG checks that the different challenges
+        // above aren't because the RNG is accidentally different.
+        assert_eq!(s3, s4);
     }
 }
