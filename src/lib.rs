@@ -126,7 +126,12 @@ impl Transcript {
     /// # Note
     ///
     /// This function should be called by a protocol's API consumer,
-    /// and *not* by the protocol implementation.
+    /// and **not by the protocol implementation**.  See above for
+    /// details.
+    ///
+    /// # Implementation
+    ///
+    /// Initializes a STROBE-128 context with the given `label`.
     pub fn new(label: &[u8]) -> Transcript {
         Transcript {
             strobe: Strobe128::new(label),
@@ -137,6 +142,14 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the message, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(message.len()) );
+    /// AD( message );
+    /// ```
     pub fn commit_bytes(&mut self, label: &[u8], message: &[u8]) {
         let data_len = encode_usize(message.len());
         self.strobe.meta_ad(label, false);
@@ -148,6 +161,14 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the challenge, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(dest.len()) );
+    /// dest <- PRF();
+    /// ```
     pub fn challenge_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
         let data_len = encode_usize(dest.len());
         self.strobe.meta_ad(label, false);
@@ -155,10 +176,10 @@ impl Transcript {
         self.strobe.prf(dest, false);
     }
 
-    /// Fork the current `Transcript` to construct an RNG whose output is bound
+    /// Fork the current [`Transcript`] to construct an RNG whose output is bound
     /// to the current transcript state as well as prover's secrets.
     ///
-    /// See the `TranscriptRng` documentation for more details.
+    /// See the [`TranscriptRngConstructor`] documentation for more details.
     pub fn fork_transcript(&self) -> TranscriptRngConstructor {
         TranscriptRngConstructor {
             strobe: self.strobe.clone(),
@@ -242,6 +263,14 @@ impl TranscriptRngConstructor {
     ///
     /// The `label` parameter is metadata about `witness`, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(witness.len()) );
+    /// KEY( witness );
+    /// ```
     pub fn commit_witness_bytes(
         mut self,
         label: &[u8],
@@ -256,9 +285,17 @@ impl TranscriptRngConstructor {
     }
 
     /// Use the supplied external `rng` to rekey the transcript, so
-    /// that the finalized `TranscriptRng` is a PRF bound to
+    /// that the finalized [`TranscriptRng`] is a PRF bound to
     /// randomness from the external RNG, as well as all other
     /// transcript data.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( "rng" );
+    /// KEY( 32 bytes of rng output );
+    /// ```
     pub fn reseed_from_rng<R>(mut self, rng: &mut R) -> TranscriptRng
     where
         R: rand::Rng + rand::CryptoRng,
