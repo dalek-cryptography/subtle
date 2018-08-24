@@ -31,7 +31,11 @@ and an auxiliary input from an external RNG.
 
 **WARNING: This code is not yet suitable for deployment.**
 
-## License
+## About
+
+Merlin is authored by Henry de Valence, with design input from Isis
+Lovecruft and Oleg Andreev.  Thanks also to Trevor Perrin and Mike
+Hamburg for helpful discussions.
 
 This project is licensed under the MIT license; see `LICENSE.txt` for
 details.
