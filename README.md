@@ -24,51 +24,18 @@ bound to the statements to be proved;
 
 * and protocol composition, by using a common transcript for multiple protocols.
 
+In addition, Merlin provides a transcript-based `rand::Rng` instance
+for use by the prover.  This provides sythetic randomness derived from
+the entire public transcript, as well as the prover's witness data,
+and an auxiliary input from an external RNG.
+
 **WARNING: This code is not yet suitable for deployment.**
 
-## Design
+## About
 
-Merlin is implemented in terms of [STROBE][strobe] operations.  Only a
-subset of STROBE operations are used, because STROBE is intended as a
-general-purpose framework for transport protocols, while Merlin is
-intended only to provide proof transcripts.
-
-Let `LE32(x)` be the little-endian byte encoding of the 32-bit integer
-`x`.  Messages and challenges must be shorter than `2^32` bytes.
-
-The STROBE operations to commit a prover's message `msg` are
-```
-meta-AD( label || LE32(msg.len()) );
-AD( msg );
-```
-The STROBE operations to compute a verifier's challenge `chal` are
-```
-meta-AD( label || LE32(chal.len()) );
-chal <- PRF();
-```
-Here `label` is a protocol-specific byte string that encodes
-information about the message or challenge. (See the *Usage* section
-below for more information).  The security properties of the
-transcript are inherited from STROBE.
-
-## Usage
-
-Implementations of proof protocols using Merlin transcripts should
-take an existing `Transcript` as a parameter, rather than initializing
-a new one.  This ensures both that protocols are sequentially
-composable — because they can be performed with a common `Transcript`
-instance – and that they will be domain separated — because API
-consumers must supply a customization string to create the
-`Transcript`.
-
-The Merlin API is a minimal, byte-oriented API aimed at maximum
-flexibility.  However, an actual protocol makes use of typed data,
-such as group elements, scalars, byte-strings, etc.  The recommended
-way to accomplish this is to define a protocol-specific extension
-trait which specifies how typed data is encoded into the transcript.
-An example of this can be found in the `Transcript` documentation.
-
-## License
+Merlin is authored by Henry de Valence, with design input from Isis
+Lovecruft and Oleg Andreev.  Thanks also to Trevor Perrin and Mike
+Hamburg for helpful discussions.
 
 This project is licensed under the MIT license; see `LICENSE.txt` for
 details.

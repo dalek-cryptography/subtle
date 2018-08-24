@@ -77,11 +77,16 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// use merlin::Transcript;
 ///
 /// trait TranscriptProtocol {
+///     fn domain_sep(&mut self);
 ///     fn commit_point(&mut self, point: CompressedRistretto);
 ///     fn challenge_scalar(&mut self) -> Scalar;
 /// }
 ///
 /// impl TranscriptProtocol for Transcript {
+///     fn domain_sep(&mut self) {
+///         self.commit_bytes(b"dom-sep", b"TranscriptProtocol Example");
+///     }
+///
 ///     fn commit_point(&mut self, point: CompressedRistretto) {
 ///         self.commit_bytes(b"pt", point.as_bytes());
 ///     }
@@ -94,14 +99,17 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// }
 /// # fn main() { }
 /// ```
-/// Now, the implementation of the protocol can call the
-/// `commit_point` and `challenge_scalar` methods on any
-/// [`Transcript`] instance, rather than calling [`commit_bytes`] and
-/// [`challenge_bytes`] directly.  Note that in this example, the
-/// functions in the extension trait don't assign semantic meaning to
-/// the operations, but a better implementation of a real protocol
-/// could define more meaningful functions like `commit_basepoint`,
-/// `commit_pubkey`, etc., each with their own labels.
+/// Now, the implementation of the protocol can use the `domain_sep`
+/// to add domain seperation to an existing `&mut Transcript`, and
+/// then call the `commit_point` and `challenge_scalar` methods,
+/// rather than calling [`commit_bytes`][Transcript::commit_bytes] and
+/// [`challenge_bytes`][Transcript::challenge_bytes] directly.
+///
+/// Note that in this example, the functions in the extension trait
+/// don't assign semantic meaning to the operations, but a better
+/// implementation of a real protocol could define more meaningful
+/// functions like `commit_basepoint`, `commit_pubkey`, etc., each
+/// with their own labels.
 ///
 /// However, because the protocol-specific behaviour is defined in a
 /// protocol-specific trait, different protocols can use the same
@@ -118,7 +126,12 @@ impl Transcript {
     /// # Note
     ///
     /// This function should be called by a protocol's API consumer,
-    /// and *not* by the protocol implementation.
+    /// and **not by the protocol implementation**.  See above for
+    /// details.
+    ///
+    /// # Implementation
+    ///
+    /// Initializes a STROBE-128 context with the given `label`.
     pub fn new(label: &[u8]) -> Transcript {
         Transcript {
             strobe: Strobe128::new(label),
@@ -129,6 +142,14 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the message, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(message.len()) );
+    /// AD( message );
+    /// ```
     pub fn commit_bytes(&mut self, label: &[u8], message: &[u8]) {
         let data_len = encode_usize(message.len());
         self.strobe.meta_ad(label, false);
@@ -140,6 +161,14 @@ impl Transcript {
     ///
     /// The `label` parameter is metadata about the challenge, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(dest.len()) );
+    /// dest <- PRF();
+    /// ```
     pub fn challenge_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
         let data_len = encode_usize(dest.len());
         self.strobe.meta_ad(label, false);
@@ -147,10 +176,10 @@ impl Transcript {
         self.strobe.prf(dest, false);
     }
 
-    /// Fork the current `Transcript` to construct an RNG whose output is bound
+    /// Fork the current [`Transcript`] to construct an RNG whose output is bound
     /// to the current transcript state as well as prover's secrets.
     ///
-    /// See the `TranscriptRng` documentation for more details.
+    /// See the [`TranscriptRngConstructor`] documentation for more details.
     pub fn fork_transcript(&self) -> TranscriptRngConstructor {
         TranscriptRngConstructor {
             strobe: self.strobe.clone(),
@@ -158,15 +187,73 @@ impl Transcript {
     }
 }
 
-/// The prover can commit witness data to the
-/// `TranscriptRngConstructor` before using an external RNG to
-/// finalize to a `TranscriptRng`.
+/// Constructs a [`TranscriptRng`] by rekeying the [`Transcript`] with
+/// prover secrets and an external RNG.
 ///
-/// The resulting `TranscriptRng` will be a PRF of the entire public
-/// transcript, as well as of the prover's witness data, as well as of
-/// randomness from the external RNG.
+/// The prover commits witness data to the
+/// [`TranscriptRngConstructor`] before using an external RNG to
+/// finalize to a [`TranscriptRng`].  The resulting [`TranscriptRng`]
+/// will be a PRF of all of the entire public transcript, the prover's
+/// secret witness data, and randomness from the external RNG.
 ///
-/// See the `TranscriptRng` documentation for more details.
+/// # Usage
+///
+/// To construct a [`TranscriptRng`], a prover calls
+/// [`Transcript::fork_transcript()`] to clone the transcript state,
+/// then uses [`commit_witness_bytes()`][commit_witness_bytes] to
+/// rekey the transcript with the prover's secrets, before finally
+/// calling [`reseed_from_rng()`][reseed_from_rng].  This rekeys the
+/// transcript with the output of an external [`rand::Rng`] instance
+/// and returns a finalized [`TranscriptRng`].
+///
+/// These methods are intended to be chained, passing from a borrowed
+/// [`Transcript`] to an owned [`TranscriptRng`] as follows:
+/// ```
+/// # extern crate merlin;
+/// # extern crate rand;
+/// # use merlin::Transcript;
+/// # fn main() {
+/// # let mut transcript = Transcript::new(b"TranscriptRng doctest");
+/// # let public_data = b"public data";
+/// # let witness_data = b"witness data";
+/// # let more_witness_data = b"witness data";
+/// transcript.commit_bytes(b"public", public_data);
+///
+/// let mut rng = transcript
+///     .fork_transcript()
+///     .commit_witness_bytes(b"witness1", witness_data)
+///     .commit_witness_bytes(b"witness2", more_witness_data)
+///     .reseed_from_rng(&mut rand::thread_rng());
+/// # }
+/// ```
+/// In this example, the final `rng` is a PRF of `public_data`
+/// (as well as all previous `transcript` state), and of the prover's
+/// secret `witness_data` and `more_witness_data`, and finally, of the
+/// output of the thread-local RNG.
+/// Note that because the [`TranscriptRng`] is produced from
+/// [`reseed_from_rng()`][reseed_from_rng], it's impossible to forget
+/// to rekey the transcript with external randomness.
+///
+/// # Note
+///
+/// Protocols that require randomness in multiple places (e.g., to
+/// choose blinding factors for a multi-round protocol) should create
+/// a fresh [`TranscriptRng`] **each time they need randomness**,
+/// rather than reusing a single instance.  This ensures that the
+/// randomness in each round is bound to the latest transcript state,
+/// rather than just the state of the transcript when randomness was
+/// first required.
+///
+/// # Typed Witness Data
+///
+/// Like the [`Transcript`], the [`TranscriptRngConstructor`] provides
+/// a minimal, byte-oriented API, and like the [`Transcript`], this
+/// API can be extended to allow committing protocol-specific types
+/// using an extension trait.  See the [`Transcript`] documentation
+/// for more details.
+///
+/// [commit_witness_bytes]: TranscriptRngConstructor::commit_witness_bytes
+/// [reseed_from_rng]: TranscriptRngConstructor::reseed_from_rng
 pub struct TranscriptRngConstructor {
     strobe: Strobe128,
 }
@@ -176,6 +263,14 @@ impl TranscriptRngConstructor {
     ///
     /// The `label` parameter is metadata about `witness`, and is
     /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( label || LE32(witness.len()) );
+    /// KEY( witness );
+    /// ```
     pub fn commit_witness_bytes(
         mut self,
         label: &[u8],
@@ -190,9 +285,17 @@ impl TranscriptRngConstructor {
     }
 
     /// Use the supplied external `rng` to rekey the transcript, so
-    /// that the finalized `TranscriptRng` is a PRF bound to
+    /// that the finalized [`TranscriptRng`] is a PRF bound to
     /// randomness from the external RNG, as well as all other
     /// transcript data.
+    ///
+    /// # Implementation
+    ///
+    /// Performs the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( "rng" );
+    /// KEY( 32 bytes of rng output );
+    /// ```
     pub fn reseed_from_rng<R>(mut self, rng: &mut R) -> TranscriptRng
     where
         R: rand::Rng + rand::CryptoRng,
@@ -212,6 +315,113 @@ impl TranscriptRngConstructor {
     }
 }
 
+/// An RNG providing synthetic randomness to the prover.
+///
+/// A [`TranscriptRng`] is constructed from a [`Transcript`] using a
+/// [`TranscriptRngConstructor`]; see its documentation for details on
+/// how to construct one.
+///
+/// # Design
+///
+/// The [`TranscriptRng`] provides a STROBE-based PRF for use by the
+/// prover to generate random values for use in blinding factors, etc.
+/// It's intended to generalize from
+///
+/// 1.  the deterministic nonce generation in Ed25519 & RFC 6979;
+/// 2.  Trevor Perrin's ["synthetic" nonce generation for Generalised
+/// EdDSA][trevp_synth];
+/// 3.  and Mike Hamburg's nonce generation mechanism sketched in the
+/// [STROBE paper][strobe_paper];
+///
+/// towards a design that's flexible enough for arbitrarily complex
+/// public-coin arguments.
+///
+/// ## Deterministic and synthetic nonce generation
+///
+/// In Schnorr signatures (the context for the above designs), the
+/// "nonce" is really a blinding factor used for a single
+/// sigma-protocol (a proof of knowledge of the secret key, with the
+/// message in the context); in a more complex protocol like
+/// Bulletproofs, the prover runs a bunch of sigma protocols in
+/// sequence and needs a bunch of blinding factors for each of them.
+///
+/// As noted in Trevor's mail, bad randomness in the blinding factor
+/// can screw up Schnorr signatures in lots of ways:
+///
+/// * guessing the blinding reveals the secret;
+/// * using the same blinding for two proofs reveals the secret;
+/// * leaking a few bits of each blinding factor over many signatures
+/// can allow recovery of the secret.
+///
+/// For more complex ZK arguments there's probably lots of even more
+/// horrible ways that everything can go wrong.
+///
+/// In (1), the blinding factor is generated as the hash of both the
+/// message data and a secret key unique to each signer, so that the
+/// blinding factors are generated in a deterministic but secret way,
+/// avoiding problems with bad randomness.  However, the choice to
+/// make the blinding factors fully deterministic makes fault
+/// injection attacks much easier, which has been used with some
+/// success on Ed25519.
+///
+/// In (2), the blinding factor is generated as the hash of all of the
+/// message data, some secret key, and some randomness from an
+/// external RNG. This retains the benefits of (1), but without the
+/// disadvantages of being fully deterministic.  Trevor terms this
+/// "*synthetic nonce generation*".
+///
+/// The STROBE paper (3) describes a variant of (1) for performing
+/// STROBE-based Schnorr signatures, where the blinding factor is
+/// generated in the following way: first, the STROBE context is
+/// copied; then, the signer uses a private key `k` to perform the
+/// STROBE operations
+/// ```text,no_run
+/// KEY[sym-key](k);
+/// r <- PRF[sig-determ]()
+/// ```
+///
+/// The STROBE design is nice because forking the transcript exactly
+/// when randomness is required ensures that, if the transcripts are
+/// different, the blinding factor will be different -- no matter how
+/// much extra data was fed into the transcript.  This means that even
+/// though it's deterministic, it's automatically protected against an
+/// issue Trevor mentioned:
+///
+/// > Without randomization, the algorithm is fragile to
+/// > modifications and misuse.  In particular, modifying it to add an
+/// > extra input to h=... without also adding the input to r=... would
+/// > leak the private scalar if the same message is signed with a
+/// > different extra input.  So would signing a message twice, once
+/// > passing in an incorrect public key K (though the synthetic-nonce
+/// > algorithm fixes this separately by hashing K into r).
+///
+/// ## Transcript-based synthetic randomness
+///
+/// To combine (2) and (3), the [`TranscriptRng`] provides a PRF of
+/// the [`Transcript`] state, prover secrets, and the output of an
+/// external RNG, to combine (2) and (3).  In Merlin's setting, the
+/// only secrets available to the prover are the witness variables for
+/// the proof statement, so in the presence of a weak or failing RNG,
+/// the "backup" entropy is limited to the entropy of the witness
+/// variables.
+///
+/// The [`TranscriptRng`] is produced from a
+/// [`TranscriptRngConstructor`], which allows the prover to rekey the
+/// STROBE state with arbitrary witness data, and then forces the
+/// prover to rekey the STROBE state with the output of an external
+/// [`rand::Rng`] instance.  The [`TranscriptRng`] then uses STROBE
+/// `PRF` operations to provide randomness.
+///
+/// Binding the output to the [`Transcript`] state ensures that two
+/// different proof contexts always generate different outputs.  This
+/// prevents repeating blinding factors between proofs.  Binding the
+/// output to the prover's witness data ensures that the PRF output
+/// has at least as much entropy as the witness does.  Finally,
+/// binding the output to the output of an external RNG provides a
+/// backstop and avoids the downsides of fully deterministic generation.
+///
+/// [trevp_synth]: https://moderncrypto.org/mail-archive/curves/2017/000925.html
+/// [strobe_paper]: https://strobe.sourceforge.io/papers/strobe-20170130.pdf
 pub struct TranscriptRng {
     strobe: Strobe128,
 }
