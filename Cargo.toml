@@ -1,6 +1,6 @@
 [package]
 name = "merlin"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Henry de Valence <hdevalence@hdevalence.ca>",
            "isis agora lovecruft <isis@patternsinthevoid.net>"]
 readme = "README.md"
