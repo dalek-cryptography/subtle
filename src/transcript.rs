@@ -113,11 +113,22 @@ impl Transcript {
     ///
     /// # Implementation
     ///
-    /// Initializes a STROBE-128 context with the given `label`.
+    /// Initializes a STROBE-128 context with a Merlin
+    /// domain-separator label, then commits the user-supplied label
+    /// using the STROBE operations
+    /// ```text,no_run
+    /// meta-AD( b"dom-sep" || LE32(label.len()) );
+    /// AD( label );
+    /// ```
     pub fn new(label: &'static [u8]) -> Transcript {
-        Transcript {
-            strobe: Strobe128::new(label),
-        }
+        use constants::MERLIN_PROTOCOL_LABEL;
+
+        let mut transcript = Transcript {
+            strobe: Strobe128::new(MERLIN_PROTOCOL_LABEL),
+        };
+        transcript.commit_bytes(b"dom-sep", label);
+
+        transcript
     }
 
     /// Commit a prover's `message` to the transcript.
@@ -447,9 +458,14 @@ mod tests {
     impl TestTranscript {
         /// Strobe init; meta-AD(label)
         pub fn new(label: &[u8]) -> TestTranscript {
-            TestTranscript {
-                state: Strobe::new(label.to_vec(), SecParam::B128),
-            }
+            use constants::MERLIN_PROTOCOL_LABEL;
+
+            let mut tt = TestTranscript {
+                state: Strobe::new(MERLIN_PROTOCOL_LABEL.to_vec(), SecParam::B128),
+            };
+            tt.commit_bytes(b"dom-sep", label);
+
+            tt
         }
 
         /// Strobe op: meta-AD(label || len(message)); AD(message)
