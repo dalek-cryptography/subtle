@@ -394,7 +394,7 @@ pub trait ConditionallyAssignable {
 #[cfg(feature = "generic-impls")]
 impl<T> ConditionallyAssignable for T
 where
-    T: Copy + ConditionallySelectable,
+    T: ConditionallySelectable,
 {
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice) {
