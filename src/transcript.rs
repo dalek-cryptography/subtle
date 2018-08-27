@@ -114,7 +114,7 @@ impl Transcript {
     /// # Implementation
     ///
     /// Initializes a STROBE-128 context with the given `label`.
-    pub fn new(label: &[u8]) -> Transcript {
+    pub fn new(label: &'static [u8]) -> Transcript {
         Transcript {
             strobe: Strobe128::new(label),
         }
@@ -132,7 +132,7 @@ impl Transcript {
     /// meta-AD( label || LE32(message.len()) );
     /// AD( message );
     /// ```
-    pub fn commit_bytes(&mut self, label: &[u8], message: &[u8]) {
+    pub fn commit_bytes(&mut self, label: &'static [u8], message: &[u8]) {
         let data_len = encode_usize(message.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
@@ -151,7 +151,7 @@ impl Transcript {
     /// meta-AD( label || LE32(dest.len()) );
     /// dest <- PRF();
     /// ```
-    pub fn challenge_bytes(&mut self, label: &[u8], dest: &mut [u8]) {
+    pub fn challenge_bytes(&mut self, label: &'static [u8], dest: &mut [u8]) {
         let data_len = encode_usize(dest.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
@@ -255,7 +255,7 @@ impl TranscriptRngConstructor {
     /// ```
     pub fn commit_witness_bytes(
         mut self,
-        label: &[u8],
+        label: &'static [u8],
         witness: &[u8],
     ) -> TranscriptRngConstructor {
         let witness_len = encode_usize(witness.len());
