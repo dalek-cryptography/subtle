@@ -12,6 +12,10 @@ const FLAG_T: u8 = 1 << 3;
 const FLAG_M: u8 = 1 << 4;
 const FLAG_K: u8 = 1 << 5;
 
+fn transmute_state(st: &mut [u8; 200]) -> &mut [u64; 25] {
+    unsafe { &mut *(st as *mut [u8; 200] as *mut [u64; 25]) }
+}
+
 /// A Strobe context for the 128-bit security level.
 ///
 /// Only `meta-AD`, `AD`, `KEY`, and `PRF` operations are supported.
@@ -44,7 +48,7 @@ impl Strobe128 {
             let mut st = [0u8; 200];
             st[0..6].copy_from_slice(&[1, STROBE_R + 2, 1, 0, 1, 96]);
             st[6..18].copy_from_slice(b"STROBEv1.0.2");
-            keccak::f1600(unsafe { ::std::mem::transmute(&mut st) });
+            keccak::f1600(transmute_state(&mut st));
 
             st
         };
@@ -87,7 +91,7 @@ impl Strobe128 {
         self.state[self.pos as usize] ^= self.pos_begin;
         self.state[(self.pos + 1) as usize] ^= 0x04;
         self.state[(STROBE_R + 1) as usize] ^= 0x80;
-        keccak::f1600(unsafe { ::std::mem::transmute(&mut self.state) });
+        keccak::f1600(transmute_state(&mut self.state));
         self.pos = 0;
         self.pos_begin = 0;
     }
