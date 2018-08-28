@@ -5,7 +5,7 @@ use keccak;
 /// Strobe R value; security level 128 is hardcoded
 const STROBE_R: u8 = 166;
 
-const FLAG_I: u8 = 1 << 0;
+const FLAG_I: u8 = 1;
 const FLAG_A: u8 = 1 << 1;
 const FLAG_C: u8 = 1 << 2;
 const FLAG_T: u8 = 1 << 3;
