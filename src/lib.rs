@@ -5,6 +5,15 @@
 //! Note that docs will only build on nightly Rust until
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
+#[cfg(target_endian = "big")]
+compile_error!(
+    r#"
+This crate doesn't support big-endian targets, since I didn't
+have one to test correctness on.  If you're seeing this message,
+please file an issue!
+"#
+);
+
 extern crate byteorder;
 extern crate clear_on_drop;
 extern crate core;
