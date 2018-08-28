@@ -155,3 +155,59 @@ impl Strobe128 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use strobe_rs::{self, OpFlags, SecParam};
+
+    #[test]
+    fn test_conformance() {
+        let mut s1 = super::Strobe128::new(b"Conformance Test Protocol");
+        let mut s2 = strobe_rs::Strobe::new(b"Conformance Test Protocol".to_vec(), SecParam::B128);
+
+        // meta-AD(b"msg"); AD(msg)
+
+        let msg = vec![99; 1024];
+
+        s1.meta_ad(b"ms", false);
+        s1.meta_ad(b"g", true);
+        s1.ad(&msg, false);
+
+        s2.ad(
+            msg.clone(),
+            Some((OpFlags::A | OpFlags::M, b"msg".to_vec())),
+            false,
+        );
+
+        // meta-AD(b"prf"); PRF()
+
+        let mut prf1 = [0u8; 32];
+        s1.meta_ad(b"prf", false);
+        s1.prf(&mut prf1, false);
+
+        let prf2 = s2.prf(32, Some((OpFlags::A | OpFlags::M, b"prf".to_vec())), false);
+
+        assert_eq!(&prf1[..], &prf2[..]);
+
+        // meta-AD(b"key"); KEY(prf output)
+
+        s1.meta_ad(b"key", false);
+        s1.key(&prf1, false);
+
+        s2.key(
+            prf2,
+            Some((OpFlags::A | OpFlags::M, b"key".to_vec())),
+            false,
+        );
+
+        // meta-AD(b"prf"); PRF()
+
+        let mut prf1 = [0u8; 32];
+        s1.meta_ad(b"prf", false);
+        s1.prf(&mut prf1, false);
+
+        let prf2 = s2.prf(32, Some((OpFlags::A | OpFlags::M, b"prf".to_vec())), false);
+
+        assert_eq!(&prf1[..], &prf2[..]);
+    }
+}
