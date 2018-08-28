@@ -17,6 +17,7 @@ extern crate curve25519_dalek;
 #[cfg(test)]
 extern crate strobe_rs;
 
+mod constants;
 mod strobe;
 mod transcript;
 
