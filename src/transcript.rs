@@ -52,6 +52,7 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// extension trait in its crate as follows:
 /// ```
 /// extern crate curve25519_dalek;
+/// use curve25519_dalek::ristretto::RistrettoPoint;
 /// use curve25519_dalek::ristretto::CompressedRistretto;
 /// use curve25519_dalek::scalar::Scalar;
 ///
@@ -60,8 +61,8 @@ fn encode_usize(x: usize) -> [u8; 4] {
 ///
 /// trait TranscriptProtocol {
 ///     fn domain_sep(&mut self);
-///     fn commit_point(&mut self, point: CompressedRistretto);
-///     fn challenge_scalar(&mut self) -> Scalar;
+///     fn commit_point(&mut self, label: &'static [u8], point: &CompressedRistretto);
+///     fn challenge_scalar(&mut self, label: &'static [u8]) -> Scalar;
 /// }
 ///
 /// impl TranscriptProtocol for Transcript {
@@ -69,15 +70,25 @@ fn encode_usize(x: usize) -> [u8; 4] {
 ///         self.commit_bytes(b"dom-sep", b"TranscriptProtocol Example");
 ///     }
 ///
-///     fn commit_point(&mut self, point: CompressedRistretto) {
-///         self.commit_bytes(b"pt", point.as_bytes());
+///     fn commit_point(&mut self, label: &'static [u8], point: &CompressedRistretto) {
+///         self.commit_bytes(label, point.as_bytes());
 ///     }
 ///
-///     fn challenge_scalar(&mut self) -> Scalar {
+///     fn challenge_scalar(&mut self, label: &'static [u8]) -> Scalar {
 ///         let mut buf = [0; 64];
-///         self.challenge_bytes(b"sc", &mut buf);
+///         self.challenge_bytes(label, &mut buf);
 ///         Scalar::from_bytes_mod_order_wide(&buf)
 ///     }
+/// }
+///
+/// fn example(transcript: &mut Transcript, A: &RistrettoPoint, B: &RistrettoPoint) {
+///     // Since the TranscriptProtocol trait is in scope, the extension
+///     // methods are available on the `transcript` object:
+///     transcript.domain_sep();
+///     transcript.commit_point(b"A", &A.compress());
+///     transcript.commit_point(b"B", &B.compress());
+///     let c = transcript.challenge_scalar(b"c");
+///     // ...
 /// }
 /// # fn main() { }
 /// ```
@@ -86,12 +97,6 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// then call the `commit_point` and `challenge_scalar` methods,
 /// rather than calling [`commit_bytes`][Transcript::commit_bytes] and
 /// [`challenge_bytes`][Transcript::challenge_bytes] directly.
-///
-/// Note that in this example, the functions in the extension trait
-/// don't assign semantic meaning to the operations, but a better
-/// implementation of a real protocol could define more meaningful
-/// functions like `commit_basepoint`, `commit_pubkey`, etc., each
-/// with their own labels.
 ///
 /// However, because the protocol-specific behaviour is defined in a
 /// protocol-specific trait, different protocols can use the same
