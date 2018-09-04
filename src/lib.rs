@@ -1,6 +1,6 @@
 // -*- mode: rust; -*-
 //
-// This file is part of x25519-dalek.
+// This file is part of subtle, part of the dalek cryptography project.
 // Copyright (c) 2016-2018 isis lovecruft, Henry de Valence
 // See LICENSE for licensing information.
 //
