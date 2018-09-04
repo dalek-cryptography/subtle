@@ -1,12 +1,11 @@
 // -*- mode: rust; -*-
 //
-// To the extent possible under law, the authors have waived all copyright and
-// related or neighboring rights to subtle, using the Creative Commons "CC0"
-// public domain dedication.  See
-// <http://creativecommons.org/publicdomain/zero/.0/> for full details.
+// This file is part of subtle, part of the dalek cryptography project.
+// Copyright (c) 2016-2018 isis lovecruft, Henry de Valence
+// See LICENSE for licensing information.
 //
 // Authors:
-// - Isis Agora Lovecruft <isis@patternsinthevoid.net>
+// - isis agora lovecruft <isis@patternsinthevoid.net>
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
@@ -100,7 +99,10 @@ impl Not for Choice {
 /// than its type.
 ///
 /// Uses inline asm when available, otherwise it's a no-op.
-#[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
+#[cfg(all(
+    feature = "nightly",
+    not(any(target_arch = "asmjs", target_arch = "wasm32"))
+))]
 fn black_box(input: u8) -> u8 {
     debug_assert!(input == 0u8 || input == 1u8);
 
@@ -111,7 +113,11 @@ fn black_box(input: u8) -> u8 {
 
     input
 }
-#[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
+#[cfg(any(
+    target_arch = "asmjs",
+    target_arch = "wasm32",
+    not(feature = "nightly")
+))]
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!(input == 0u8 || input == 1u8);
@@ -388,7 +394,7 @@ pub trait ConditionallyAssignable {
 #[cfg(feature = "generic-impls")]
 impl<T> ConditionallyAssignable for T
 where
-    T: Copy + ConditionallySelectable,
+    T: ConditionallySelectable,
 {
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice) {

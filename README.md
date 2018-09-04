@@ -40,7 +40,7 @@ without violating the orphan rules.
 
 ## Documentation
 
-Documentation is available [here](docs).
+Documentation is available [here][docs].
 
 ## About
 
