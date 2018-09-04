@@ -21,10 +21,7 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-use core::ops::{BitAnd, BitOr, BitXor, Not};
-
-#[cfg(feature = "generic-impls")]
-use core::ops::Neg;
+use core::ops::{BitAnd, BitOr, BitXor, Neg, Not};
 
 /// The `Choice` struct represents a choice for use in conditional
 /// assignment.
@@ -335,9 +332,7 @@ generate_integer_conditional_select!(u128 i128);
 /// # Note
 ///
 /// A generic implementation of `ConditionallyNegatable` is provided for types
-/// which are `ConditionallyNegatable` + `Neg`, but this generic implementation
-/// is feature-gated on the `generic-impls` feature in order to allow users to
-/// make custom implementations without clashing with the orphan rules.
+/// which are `ConditionallyNegatable + Neg`.
 pub trait ConditionallyNegatable {
     /// Negate `self` if `choice == Choice(1)`; otherwise, leave it
     /// unchanged.
@@ -347,7 +342,6 @@ pub trait ConditionallyNegatable {
     fn conditional_negate(&mut self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallyNegatable for T
 where
     T: ConditionallyAssignable,
@@ -373,8 +367,7 @@ pub trait ConditionallyAssignable {
     /// # extern crate subtle;
     /// use subtle::ConditionallyAssignable;
     /// #
-    /// # #[cfg(features = "generic-impls")]
-    /// # fn do_test() {
+    /// # fn main() {
     /// let mut x: u8 = 13;
     /// let y:     u8 = 42;
     ///
@@ -383,15 +376,12 @@ pub trait ConditionallyAssignable {
     /// x.conditional_assign(&y, 1.into());
     /// assert_eq!(x, 42);
     /// # }
-    /// # #[cfg(not(features = "generic-impls"))]
-    /// # fn main () { }
     /// ```
     ///
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallyAssignable for T
 where
     T: ConditionallySelectable,
@@ -410,14 +400,11 @@ pub trait ConditionallySwappable {
     /// # Note
     ///
     /// This trait is generically implemented for any type which implements
-    /// `ConditionallyAssignable` + `Copy`, but is feature-gated on the
-    /// "generic-impls" feature, in order to allow more fast/efficient
-    /// implementations without clashing with the orphan rules.
+    /// `ConditionallyAssignable + Copy`.
     #[inline]
     fn conditional_swap(&mut self, other: &mut Self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallySwappable for T
 where
     T: ConditionallyAssignable + Copy,
@@ -461,7 +448,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "generic-impls")]
     fn conditional_assign_i32() {
         let mut a: i32 = 5;
         let b: i32 = 13;
@@ -473,7 +459,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "generic-impls")]
     fn conditional_assign_i64() {
         let mut c: i64 = 2343249123;
         let d: i64 = 8723884895;
