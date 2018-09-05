@@ -59,6 +59,32 @@ impl Choice {
     }
 }
 
+impl From<Choice> for bool {
+    /// Convert the `Choice` wrapper into a `bool`, depending on whether
+    /// the underlying `u8` was a `0` or a `1`.
+    ///
+    /// # Note
+    ///
+    /// This function exists to avoid having higher-level cryptographic protocol
+    /// implementations duplicating this pattern.
+    ///
+    /// The intended use case for this conversion is at the _end_ of a
+    /// higher-level primitive implementation: for example, in checking a keyed
+    /// MAC, where the verification should happen in constant-time (and thus use
+    /// a `Choice`) but it is safe to return a `bool` at the end of the
+    /// verification.
+    #[inline]
+    fn from(source: Choice) -> bool {
+        debug_assert!(source.0 == 0u8 || source.0 == 1u8);
+
+        match source.0 {
+            0 => return false,
+            1 => return true,
+            _ => unsafe { ::core::hint::unreachable_unchecked() },
+        }
+    }
+}
+
 impl BitAnd for Choice {
     type Output = Choice;
     #[inline]
@@ -531,5 +557,16 @@ mod test {
     fn integer_equal() {
         generate_integer_equal_tests!(u8, u16, u32, u64, u128);
         generate_integer_equal_tests!(i8, i16, i32, i64, i128);
+    }
+
+    #[test]
+    fn choice_into_bool() {
+        let choice_true: bool = Choice::from(1).into();
+
+        assert!(choice_true);
+
+        let choice_false: bool = Choice::from(0).into();
+
+        assert!(!choice_false);
     }
 }
