@@ -69,10 +69,13 @@ impl From<Choice> for bool {
     /// # Note
     ///
     /// This function exists to avoid having higher-level cryptographic protocol
-    /// implementations duplicating this pattern.  Users should be advised that
-    /// it's safest to keep the value as a `Choice` for as long as possible and
-    /// use the arithmetic methods provided on that `Choice`, rather than
-    /// branching on `bool`s.
+    /// implementations duplicating this pattern.
+    ///
+    /// The intended use case for this conversion is at the _end_ of a
+    /// higher-level primitive implementation: for example, in checking a keyed
+    /// MAC, where the verification should happen in constant-time (and thus use
+    /// a `Choice`) but it is safe to return a `bool` at the end of the
+    /// verification.
     #[inline]
     fn from(source: Choice) -> bool {
         debug_assert!(source.0 == 0u8 || source.0 == 1u8);
