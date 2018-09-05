@@ -34,10 +34,6 @@ features = ["nightly"]
 an optimization barrier to protect the `Choice` type.
 _Using the `nightly` feature is recommended for security_.
 
-* The `generic-impls` feature (enabled by default) provides generic
-impls of some traits.  It can be disabled to allow specialized impls
-without violating the orphan rules.
-
 ## Documentation
 
 Documentation is available [here][docs].
