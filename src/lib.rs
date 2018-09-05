@@ -19,6 +19,7 @@
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
 #[cfg(feature = "std")]
+#[macro_use]
 extern crate std;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
