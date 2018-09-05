@@ -293,6 +293,7 @@ generate_integer_equal!(u16, i16, 16);
 generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
+generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
 /// Select one of two inputs according to a `Choice` in constant time.
 ///
@@ -555,8 +556,8 @@ mod test {
 
     #[test]
     fn integer_equal() {
-        generate_integer_equal_tests!(u8, u16, u32, u64, u128);
-        generate_integer_equal_tests!(i8, i16, i32, i64, i128);
+        generate_integer_equal_tests!(u8, u16, u32, u64, u128, usize);
+        generate_integer_equal_tests!(i8, i16, i32, i64, i128, isize);
     }
 
     #[test]
