@@ -21,7 +21,7 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-use core::ops::{BitAnd, BitOr, BitXor, Neg, Not};
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 
 /// The `Choice` struct represents a choice for use in conditional
 /// assignment.
@@ -67,6 +67,13 @@ impl BitAnd for Choice {
     }
 }
 
+impl BitAndAssign for Choice {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: Choice) {
+        *self = *self & rhs;
+    }
+}
+
 impl BitOr for Choice {
     type Output = Choice;
     #[inline]
@@ -75,11 +82,25 @@ impl BitOr for Choice {
     }
 }
 
+impl BitOrAssign for Choice {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: Choice) {
+        *self = *self | rhs;
+    }
+}
+
 impl BitXor for Choice {
     type Output = Choice;
     #[inline]
     fn bitxor(self, rhs: Choice) -> Choice {
         (self.0 ^ rhs.0).into()
+    }
+}
+
+impl BitXorAssign for Choice {
+    #[inline]
+    fn bitxor_assign(&mut self, rhs: Choice) {
+        *self = *self ^ rhs;
     }
 }
 
