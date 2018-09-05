@@ -20,9 +20,7 @@ exclude = [
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
 [features]
-default = ["std", "generic-impls"]
+default = ["std"]
 std = []
 bench = []
 nightly = []
-# Enables generic implementations of ConditionallyNegatable and ConditionallySwappable
-generic-impls = []
