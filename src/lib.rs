@@ -60,6 +60,27 @@ impl Choice {
     pub fn unwrap_u8(&self) -> u8 {
         self.0
     }
+
+    /// Unwrap the `Choice wrapper into a `bool`, depending on whether
+    /// the underlying `u8` was a `0` or a `1`.
+    ///
+    /// # Note
+    ///
+    /// This function exists to avoid having higher-level cryptographic protocol
+    /// implementations duplicating this pattern.  Users should be advised that
+    /// it's safest to keep the value as a `Choice` for as long as possible and
+    /// use the arithmetic methods provided on that `Choice`, rather than
+    /// branching on `bool`s.
+    #[inline]
+    pub fn unwrap_bool(&self) -> bool {
+        debug_assert!(self.0 == 0u8 || self.0 == 1u8);
+
+        match self.0 {
+            0 => return false,
+            1 => return true,
+            _ => unsafe { ::core::hint::unreachable_unchecked() },
+        }
+    }
 }
 
 impl BitAnd for Choice {
@@ -525,5 +546,16 @@ mod test {
     fn integer_equal() {
         generate_integer_equal_tests!(u8, u16, u32, u64, u128);
         generate_integer_equal_tests!(i8, i16, i32, i64, i128);
+    }
+
+    #[test]
+    fn unwrap_bool() {
+        let choice_true: Choice = Choice::from(1);
+
+        assert!(choice_true.unwrap_bool());
+
+        let choice_false: Choice = Choice::from(0);
+
+        assert!(!choice_false.unwrap_bool());
     }
 }
