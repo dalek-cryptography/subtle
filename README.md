@@ -24,7 +24,7 @@ is unfortunate, but is no worse than C code.
 
 ```toml
 [dependencies.subtle]
-version = "^0.7"
+version = "^0.8"
 features = ["nightly"]
 ```
 
@@ -33,10 +33,6 @@ features = ["nightly"]
 * The `nightly` feature enables the use of
 an optimization barrier to protect the `Choice` type.
 _Using the `nightly` feature is recommended for security_.
-
-* The `generic-impls` feature (enabled by default) provides generic
-impls of some traits.  It can be disabled to allow specialized impls
-without violating the orphan rules.
 
 ## Documentation
 
