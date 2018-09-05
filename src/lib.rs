@@ -21,10 +21,7 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-use core::ops::{BitAnd, BitOr, BitXor, Not};
-
-#[cfg(feature = "generic-impls")]
-use core::ops::Neg;
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 
 /// The `Choice` struct represents a choice for use in conditional
 /// assignment.
@@ -62,11 +59,44 @@ impl Choice {
     }
 }
 
+impl From<Choice> for bool {
+    /// Convert the `Choice` wrapper into a `bool`, depending on whether
+    /// the underlying `u8` was a `0` or a `1`.
+    ///
+    /// # Note
+    ///
+    /// This function exists to avoid having higher-level cryptographic protocol
+    /// implementations duplicating this pattern.
+    ///
+    /// The intended use case for this conversion is at the _end_ of a
+    /// higher-level primitive implementation: for example, in checking a keyed
+    /// MAC, where the verification should happen in constant-time (and thus use
+    /// a `Choice`) but it is safe to return a `bool` at the end of the
+    /// verification.
+    #[inline]
+    fn from(source: Choice) -> bool {
+        debug_assert!(source.0 == 0u8 || source.0 == 1u8);
+
+        match source.0 {
+            0 => return false,
+            1 => return true,
+            _ => unsafe { ::core::hint::unreachable_unchecked() },
+        }
+    }
+}
+
 impl BitAnd for Choice {
     type Output = Choice;
     #[inline]
     fn bitand(self, rhs: Choice) -> Choice {
         (self.0 & rhs.0).into()
+    }
+}
+
+impl BitAndAssign for Choice {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: Choice) {
+        *self = *self & rhs;
     }
 }
 
@@ -78,11 +108,25 @@ impl BitOr for Choice {
     }
 }
 
+impl BitOrAssign for Choice {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: Choice) {
+        *self = *self | rhs;
+    }
+}
+
 impl BitXor for Choice {
     type Output = Choice;
     #[inline]
     fn bitxor(self, rhs: Choice) -> Choice {
         (self.0 ^ rhs.0).into()
+    }
+}
+
+impl BitXorAssign for Choice {
+    #[inline]
+    fn bitxor_assign(&mut self, rhs: Choice) {
+        *self = *self ^ rhs;
     }
 }
 
@@ -335,9 +379,7 @@ generate_integer_conditional_select!(u128 i128);
 /// # Note
 ///
 /// A generic implementation of `ConditionallyNegatable` is provided for types
-/// which are `ConditionallyNegatable` + `Neg`, but this generic implementation
-/// is feature-gated on the `generic-impls` feature in order to allow users to
-/// make custom implementations without clashing with the orphan rules.
+/// which are `ConditionallyNegatable + Neg`.
 pub trait ConditionallyNegatable {
     /// Negate `self` if `choice == Choice(1)`; otherwise, leave it
     /// unchanged.
@@ -347,7 +389,6 @@ pub trait ConditionallyNegatable {
     fn conditional_negate(&mut self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallyNegatable for T
 where
     T: ConditionallyAssignable,
@@ -373,8 +414,7 @@ pub trait ConditionallyAssignable {
     /// # extern crate subtle;
     /// use subtle::ConditionallyAssignable;
     /// #
-    /// # #[cfg(features = "generic-impls")]
-    /// # fn do_test() {
+    /// # fn main() {
     /// let mut x: u8 = 13;
     /// let y:     u8 = 42;
     ///
@@ -383,15 +423,12 @@ pub trait ConditionallyAssignable {
     /// x.conditional_assign(&y, 1.into());
     /// assert_eq!(x, 42);
     /// # }
-    /// # #[cfg(not(features = "generic-impls"))]
-    /// # fn main () { }
     /// ```
     ///
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallyAssignable for T
 where
     T: ConditionallySelectable,
@@ -410,14 +447,11 @@ pub trait ConditionallySwappable {
     /// # Note
     ///
     /// This trait is generically implemented for any type which implements
-    /// `ConditionallyAssignable` + `Copy`, but is feature-gated on the
-    /// "generic-impls" feature, in order to allow more fast/efficient
-    /// implementations without clashing with the orphan rules.
+    /// `ConditionallyAssignable + Copy`.
     #[inline]
     fn conditional_swap(&mut self, other: &mut Self, choice: Choice);
 }
 
-#[cfg(feature = "generic-impls")]
 impl<T> ConditionallySwappable for T
 where
     T: ConditionallyAssignable + Copy,
@@ -461,7 +495,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "generic-impls")]
     fn conditional_assign_i32() {
         let mut a: i32 = 5;
         let b: i32 = 13;
@@ -473,7 +506,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "generic-impls")]
     fn conditional_assign_i64() {
         let mut c: i64 = 2343249123;
         let d: i64 = 8723884895;
@@ -525,5 +557,16 @@ mod test {
     fn integer_equal() {
         generate_integer_equal_tests!(u8, u16, u32, u64, u128);
         generate_integer_equal_tests!(i8, i16, i32, i64, i128);
+    }
+
+    #[test]
+    fn choice_into_bool() {
+        let choice_true: bool = Choice::from(1).into();
+
+        assert!(choice_true);
+
+        let choice_false: bool = Choice::from(0).into();
+
+        assert!(!choice_false);
     }
 }
