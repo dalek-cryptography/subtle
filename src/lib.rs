@@ -60,8 +60,10 @@ impl Choice {
     pub fn unwrap_u8(&self) -> u8 {
         self.0
     }
+}
 
-    /// Unwrap the `Choice wrapper into a `bool`, depending on whether
+impl From<Choice> for bool {
+    /// Convert the `Choice` wrapper into a `bool`, depending on whether
     /// the underlying `u8` was a `0` or a `1`.
     ///
     /// # Note
@@ -72,10 +74,10 @@ impl Choice {
     /// use the arithmetic methods provided on that `Choice`, rather than
     /// branching on `bool`s.
     #[inline]
-    pub fn unwrap_bool(&self) -> bool {
-        debug_assert!(self.0 == 0u8 || self.0 == 1u8);
+    fn from(source: Choice) -> bool {
+        debug_assert!(source.0 == 0u8 || source.0 == 1u8);
 
-        match self.0 {
+        match source.0 {
             0 => return false,
             1 => return true,
             _ => unsafe { ::core::hint::unreachable_unchecked() },
@@ -549,13 +551,13 @@ mod test {
     }
 
     #[test]
-    fn unwrap_bool() {
-        let choice_true: Choice = Choice::from(1);
+    fn choice_into_bool() {
+        let choice_true: bool = Choice::from(1).into();
 
-        assert!(choice_true.unwrap_bool());
+        assert!(choice_true);
 
-        let choice_false: Choice = Choice::from(0);
+        let choice_false: bool = Choice::from(0).into();
 
-        assert!(!choice_false.unwrap_bool());
+        assert!(!choice_false);
     }
 }
