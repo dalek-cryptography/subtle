@@ -525,8 +525,10 @@ mod test {
 
     #[test]
     fn integer_conditional_select() {
-        generate_integer_conditional_select_tests!(u8 u16 u32 u64 u128);
-        generate_integer_conditional_select_tests!(i8 i16 i32 i64 i128);
+        generate_integer_conditional_select_tests!(u8 u16 u32 u64);
+        generate_integer_conditional_select_tests!(i8 i16 i32 i64);
+        #[cfg(feature = "i128")]
+        generate_integer_conditional_select_tests!(i128 u128);
     }
 
     #[test]
@@ -552,8 +554,10 @@ mod test {
 
     #[test]
     fn integer_equal() {
-        generate_integer_equal_tests!(u8, u16, u32, u64, u128);
-        generate_integer_equal_tests!(i8, i16, i32, i64, i128);
+        generate_integer_equal_tests!(u8, u16, u32, u64);
+        generate_integer_equal_tests!(i8, i16, i32, i64);
+        #[cfg(feature = "i128")]
+        generate_integer_equal_tests!(i128, u128);
     }
 
     #[test]
