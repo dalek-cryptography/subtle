@@ -18,6 +18,17 @@ matrix:
     # Test building no-std only on nightly.
     - rust: nightly
       env: TEST_COMMAND=build EXTRA_FLAGS=--no-default-features FEATURES=''
+    # Test MSRV
+    - rust: 1.13.0
+      script: cargo test --no-default-features --features std
+    # Test if crate can be truly built without std
+    - rust: nightly
+      env: TARGET=thumbv7em-none-eabi
+      script: xargo build --no-default-features --target $TARGET
+      install:
+        - cargo install xargo || true
+        - rustup target install armv7-unknown-linux-gnueabihf
+        - rustup component add rust-src
 
 script:
   - cargo $TEST_COMMAND --features="$FEATURES" $EXTRA_FLAGS

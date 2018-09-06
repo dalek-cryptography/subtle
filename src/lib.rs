@@ -76,12 +76,7 @@ impl From<Choice> for bool {
     #[inline]
     fn from(source: Choice) -> bool {
         debug_assert!(source.0 == 0u8 || source.0 == 1u8);
-
-        match source.0 {
-            0 => return false,
-            1 => return true,
-            _ => unsafe { ::core::hint::unreachable_unchecked() },
-        }
+        source.0 != 0
     }
 }
 
@@ -292,6 +287,7 @@ generate_integer_equal!(u8, i8, 8);
 generate_integer_equal!(u16, i16, 16);
 generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
+#[cfg(feature = "i128")]
 generate_integer_equal!(u128, i128, 128);
 
 /// Select one of two inputs according to a `Choice` in constant time.
@@ -372,6 +368,7 @@ generate_integer_conditional_select!(  u8   i8);
 generate_integer_conditional_select!( u16  i16);
 generate_integer_conditional_select!( u32  i32);
 generate_integer_conditional_select!( u64  i64);
+#[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
 /// A type which can be conditionally negated in constant time.
