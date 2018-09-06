@@ -33,3 +33,7 @@ notifications:
   slack:
     rooms:
       - dalek-cryptography:Xxv9WotKYWdSoKlgKNqXiHoD#dalek-bots
+
+cache:
+  directories:
+    - /home/travis/.cargo
