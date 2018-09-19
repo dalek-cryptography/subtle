@@ -19,6 +19,7 @@
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
 
 #[cfg(feature = "std")]
+#[macro_use]
 extern crate std;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
@@ -289,6 +290,7 @@ generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
 #[cfg(feature = "i128")]
 generate_integer_equal!(u128, i128, 128);
+generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
 /// Select one of two inputs according to a `Choice` in constant time.
 ///

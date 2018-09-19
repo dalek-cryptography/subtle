@@ -95,6 +95,7 @@ fn integer_equal() {
     generate_integer_equal_tests!(i8, i16, i32, i64);
     #[cfg(feature = "i128")]
     generate_integer_equal_tests!(i128, u128);
+    generate_integer_equal_tests!(isize, usize);
 }
 
 #[test]
