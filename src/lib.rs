@@ -32,4 +32,4 @@ mod transcript;
 
 pub use transcript::Transcript;
 pub use transcript::TranscriptRng;
-pub use transcript::TranscriptRngConstructor;
+pub use transcript::TranscriptRngBuilder;

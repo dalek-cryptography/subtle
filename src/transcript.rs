@@ -177,9 +177,9 @@ impl Transcript {
     /// Fork the current [`Transcript`] to construct an RNG whose output is bound
     /// to the current transcript state as well as prover's secrets.
     ///
-    /// See the [`TranscriptRngConstructor`] documentation for more details.
-    pub fn fork_transcript(&self) -> TranscriptRngConstructor {
-        TranscriptRngConstructor {
+    /// See the [`TranscriptRngBuilder`] documentation for more details.
+    pub fn build_rng(&self) -> TranscriptRngBuilder {
+        TranscriptRngBuilder {
             strobe: self.strobe.clone(),
         }
     }
@@ -189,7 +189,7 @@ impl Transcript {
 /// prover secrets and an external RNG.
 ///
 /// The prover commits witness data to the
-/// [`TranscriptRngConstructor`] before using an external RNG to
+/// [`TranscriptRngBuilder`] before using an external RNG to
 /// finalize to a [`TranscriptRng`].  The resulting [`TranscriptRng`]
 /// will be a PRF of all of the entire public transcript, the prover's
 /// secret witness data, and randomness from the external RNG.
@@ -197,10 +197,10 @@ impl Transcript {
 /// # Usage
 ///
 /// To construct a [`TranscriptRng`], a prover calls
-/// [`Transcript::fork_transcript()`] to clone the transcript state,
+/// [`Transcript::build_rng()`] to clone the transcript state,
 /// then uses [`commit_witness_bytes()`][commit_witness_bytes] to
 /// rekey the transcript with the prover's secrets, before finally
-/// calling [`reseed_from_rng()`][reseed_from_rng].  This rekeys the
+/// calling [`finalize()`][finalize].  This rekeys the
 /// transcript with the output of an external [`rand::Rng`] instance
 /// and returns a finalized [`TranscriptRng`].
 ///
@@ -218,10 +218,10 @@ impl Transcript {
 /// transcript.commit_bytes(b"public", public_data);
 ///
 /// let mut rng = transcript
-///     .fork_transcript()
+///     .build_rng()
 ///     .commit_witness_bytes(b"witness1", witness_data)
 ///     .commit_witness_bytes(b"witness2", more_witness_data)
-///     .reseed_from_rng(&mut rand::thread_rng());
+///     .finalize(&mut rand::thread_rng());
 /// # }
 /// ```
 /// In this example, the final `rng` is a PRF of `public_data`
@@ -229,7 +229,7 @@ impl Transcript {
 /// secret `witness_data` and `more_witness_data`, and finally, of the
 /// output of the thread-local RNG.
 /// Note that because the [`TranscriptRng`] is produced from
-/// [`reseed_from_rng()`][reseed_from_rng], it's impossible to forget
+/// [`finalize()`][finalize], it's impossible to forget
 /// to rekey the transcript with external randomness.
 ///
 /// # Note
@@ -244,19 +244,19 @@ impl Transcript {
 ///
 /// # Typed Witness Data
 ///
-/// Like the [`Transcript`], the [`TranscriptRngConstructor`] provides
+/// Like the [`Transcript`], the [`TranscriptRngBuilder`] provides
 /// a minimal, byte-oriented API, and like the [`Transcript`], this
 /// API can be extended to allow committing protocol-specific types
 /// using an extension trait.  See the [`Transcript`] documentation
 /// for more details.
 ///
-/// [commit_witness_bytes]: TranscriptRngConstructor::commit_witness_bytes
-/// [reseed_from_rng]: TranscriptRngConstructor::reseed_from_rng
-pub struct TranscriptRngConstructor {
+/// [commit_witness_bytes]: TranscriptRngBuilder::commit_witness_bytes
+/// [finalize]: TranscriptRngBuilder::finalize
+pub struct TranscriptRngBuilder {
     strobe: Strobe128,
 }
 
-impl TranscriptRngConstructor {
+impl TranscriptRngBuilder {
     /// Rekey the transcript using the provided witness data.
     ///
     /// The `label` parameter is metadata about `witness`, and is
@@ -273,7 +273,7 @@ impl TranscriptRngConstructor {
         mut self,
         label: &'static [u8],
         witness: &[u8],
-    ) -> TranscriptRngConstructor {
+    ) -> TranscriptRngBuilder {
         let witness_len = encode_usize(witness.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&witness_len, true);
@@ -294,7 +294,7 @@ impl TranscriptRngConstructor {
     /// meta-AD( "rng" );
     /// KEY( 32 bytes of rng output );
     /// ```
-    pub fn reseed_from_rng<R>(mut self, rng: &mut R) -> TranscriptRng
+    pub fn finalize<R>(mut self, rng: &mut R) -> TranscriptRng
     where
         R: rand::Rng + rand::CryptoRng,
     {
@@ -316,7 +316,7 @@ impl TranscriptRngConstructor {
 /// An RNG providing synthetic randomness to the prover.
 ///
 /// A [`TranscriptRng`] is constructed from a [`Transcript`] using a
-/// [`TranscriptRngConstructor`]; see its documentation for details on
+/// [`TranscriptRngBuilder`]; see its documentation for details on
 /// how to construct one.
 ///
 /// # Design
@@ -404,7 +404,7 @@ impl TranscriptRngConstructor {
 /// variables.
 ///
 /// The [`TranscriptRng`] is produced from a
-/// [`TranscriptRngConstructor`], which allows the prover to rekey the
+/// [`TranscriptRngBuilder`], which allows the prover to rekey the
 /// STROBE state with arbitrary witness data, and then forces the
 /// prover to rekey the STROBE state with the output of an external
 /// [`rand::Rng`] instance.  The [`TranscriptRng`] then uses STROBE
@@ -577,24 +577,24 @@ mod tests {
         t4.commit_bytes(b"com", commitment2);
 
         let mut r1 = t1
-            .fork_transcript()
+            .build_rng()
             .commit_witness_bytes(b"witness", witness1)
-            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+            .finalize(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r2 = t2
-            .fork_transcript()
+            .build_rng()
             .commit_witness_bytes(b"witness", witness1)
-            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+            .finalize(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r3 = t3
-            .fork_transcript()
+            .build_rng()
             .commit_witness_bytes(b"witness", witness2)
-            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+            .finalize(&mut ChaChaRng::from_seed([0; 32]));
 
         let mut r4 = t4
-            .fork_transcript()
+            .build_rng()
             .commit_witness_bytes(b"witness", witness2)
-            .reseed_from_rng(&mut ChaChaRng::from_seed([0; 32]));
+            .finalize(&mut ChaChaRng::from_seed([0; 32]));
 
         let s1 = Scalar::random(&mut r1);
         let s2 = Scalar::random(&mut r2);
