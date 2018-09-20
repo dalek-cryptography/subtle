@@ -20,7 +20,8 @@ exclude = [
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
 [features]
-default = ["std"]
+default = ["std", "i128"]
 std = []
+i128 = []
 bench = []
 nightly = []
