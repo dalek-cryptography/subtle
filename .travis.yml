@@ -3,26 +3,37 @@ language: rust
 rust:
   - stable
   - beta
-
-env:
-  - TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
-  - TEST_COMMAND=test EXTRA_FLAGS='--no-default-features' FEATURES='std'
+  - nightly
 
 matrix:
   include:
-    # Also run the default tests on nightly.
+    # Test nightly feature
     - rust: nightly
-      env: TEST_COMMAND=test EXTRA_FLAGS='' FEATURES=''
+      env: NAME="nightly feature"
+      script: cargo test --features nightly
+    # Test MSRV
+    - rust: 1.13.0
+      env: NAME="MSRV test"
+      script: cargo test --no-default-features --features std
+    # Test if crate can be truly built without std
     - rust: nightly
-      env: TEST_COMMAND=test EXTRA_FLAGS='--no-default-features' FEATURES='std'
-    # Test building no-std only on nightly.
-    - rust: nightly
-      env: TEST_COMMAND=build EXTRA_FLAGS=--no-default-features FEATURES=''
+      env: TARGET=thumbv7em-none-eabi
+      script: xargo build --no-default-features --target $TARGET
+      install:
+        - cargo install xargo || true
+        - rustup target install armv7-unknown-linux-gnueabihf
+        - rustup component add rust-src
 
 script:
-  - cargo $TEST_COMMAND --features="$FEATURES" $EXTRA_FLAGS
+  - cargo test && cargo test --no-default-features &&
+    cargo test --no-default-features --features std &&
+    cargo test --no-default-features --features "std i128"
 
 notifications:
   slack:
     rooms:
       - dalek-cryptography:Xxv9WotKYWdSoKlgKNqXiHoD#dalek-bots
+
+cache:
+  directories:
+    - /home/travis/.cargo
