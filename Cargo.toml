@@ -1,6 +1,6 @@
 [package]
 name = "subtle"
-version = "0.8.0"
+version = "1.0.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
@@ -23,5 +23,4 @@ travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 default = ["std", "i128"]
 std = []
 i128 = []
-bench = []
 nightly = []
