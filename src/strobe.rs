@@ -1,6 +1,7 @@
 //! Minimal implementatation of (parts of) Strobe.
 
 use keccak;
+use std::ops::{Deref, DerefMut};
 
 /// Strobe R value; security level 128 is hardcoded
 const STROBE_R: u8 = 166;
@@ -12,16 +13,23 @@ const FLAG_T: u8 = 1 << 3;
 const FLAG_M: u8 = 1 << 4;
 const FLAG_K: u8 = 1 << 5;
 
-fn transmute_state(st: &mut [u8; 200]) -> &mut [u64; 25] {
-    unsafe { &mut *(st as *mut [u8; 200] as *mut [u64; 25]) }
+fn transmute_state(st: &mut AlignedKeccakState) -> &mut [u64; 25] {
+    unsafe { &mut *(st as *mut AlignedKeccakState as *mut [u64; 25]) }
 }
+
+/// This is a wrapper around 200-byte buffer that's always 8-byte aligned
+/// to make pointers to it safely convertible to pointers to [u64; 25]
+/// (since u64 words must be 8-byte aligned)
+#[derive(Clone)]
+#[repr(align(8))]
+struct AlignedKeccakState([u8; 200]);
 
 /// A Strobe context for the 128-bit security level.
 ///
 /// Only `meta-AD`, `AD`, `KEY`, and `PRF` operations are supported.
 #[derive(Clone)]
 pub struct Strobe128 {
-    state: [u8; 200],
+    state: AlignedKeccakState,
     pos: u8,
     pos_begin: u8,
     cur_flags: u8,
@@ -38,14 +46,14 @@ impl Drop for Strobe128 {
     fn drop(&mut self) {
         // Ensure that the Strobe state is zeroed on drop
         use clear_on_drop::clear::Clear;
-        self.state.clear();
+        self.state.0.clear();
     }
 }
 
 impl Strobe128 {
     pub fn new(protocol_label: &[u8]) -> Strobe128 {
         let initial_state = {
-            let mut st = [0u8; 200];
+            let mut st = AlignedKeccakState([0u8; 200]);
             st[0..6].copy_from_slice(&[1, STROBE_R + 2, 1, 0, 1, 96]);
             st[6..18].copy_from_slice(b"STROBEv1.0.2");
             keccak::f1600(transmute_state(&mut st));
@@ -157,6 +165,20 @@ impl Strobe128 {
         if force_f && self.pos != 0 {
             self.run_f();
         }
+    }
+}
+
+impl Deref for AlignedKeccakState {
+    type Target = [u8; 200];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for AlignedKeccakState {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
