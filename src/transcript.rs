@@ -6,7 +6,7 @@ use strobe::Strobe128;
 fn encode_usize(x: usize) -> [u8; 4] {
     use byteorder::{ByteOrder, LittleEndian};
 
-    assert!(x < (u32::max_value() as usize));
+    assert!(x <= (u32::max_value() as usize));
 
     let mut buf = [0; 4];
     LittleEndian::write_u32(&mut buf, x as u32);
