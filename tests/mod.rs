@@ -57,6 +57,21 @@ macro_rules! generate_integer_conditional_select_tests {
 
         assert_eq!(<$t>::conditional_select(&x, &y, 0.into()), 0);
         assert_eq!(<$t>::conditional_select(&x, &y, 1.into()), y);
+
+        let mut z = x;
+        let mut w = y;
+
+        <$t>::conditional_swap(&mut z, &mut w, 0.into());
+        assert_eq!(z, x);
+        assert_eq!(w, y);
+        <$t>::conditional_swap(&mut z, &mut w, 1.into());
+        assert_eq!(z, y);
+        assert_eq!(w, x);
+
+        z.conditional_assign(&x, 1.into());
+        w.conditional_assign(&y, 0.into());
+        assert_eq!(z, x);
+        assert_eq!(w, x);
     )*)
 }
 

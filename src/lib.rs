@@ -292,21 +292,11 @@ generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
 generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
-/// Select one of two inputs according to a `Choice` in constant time.
+/// A type which can be conditionally selected in constant time.
 ///
-/// # Examples
-///
-/// ```
-/// # use subtle;
-/// use subtle::ConditionallySelectable;
-/// use subtle::Choice;
-/// let a: i32 = 5;
-/// let b: i32 = 13;
-///
-/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(0)), a);
-/// assert_eq!(i32::conditional_select(&a, &b, Choice::from(1)), b);
-/// ```
-pub trait ConditionallySelectable {
+/// This trait also provides generic implementations of conditional
+/// assignment and conditional swaps.
+pub trait ConditionallySelectable: Copy {
     /// Select `a` or `b` according to `choice`.
     ///
     /// # Returns
@@ -315,8 +305,80 @@ pub trait ConditionallySelectable {
     /// * `b` if `choice == Choice(1)`.
     ///
     /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallySelectable;
+    /// #
+    /// # fn main() {
+    /// let x: u8 = 13;
+    /// let y: u8 = 42;
+    ///
+    /// let z = u8::conditional_select(&x, &y, 0.into());
+    /// assert_eq!(z, x);
+    /// let z = u8::conditional_select(&x, &y, 1.into());
+    /// assert_eq!(z, y);
+    /// # }
+    /// ```
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
+
+    /// Conditionally assign `other` to `self`, according to `choice`.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallySelectable;
+    /// #
+    /// # fn main() {
+    /// let mut x: u8 = 13;
+    /// let mut y: u8 = 42;
+    ///
+    /// x.conditional_assign(&y, 0.into());
+    /// assert_eq!(x, 13);
+    /// x.conditional_assign(&y, 1.into());
+    /// assert_eq!(x, 42);
+    /// # }
+    /// ```
+    #[inline]
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        *self = Self::conditional_select(self, other, choice);
+    }
+
+    /// Conditionally swap `self` and `other` if `choice == 1`; otherwise,
+    /// reassign both unto themselves.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConditionallySelectable;
+    /// #
+    /// # fn main() {
+    /// let mut x: u8 = 13;
+    /// let mut y: u8 = 42;
+    ///
+    /// u8::conditional_swap(&mut x, &mut y, 0.into());
+    /// assert_eq!(x, 13);
+    /// assert_eq!(y, 42);
+    /// u8::conditional_swap(&mut x, &mut y, 1.into());
+    /// assert_eq!(x, 42);
+    /// assert_eq!(y, 13);
+    /// # }
+    /// ```
+    #[inline]
+    fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
+        let t: Self = *a;
+        a.conditional_assign(&b, choice);
+        b.conditional_assign(&t, choice);
+    }
 }
 
 macro_rules! to_signed_int {
@@ -360,7 +422,25 @@ macro_rules! generate_integer_conditional_select {
                 // if choice = 0, mask = (-0) = 0000...0000
                 // if choice = 1, mask = (-1) = 1111...1111
                 let mask = -(choice.unwrap_u8() as to_signed_int!($t)) as $t;
-                a ^ ((mask) & (a ^ b))
+                a ^ (mask & (a ^ b))
+            }
+
+            #[inline]
+            fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+                // if choice = 0, mask = (-0) = 0000...0000
+                // if choice = 1, mask = (-1) = 1111...1111
+                let mask = -(choice.unwrap_u8() as to_signed_int!($t)) as $t;
+                *self ^= mask & (*self ^ *other);
+            }
+
+            #[inline]
+            fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
+                // if choice = 0, mask = (-0) = 0000...0000
+                // if choice = 1, mask = (-1) = 1111...1111
+                let mask = -(choice.unwrap_u8() as to_signed_int!($t)) as $t;
+                let t = mask & (*a ^ *b);
+                *a ^= t;
+                *b ^= t;
             }
          }
     )*)
@@ -377,8 +457,9 @@ generate_integer_conditional_select!(u128 i128);
 ///
 /// # Note
 ///
-/// A generic implementation of `ConditionallyNegatable` is provided for types
-/// which are `ConditionallyNegatable + Neg`.
+/// A generic implementation of `ConditionallyNegatable` is provided
+/// for types `T` which are `ConditionallySelectable` and have `Neg`
+/// implemented on `&T`.
 pub trait ConditionallyNegatable {
     /// Negate `self` if `choice == Choice(1)`; otherwise, leave it
     /// unchanged.
@@ -390,7 +471,7 @@ pub trait ConditionallyNegatable {
 
 impl<T> ConditionallyNegatable for T
 where
-    T: ConditionallyAssignable,
+    T: ConditionallySelectable,
     for<'a> &'a T: Neg<Output = T>,
 {
     #[inline]
@@ -398,67 +479,5 @@ where
         // Need to cast to eliminate mutability
         let self_neg: T = -(self as &T);
         self.conditional_assign(&self_neg, choice);
-    }
-}
-
-/// A type which can be conditionally assigned in constant time.
-pub trait ConditionallyAssignable {
-    /// Conditionally assign `other` to `self`, according to `choice`.
-    ///
-    /// This function should execute in constant time.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate subtle;
-    /// use subtle::ConditionallyAssignable;
-    /// #
-    /// # fn main() {
-    /// let mut x: u8 = 13;
-    /// let y:     u8 = 42;
-    ///
-    /// x.conditional_assign(&y, 0.into());
-    /// assert_eq!(x, 13);
-    /// x.conditional_assign(&y, 1.into());
-    /// assert_eq!(x, 42);
-    /// # }
-    /// ```
-    ///
-    #[inline]
-    fn conditional_assign(&mut self, other: &Self, choice: Choice);
-}
-
-impl<T> ConditionallyAssignable for T
-where
-    T: ConditionallySelectable,
-{
-    #[inline]
-    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
-        *self = T::conditional_select(self, other, choice);
-    }
-}
-
-/// A type which is conditionally swappable in constant time.
-pub trait ConditionallySwappable {
-    /// Conditionally swap `self` and `other` if `choice == 1`; otherwise,
-    /// reassign both unto themselves.
-    ///
-    /// # Note
-    ///
-    /// This trait is generically implemented for any type which implements
-    /// `ConditionallyAssignable + Copy`.
-    #[inline]
-    fn conditional_swap(&mut self, other: &mut Self, choice: Choice);
-}
-
-impl<T> ConditionallySwappable for T
-where
-    T: ConditionallyAssignable + Copy,
-{
-    #[inline]
-    fn conditional_swap(&mut self, other: &mut T, choice: Choice) {
-        let temp: T = *self;
-        self.conditional_assign(&other, choice);
-        other.conditional_assign(&temp, choice);
     }
 }
