@@ -29,8 +29,6 @@ for use by the prover.  This provides sythetic randomness derived from
 the entire public transcript, as well as the prover's witness data,
 and an auxiliary input from an external RNG.
 
-**WARNING: This code is not yet suitable for deployment.**
-
 ## About
 
 Merlin is authored by Henry de Valence, with design input from Isis
