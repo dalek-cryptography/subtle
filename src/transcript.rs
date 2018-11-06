@@ -18,7 +18,20 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// The prover's messages are added to the transcript using `commit_bytes`,
 /// and the verifier's challenges can be computed using `challenge_bytes`.
 ///
-/// # Usage
+/// # Creating and using a Merlin transcript
+///
+/// To create a Merlin transcript, use [`Transcript::new()`].  This
+/// function takes a domain separation label which should be unique to
+/// the application.  To use the transcript with a Merlin-based proof
+/// implementation, the prover's side creates a Merlin transcript with
+/// an application-specific domain separation label, and passes a
+/// `&mut` reference to the transcript to the proving function(s).  To
+/// verify the resulting proof, the verifier creates their own Merlin
+/// transcript using the same domain separation label, then passes a
+/// `&mut` reference to the verifier's transcript to the verification
+/// function.
+///
+/// # Implementing proofs using Merlin
 ///
 /// Implementations of proof protocols should take a `&mut Transcript`
 /// as a parameter, **not** construct one internally.  This provides
@@ -27,7 +40,8 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// 1.  It forces the API client to initialize their own transcript
 /// using [`Transcript::new()`].  Since that function takes a domain
 /// separation string, this ensures that all proofs are
-/// domain-separated.
+/// domain-separated, not just with a proof-specific domain separator,
+/// but also with a per-application domain separator.
 ///
 /// 2.  It ensures that protocols are sequentially composable, by
 /// running them on a common transcript.  (Since transcript instances
