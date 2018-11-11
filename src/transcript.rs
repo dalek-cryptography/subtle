@@ -107,7 +107,7 @@ fn encode_usize(x: usize) -> [u8; 4] {
 /// # fn main() { }
 /// ```
 /// Now, the implementation of the protocol can use the `domain_sep`
-/// to add domain seperation to an existing `&mut Transcript`, and
+/// to add domain separation to an existing `&mut Transcript`, and
 /// then call the `commit_point` and `challenge_scalar` methods,
 /// rather than calling [`commit_bytes`][Transcript::commit_bytes] and
 /// [`challenge_bytes`][Transcript::challenge_bytes] directly.
