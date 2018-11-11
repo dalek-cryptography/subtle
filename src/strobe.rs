@@ -1,4 +1,4 @@
-//! Minimal implementatation of (parts of) Strobe.
+//! Minimal implementation of (parts of) Strobe.
 
 use keccak;
 use std::ops::{Deref, DerefMut};
