@@ -566,8 +566,8 @@ mod tests {
     #[test]
     fn transcript_rng_is_bound_to_transcript_and_witnesses() {
         use curve25519_dalek::scalar::Scalar;
-        use rand::prng::chacha::ChaChaRng;
         use rand::SeedableRng;
+        use rand_chacha::ChaChaRng;
 
         // Check that the TranscriptRng is bound to the transcript and
         // the witnesses.  This is done by producing a sequence of
