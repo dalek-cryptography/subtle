@@ -24,6 +24,8 @@ extern crate rand_core;
 #[cfg(test)]
 extern crate curve25519_dalek;
 #[cfg(test)]
+extern crate rand_chacha;
+#[cfg(test)]
 extern crate strobe_rs;
 
 mod constants;
