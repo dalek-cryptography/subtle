@@ -3,6 +3,14 @@ use rand_core;
 
 use strobe::Strobe128;
 
+fn encode_u64(x: u64) -> [u8; 8] {
+    use byteorder::{ByteOrder, LittleEndian};
+
+    let mut buf = [0; 8];
+    LittleEndian::write_u64(&mut buf, x);
+    buf
+}
+
 fn encode_usize(x: usize) -> [u8; 4] {
     use byteorder::{ByteOrder, LittleEndian};
 
@@ -167,6 +175,18 @@ impl Transcript {
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
         self.strobe.ad(message, false);
+    }
+
+    /// Convenience method for committing a `u64` to the transcript.
+    ///
+    /// The `label` parameter is metadata about the message, and is
+    /// also committed to the transcript.
+    ///
+    /// # Implementation
+    ///
+    /// Calls `commit_bytes` with the little-endian encoding of `x`.
+    pub fn commit_u64(&mut self, label: &'static [u8], x: u64) {
+        self.commit_bytes(label, &encode_u64(x));
     }
 
     /// Fill the supplied buffer with the verifier's challenge bytes.
