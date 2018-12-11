@@ -11,7 +11,7 @@ fn encode_u64(x: u64) -> [u8; 8] {
     buf
 }
 
-fn encode_usize(x: usize) -> [u8; 4] {
+fn encode_usize_as_u32(x: usize) -> [u8; 4] {
     use byteorder::{ByteOrder, LittleEndian};
 
     assert!(x <= (u32::max_value() as usize));
@@ -171,7 +171,7 @@ impl Transcript {
     /// AD( message );
     /// ```
     pub fn commit_bytes(&mut self, label: &'static [u8], message: &[u8]) {
-        let data_len = encode_usize(message.len());
+        let data_len = encode_usize_as_u32(message.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
         self.strobe.ad(message, false);
@@ -202,7 +202,7 @@ impl Transcript {
     /// dest <- PRF();
     /// ```
     pub fn challenge_bytes(&mut self, label: &'static [u8], dest: &mut [u8]) {
-        let data_len = encode_usize(dest.len());
+        let data_len = encode_usize_as_u32(dest.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&data_len, true);
         self.strobe.prf(dest, false);
@@ -308,7 +308,7 @@ impl TranscriptRngBuilder {
         label: &'static [u8],
         witness: &[u8],
     ) -> TranscriptRngBuilder {
-        let witness_len = encode_usize(witness.len());
+        let witness_len = encode_usize_as_u32(witness.len());
         self.strobe.meta_ad(label, false);
         self.strobe.meta_ad(&witness_len, true);
         self.strobe.key(witness, false);
@@ -468,7 +468,7 @@ impl rand_core::RngCore for TranscriptRng {
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        let dest_len = encode_usize(dest.len());
+        let dest_len = encode_usize_as_u32(dest.len());
         self.strobe.meta_ad(&dest_len, false);
         self.strobe.prf(dest, false);
     }
@@ -514,7 +514,7 @@ mod tests {
             let metaflags: OpFlags = OpFlags::A | OpFlags::M;
             let mut metadata: Vec<u8> = Vec::with_capacity(label.len() + 4);
             metadata.extend_from_slice(label);
-            metadata.extend_from_slice(&encode_usize(message.len()));
+            metadata.extend_from_slice(&encode_usize_as_u32(message.len()));
 
             self.state
                 .ad(message.to_vec(), Some((metaflags, metadata)), false);
@@ -528,7 +528,7 @@ mod tests {
             let metaflags: OpFlags = OpFlags::A | OpFlags::M;
             let mut metadata: Vec<u8> = Vec::with_capacity(label.len() + 4);
             metadata.extend_from_slice(label);
-            metadata.extend_from_slice(&encode_usize(prf_len));
+            metadata.extend_from_slice(&encode_usize_as_u32(prf_len));
 
             let bytes = self.state.prf(prf_len, Some((metaflags, metadata)), false);
             dest.copy_from_slice(&bytes);
