@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0
+## 1.0.1
+
+* Update the `curve25519-dalek` dev-dependency used for tests to version `1.0`.
+
+## 1.0.0
 
 * Initial stable version.
 
