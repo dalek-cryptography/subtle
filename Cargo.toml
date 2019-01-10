@@ -23,6 +23,7 @@ byteorder = "1.2.4"
 clear_on_drop = "0.2.3"
 rand_core = "0.3"
 rand = "0.6"
+hex = {version = "0.3", optional = true}
 
 [dev-dependencies]
 strobe-rs = "0.3"
@@ -31,3 +32,4 @@ rand_chacha = "0.1"
 
 [features]
 nightly = ["clear_on_drop/nightly"]
+debug-transcript = ["hex"]
