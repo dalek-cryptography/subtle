@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+* Update doc comment on Merlin domain separator version string.
+* Add an experimental `debug-transcript` feature which does
+  pretty-printing.
+
 ## 1.0.1
 
 * Update the `curve25519-dalek` dev-dependency used for tests to version `1.0`.
