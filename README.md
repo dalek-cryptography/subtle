@@ -29,6 +29,16 @@ for use by the prover.  This provides synthetic randomness derived from
 the entire public transcript, as well as the prover's witness data,
 and an auxiliary input from an external RNG.
 
+## Features
+
+The `nightly` feature is passed to `clear_on_drop`; it may be replaced
+with a no-op in the future (since `clear_on_drop` is an implementation
+detail).
+
+The `debug-transcript` feature prints an annotated proof transcript to
+`stdout`; it is only suitable for development and testing purposes,
+should not be used in released crates, and should not be considered stable.
+
 ## About
 
 Merlin is authored by Henry de Valence, with design input from Isis
