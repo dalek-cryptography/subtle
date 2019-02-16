@@ -39,13 +39,20 @@ The `debug-transcript` feature prints an annotated proof transcript to
 `stdout`; it is only suitable for development and testing purposes,
 should not be used in released crates, and should not be considered stable.
 
+An example of an annotated transcript for a Bulletproof rangeproof can
+be [found here][bp_transcript].
+
 ## About
 
 Merlin is authored by Henry de Valence, with design input from Isis
 Lovecruft and Oleg Andreev.  Thanks also to Trevor Perrin and Mike
-Hamburg for helpful discussions.
+Hamburg for helpful discussions.  Merlin is named in reference to
+[Arthur-Merlin protocols][am_wiki] which introduced the notion of
+public coin arguments.
 
 This project is licensed under the MIT license; see `LICENSE.txt` for
 details.
 
 [strobe]: https://strobe.sourceforge.io/
+[am_wiki]: https://en.wikipedia.org/wiki/Arthur%E2%80%93Merlin_protocol
+[bp_transcript]: https://gist.github.com/hdevalence/9db3997cc275597eeae1ec2461b8e2a1
