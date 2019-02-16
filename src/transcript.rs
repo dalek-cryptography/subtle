@@ -1,4 +1,3 @@
-use rand;
 use rand_core;
 
 use strobe::Strobe128;
@@ -292,12 +291,12 @@ impl Transcript {
 /// # Usage
 ///
 /// To construct a [`TranscriptRng`], a prover calls
-/// [`Transcript::build_rng()`] to clone the transcript state,
-/// then uses [`commit_witness_bytes()`][commit_witness_bytes] to
-/// rekey the transcript with the prover's secrets, before finally
-/// calling [`finalize()`][finalize].  This rekeys the
-/// transcript with the output of an external [`rand::Rng`] instance
-/// and returns a finalized [`TranscriptRng`].
+/// [`Transcript::build_rng()`] to clone the transcript state, then
+/// uses [`commit_witness_bytes()`][commit_witness_bytes] to rekey the
+/// transcript with the prover's secrets, before finally calling
+/// [`finalize()`][finalize].  This rekeys the transcript with the
+/// output of an external [`rand_core::RngCore`] instance and returns
+/// a finalized [`TranscriptRng`].
 ///
 /// These methods are intended to be chained, passing from a borrowed
 /// [`Transcript`] to an owned [`TranscriptRng`] as follows:
@@ -391,11 +390,11 @@ impl TranscriptRngBuilder {
     /// ```
     pub fn finalize<R>(mut self, rng: &mut R) -> TranscriptRng
     where
-        R: rand::Rng + rand::CryptoRng,
+        R: rand_core::RngCore + rand_core::CryptoRng,
     {
         let random_bytes = {
             let mut bytes = [0u8; 32];
-            rng.fill(&mut bytes);
+            rng.fill_bytes(&mut bytes);
             bytes
         };
 
@@ -502,7 +501,7 @@ impl TranscriptRngBuilder {
 /// [`TranscriptRngBuilder`], which allows the prover to rekey the
 /// STROBE state with arbitrary witness data, and then forces the
 /// prover to rekey the STROBE state with the output of an external
-/// [`rand::Rng`] instance.  The [`TranscriptRng`] then uses STROBE
+/// [`rand_core::RngCore`] instance.  The [`TranscriptRng`] then uses STROBE
 /// `PRF` operations to provide randomness.
 ///
 /// Binding the output to the [`Transcript`] state ensures that two
@@ -540,7 +539,7 @@ impl rand_core::RngCore for TranscriptRng {
     }
 }
 
-impl rand::CryptoRng for TranscriptRng {}
+impl rand_core::CryptoRng for TranscriptRng {}
 
 #[cfg(test)]
 mod tests {
