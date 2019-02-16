@@ -18,13 +18,14 @@ extern crate byteorder;
 extern crate clear_on_drop;
 extern crate core;
 extern crate keccak;
-extern crate rand;
 extern crate rand_core;
 
 #[cfg(test)]
 extern crate curve25519_dalek;
 #[cfg(feature = "hex")]
 extern crate hex;
+#[cfg(test)]
+extern crate rand;
 #[cfg(test)]
 extern crate rand_chacha;
 #[cfg(test)]

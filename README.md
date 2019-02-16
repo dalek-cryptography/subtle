@@ -24,7 +24,7 @@ bound to the statements to be proved;
 
 * and protocol composition, by using a common transcript for multiple protocols.
 
-In addition, Merlin provides a transcript-based `rand::Rng` instance
+In addition, Merlin provides a transcript-based `rand_core::RngCore` instance
 for use by the prover.  This provides synthetic randomness derived from
 the entire public transcript, as well as the prover's witness data,
 and an auxiliary input from an external RNG.
