@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+* Remove `rand` dependency in favor of `rand_core`.
+* Update README with example of transcript logs.
+
 ## 1.0.2
 
 * Update doc comment on Merlin domain separator version string.
