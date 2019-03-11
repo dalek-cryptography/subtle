@@ -537,6 +537,6 @@ impl<T: ConstantTimeEq> ConstantTimeEq for Maybe<T> {
         let a = self.is_some();
         let b = rhs.is_some();
 
-        (self.is_some() & rhs.is_some() & self.value.ct_eq(&rhs.value)) | (!a & !b)
+        (a & b & self.value.ct_eq(&rhs.value)) | (!a & !b)
     }
 }
