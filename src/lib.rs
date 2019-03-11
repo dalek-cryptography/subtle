@@ -139,10 +139,7 @@ impl Not for Choice {
 /// than its type.
 ///
 /// Uses inline asm when available, otherwise it's a no-op.
-#[cfg(all(
-    feature = "nightly",
-    not(any(target_arch = "asmjs", target_arch = "wasm32"))
-))]
+#[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
 fn black_box(input: u8) -> u8 {
     debug_assert!(input == 0u8 || input == 1u8);
 
@@ -153,11 +150,7 @@ fn black_box(input: u8) -> u8 {
 
     input
 }
-#[cfg(any(
-    target_arch = "asmjs",
-    target_arch = "wasm32",
-    not(feature = "nightly")
-))]
+#[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!(input == 0u8 || input == 1u8);
