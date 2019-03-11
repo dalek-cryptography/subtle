@@ -480,9 +480,9 @@ where
 /// use in constant time APIs. Any given `Maybe<T>` is either
 /// `Some` or `None`, but unlike `Option<T>` these variants are
 /// not exposed. The `is_some()` method is used to determine if the
-/// value is `Some`, and the `unwrap()` method is used to extract
-/// the underlying `Some` value (and will panic if the value is
-/// `None`).
+/// value is `Some`, and `unwrap_or`/`unwrap_or_else` methods are
+/// provided to access the underlying value. The value can also be
+/// obtained with `unwrap()` but this will panic if it is None.
 ///
 /// Functions that are intended to be constant time may not produce
 /// valid results for all inputs, such as square root and inversion
@@ -514,6 +514,25 @@ impl<T> Maybe<T> {
         assert_eq!(self.is_some.unwrap_u8(), 1);
 
         self.value
+    }
+
+    /// This returns the underlying value if it is `Some`
+    /// or the provided value otherwise.
+    #[inline]
+    pub fn unwrap_or(self, def: T) -> T
+        where T: ConditionallySelectable
+    {
+        T::conditional_select(&def, &self.value, self.is_some)
+    }
+
+    /// This returns the underlying value if it is `Some`
+    /// or the value produced by the provided closure otherwise.
+    #[inline]
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+        where T: ConditionallySelectable,
+              F: FnOnce() -> T
+    {
+        T::conditional_select(&f(), &self.value, self.is_some)
     }
 
     /// Returns a true `Choice` if this value is `Some`.

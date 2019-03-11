@@ -154,6 +154,14 @@ fn test_maybe() {
     // Test equality of None with different
     // dummy value
     assert!(bool::from(c.ct_eq(&d)));
+
+    // Test unwrap_or
+    assert_eq!(Maybe::new(1, Choice::from(1)).unwrap_or(2), 1);
+    assert_eq!(Maybe::new(1, Choice::from(0)).unwrap_or(2), 2);
+
+    // Test unwrap_or_else
+    assert_eq!(Maybe::new(1, Choice::from(1)).unwrap_or_else(|| 2), 1);
+    assert_eq!(Maybe::new(1, Choice::from(0)).unwrap_or_else(|| 2), 2);
 }
 
 #[test]
