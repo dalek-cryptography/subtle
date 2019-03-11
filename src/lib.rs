@@ -474,3 +474,68 @@ where
         self.conditional_assign(&self_neg, choice);
     }
 }
+
+/// The `Maybe<T>` type represents an optional value similar to the
+/// [`Option<T>`](core::option::Option) type but is intended for
+/// use in constant time APIs. Any given `Maybe<T>` is either
+/// `Some` or `None`, but unlike `Option<T>` these variants are
+/// not exposed. The `is_some()` method is used to determine if the
+/// value is `Some`, and the `unwrap()` method is used to extract
+/// the underlying `Some` value (and will panic if the value is
+/// `None`).
+///
+/// Functions that are intended to be constant time may not produce
+/// valid results for all inputs, such as square root and inversion
+/// operations in finite field arithmetic. Returning an `Option<T>`
+/// from these functions makes it difficult for the caller to reason
+/// about the result in constant time, and returning an incorrect
+/// value burdens the caller and increases the chance of bugs.
+#[derive(Clone, Copy, Debug)]
+pub struct Maybe<T> {
+    value: T,
+    is_some: Choice,
+}
+
+impl<T> Maybe<T> {
+    /// This method is used to construct a new `Maybe<T>` and takes
+    /// a value of type `T`, and a `Choice` that determines whether
+    /// the optional value should be `Some` or not. If `is_some` is
+    /// false, the value will still be stored but its value is never
+    /// exposed.
+    #[inline]
+    pub fn new(value: T, is_some: Choice) -> Maybe<T> {
+        Maybe { value, is_some }
+    }
+
+    /// This returns the underlying value but panics if it
+    /// is not `Some`.
+    #[inline]
+    pub fn unwrap(self) -> T {
+        assert_eq!(self.is_some.unwrap_u8(), 1);
+
+        self.value
+    }
+
+    /// Returns a true `Choice` if this value is `Some`.
+    #[inline]
+    pub fn is_some(&self) -> Choice {
+        self.is_some
+    }
+
+    #[inline]
+    pub fn is_none(&self) -> Choice {
+        !self.is_some
+    }
+}
+
+impl<T: ConstantTimeEq> ConstantTimeEq for Maybe<T> {
+    /// Two `Maybe<T>`s are equal if they are both `Some` and
+    /// their values are equal, or both `None`.
+    #[inline]
+    fn ct_eq(&self, rhs: &Maybe<T>) -> Choice {
+        let a = self.is_some();
+        let b = rhs.is_some();
+
+        (self.is_some() & rhs.is_some() & self.value.ct_eq(&rhs.value)) | (!a & !b)
+    }
+}

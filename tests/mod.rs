@@ -123,3 +123,43 @@ fn choice_into_bool() {
 
     assert!(!choice_false);
 }
+
+#[test]
+fn test_maybe() {
+    let a = Maybe::new(10, Choice::from(1));
+    let b = Maybe::new(9, Choice::from(1));
+    let c = Maybe::new(10, Choice::from(0));
+    let d = Maybe::new(9, Choice::from(0));
+
+    // Test is_some / is_none
+    assert!(bool::from(a.is_some()));
+    assert!(bool::from(!a.is_none()));
+    assert!(bool::from(b.is_some()));
+    assert!(bool::from(!b.is_none()));
+    assert!(bool::from(!c.is_some()));
+    assert!(bool::from(c.is_none()));
+    assert!(bool::from(!d.is_some()));
+    assert!(bool::from(d.is_none()));
+
+    // Test unwrap for Some
+    assert_eq!(a.unwrap(), 10);
+    assert_eq!(b.unwrap(), 9);
+
+    // Test equality
+    assert!(bool::from(a.ct_eq(&a)));
+    assert!(bool::from(!a.ct_eq(&b)));
+    assert!(bool::from(!a.ct_eq(&c)));
+    assert!(bool::from(!a.ct_eq(&d)));
+
+    // Test equality of None with different
+    // dummy value
+    assert!(bool::from(c.ct_eq(&d)));
+}
+
+#[test]
+#[should_panic]
+fn unwrap_none_maybe() {
+    // This test might fail (in release mode?) if the
+    // compiler decides to optimize it away.
+    Maybe::new(10, Choice::from(0)).unwrap();
+}
