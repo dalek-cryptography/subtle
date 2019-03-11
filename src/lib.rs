@@ -522,6 +522,7 @@ impl<T> Maybe<T> {
         self.is_some
     }
 
+    /// Returns a true `Choice` if this value is `None`.
     #[inline]
     pub fn is_none(&self) -> Choice {
         !self.is_some
