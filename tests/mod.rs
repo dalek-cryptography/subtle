@@ -125,11 +125,11 @@ fn choice_into_bool() {
 }
 
 #[test]
-fn test_maybe() {
-    let a = Maybe::new(10, Choice::from(1));
-    let b = Maybe::new(9, Choice::from(1));
-    let c = Maybe::new(10, Choice::from(0));
-    let d = Maybe::new(9, Choice::from(0));
+fn test_ctoption() {
+    let a = CtOption::new(10, Choice::from(1));
+    let b = CtOption::new(9, Choice::from(1));
+    let c = CtOption::new(10, Choice::from(0));
+    let d = CtOption::new(9, Choice::from(0));
 
     // Test is_some / is_none
     assert!(bool::from(a.is_some()));
@@ -156,16 +156,16 @@ fn test_maybe() {
     assert!(bool::from(c.ct_eq(&d)));
 
     // Test unwrap_or
-    assert_eq!(Maybe::new(1, Choice::from(1)).unwrap_or(2), 1);
-    assert_eq!(Maybe::new(1, Choice::from(0)).unwrap_or(2), 2);
+    assert_eq!(CtOption::new(1, Choice::from(1)).unwrap_or(2), 1);
+    assert_eq!(CtOption::new(1, Choice::from(0)).unwrap_or(2), 2);
 
     // Test unwrap_or_else
-    assert_eq!(Maybe::new(1, Choice::from(1)).unwrap_or_else(|| 2), 1);
-    assert_eq!(Maybe::new(1, Choice::from(0)).unwrap_or_else(|| 2), 2);
+    assert_eq!(CtOption::new(1, Choice::from(1)).unwrap_or_else(|| 2), 1);
+    assert_eq!(CtOption::new(1, Choice::from(0)).unwrap_or_else(|| 2), 2);
 
     // Test map
     assert_eq!(
-        Maybe::new(1, Choice::from(1))
+        CtOption::new(1, Choice::from(1))
             .map(|v| {
                 assert_eq!(v, 1);
                 2
@@ -174,7 +174,7 @@ fn test_maybe() {
         2
     );
     assert_eq!(
-        Maybe::new(1, Choice::from(0))
+        CtOption::new(1, Choice::from(0))
             .map(|_| 2)
             .is_none()
             .unwrap_u8(),
@@ -183,57 +183,57 @@ fn test_maybe() {
 
     // Test and_then
     assert_eq!(
-        Maybe::new(1, Choice::from(1))
+        CtOption::new(1, Choice::from(1))
             .and_then(|v| {
                 assert_eq!(v, 1);
-                Maybe::new(2, Choice::from(0))
+                CtOption::new(2, Choice::from(0))
             })
             .is_none()
             .unwrap_u8(),
         1
     );
     assert_eq!(
-        Maybe::new(1, Choice::from(1))
+        CtOption::new(1, Choice::from(1))
             .and_then(|v| {
                 assert_eq!(v, 1);
-                Maybe::new(2, Choice::from(1))
+                CtOption::new(2, Choice::from(1))
             })
             .unwrap(),
         2
     );
 
     assert_eq!(
-        Maybe::new(1, Choice::from(0))
-            .and_then(|_| Maybe::new(2, Choice::from(0)))
+        CtOption::new(1, Choice::from(0))
+            .and_then(|_| CtOption::new(2, Choice::from(0)))
             .is_none()
             .unwrap_u8(),
         1
     );
     assert_eq!(
-        Maybe::new(1, Choice::from(0))
-            .and_then(|_| Maybe::new(2, Choice::from(1)))
+        CtOption::new(1, Choice::from(0))
+            .and_then(|_| CtOption::new(2, Choice::from(1)))
             .is_none()
             .unwrap_u8(),
         1
     );
 
     // Test (in)equality
-    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(0))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(0))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(1, Choice::from(0))).unwrap_u8() == 1);
-    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(2, Choice::from(0))).unwrap_u8() == 1);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 1);
-    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
 }
 
 #[test]
 #[should_panic]
-fn unwrap_none_maybe() {
+fn unwrap_none_ctoption() {
     // This test might fail (in release mode?) if the
     // compiler decides to optimize it away.
-    Maybe::new(10, Choice::from(0)).unwrap();
+    CtOption::new(10, Choice::from(0)).unwrap();
 }

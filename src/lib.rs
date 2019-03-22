@@ -475,9 +475,9 @@ where
     }
 }
 
-/// The `Maybe<T>` type represents an optional value similar to the
+/// The `CtOption<T>` type represents an optional value similar to the
 /// [`Option<T>`](core::option::Option) type but is intended for
-/// use in constant time APIs. Any given `Maybe<T>` is either
+/// use in constant time APIs. Any given `CtOption<T>` is either
 /// `Some` or `None`, but unlike `Option<T>` these variants are
 /// not exposed. The `is_some()` method is used to determine if the
 /// value is `Some`, and `unwrap_or`/`unwrap_or_else` methods are
@@ -491,20 +491,20 @@ where
 /// about the result in constant time, and returning an incorrect
 /// value burdens the caller and increases the chance of bugs.
 #[derive(Clone, Copy, Debug)]
-pub struct Maybe<T> {
+pub struct CtOption<T> {
     value: T,
     is_some: Choice,
 }
 
-impl<T> Maybe<T> {
-    /// This method is used to construct a new `Maybe<T>` and takes
+impl<T> CtOption<T> {
+    /// This method is used to construct a new `CtOption<T>` and takes
     /// a value of type `T`, and a `Choice` that determines whether
     /// the optional value should be `Some` or not. If `is_some` is
     /// false, the value will still be stored but its value is never
     /// exposed.
     #[inline]
-    pub fn new(value: T, is_some: Choice) -> Maybe<T> {
-        Maybe { value, is_some }
+    pub fn new(value: T, is_some: Choice) -> CtOption<T> {
+        CtOption { value, is_some }
     }
 
     /// This returns the underlying value but panics if it
@@ -550,7 +550,7 @@ impl<T> Maybe<T> {
     }
 
     /// Returns a `None` value if the option is `None`, otherwise
-    /// returns a `Maybe` enclosing the value of the provided closure.
+    /// returns a `CtOption` enclosing the value of the provided closure.
     /// The closure is given the enclosed value or, if the option is
     /// `None`, it is provided a dummy value computed using
     /// `Default::default()`.
@@ -558,12 +558,12 @@ impl<T> Maybe<T> {
     /// This operates in constant time, because the provided closure
     /// is always called.
     #[inline]
-    pub fn map<U, F>(self, f: F) -> Maybe<U>
+    pub fn map<U, F>(self, f: F) -> CtOption<U>
     where
         T: Default + ConditionallySelectable,
         F: FnOnce(T) -> U,
     {
-        Maybe::new(
+        CtOption::new(
             f(T::conditional_select(
                 &T::default(),
                 &self.value,
@@ -581,10 +581,10 @@ impl<T> Maybe<T> {
     /// This operates in constant time, because the provided closure
     /// is always called.
     #[inline]
-    pub fn and_then<U, F>(self, f: F) -> Maybe<U>
+    pub fn and_then<U, F>(self, f: F) -> CtOption<U>
     where
         T: Default + ConditionallySelectable,
-        F: FnOnce(T) -> Maybe<U>,
+        F: FnOnce(T) -> CtOption<U>,
     {
         let mut tmp = f(T::conditional_select(
             &T::default(),
@@ -597,9 +597,9 @@ impl<T> Maybe<T> {
     }
 }
 
-impl<T: ConditionallySelectable> ConditionallySelectable for Maybe<T> {
+impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        Maybe::new(
+        CtOption::new(
             T::conditional_select(&a.value, &b.value, choice),
             // TODO: subtle crate currently doesn't implement ConditionallySelectable
             // for Choice so we must unwrap these manually.
@@ -612,11 +612,11 @@ impl<T: ConditionallySelectable> ConditionallySelectable for Maybe<T> {
     }
 }
 
-impl<T: ConstantTimeEq> ConstantTimeEq for Maybe<T> {
-    /// Two `Maybe<T>`s are equal if they are both `Some` and
+impl<T: ConstantTimeEq> ConstantTimeEq for CtOption<T> {
+    /// Two `CtOption<T>`s are equal if they are both `Some` and
     /// their values are equal, or both `None`.
     #[inline]
-    fn ct_eq(&self, rhs: &Maybe<T>) -> Choice {
+    fn ct_eq(&self, rhs: &CtOption<T>) -> Choice {
         let a = self.is_some();
         let b = rhs.is_some();
 
