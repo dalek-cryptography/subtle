@@ -162,6 +162,72 @@ fn test_maybe() {
     // Test unwrap_or_else
     assert_eq!(Maybe::new(1, Choice::from(1)).unwrap_or_else(|| 2), 1);
     assert_eq!(Maybe::new(1, Choice::from(0)).unwrap_or_else(|| 2), 2);
+
+    // Test map
+    assert_eq!(
+        Maybe::new(1, Choice::from(1))
+            .map(|v| {
+                assert_eq!(v, 1);
+                2
+            })
+            .unwrap(),
+        2
+    );
+    assert_eq!(
+        Maybe::new(1, Choice::from(0))
+            .map(|_| 2)
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+
+    // Test and_then
+    assert_eq!(
+        Maybe::new(1, Choice::from(1))
+            .and_then(|v| {
+                assert_eq!(v, 1);
+                Maybe::new(2, Choice::from(0))
+            })
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        Maybe::new(1, Choice::from(1))
+            .and_then(|v| {
+                assert_eq!(v, 1);
+                Maybe::new(2, Choice::from(1))
+            })
+            .unwrap(),
+        2
+    );
+
+    assert_eq!(
+        Maybe::new(1, Choice::from(0))
+            .and_then(|_| Maybe::new(2, Choice::from(0)))
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        Maybe::new(1, Choice::from(0))
+            .and_then(|_| Maybe::new(2, Choice::from(1)))
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+
+    // Test (in)equality
+    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(0))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(0))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(1, Choice::from(0))).unwrap_u8() == 1);
+    assert!(Maybe::new(1, Choice::from(0)).ct_eq(&Maybe::new(2, Choice::from(0))).unwrap_u8() == 1);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(Maybe::new(1, Choice::from(1)).ct_eq(&Maybe::new(1, Choice::from(1))).unwrap_u8() == 1);
 }
 
 #[test]

@@ -520,7 +520,8 @@ impl<T> Maybe<T> {
     /// or the provided value otherwise.
     #[inline]
     pub fn unwrap_or(self, def: T) -> T
-        where T: ConditionallySelectable
+    where
+        T: ConditionallySelectable,
     {
         T::conditional_select(&def, &self.value, self.is_some)
     }
@@ -529,8 +530,9 @@ impl<T> Maybe<T> {
     /// or the value produced by the provided closure otherwise.
     #[inline]
     pub fn unwrap_or_else<F>(self, f: F) -> T
-        where T: ConditionallySelectable,
-              F: FnOnce() -> T
+    where
+        T: ConditionallySelectable,
+        F: FnOnce() -> T,
     {
         T::conditional_select(&f(), &self.value, self.is_some)
     }
@@ -545,6 +547,68 @@ impl<T> Maybe<T> {
     #[inline]
     pub fn is_none(&self) -> Choice {
         !self.is_some
+    }
+
+    /// Returns a `None` value if the option is `None`, otherwise
+    /// returns a `Maybe` enclosing the value of the provided closure.
+    /// The closure is given the enclosed value or, if the option is
+    /// `None`, it is provided a dummy value computed using
+    /// `Default::default()`.
+    ///
+    /// This operates in constant time, because the provided closure
+    /// is always called.
+    #[inline]
+    pub fn map<U, F>(self, f: F) -> Maybe<U>
+    where
+        T: Default + ConditionallySelectable,
+        F: FnOnce(T) -> U,
+    {
+        Maybe::new(
+            f(T::conditional_select(
+                &T::default(),
+                &self.value,
+                self.is_some,
+            )),
+            self.is_some,
+        )
+    }
+
+    /// Returns a `None` value if the option is `None`, otherwise
+    /// returns the result of the provided closure. The closure is
+    /// given the enclosed value or, if the option is `None`, it
+    /// is provided a dummy value computed using `Default::default()`.
+    ///
+    /// This operates in constant time, because the provided closure
+    /// is always called.
+    #[inline]
+    pub fn and_then<U, F>(self, f: F) -> Maybe<U>
+    where
+        T: Default + ConditionallySelectable,
+        F: FnOnce(T) -> Maybe<U>,
+    {
+        let mut tmp = f(T::conditional_select(
+            &T::default(),
+            &self.value,
+            self.is_some,
+        ));
+        tmp.is_some &= self.is_some;
+
+        tmp
+    }
+}
+
+impl<T: ConditionallySelectable> ConditionallySelectable for Maybe<T> {
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        Maybe::new(
+            T::conditional_select(&a.value, &b.value, choice),
+            // TODO: subtle crate currently doesn't implement ConditionallySelectable
+            // for Choice so we must unwrap these manually.
+            Choice::from(u8::conditional_select(
+                &a.is_some.unwrap_u8(),
+                &b.is_some.unwrap_u8(),
+                choice,
+            )),
+        )
     }
 }
 
