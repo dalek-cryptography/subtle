@@ -76,7 +76,7 @@ impl From<Choice> for bool {
     /// verification.
     #[inline]
     fn from(source: Choice) -> bool {
-        debug_assert!(source.0 == 0u8 || source.0 == 1u8);
+        debug_assert!((source.0 == 0u8) | (source.0 == 1u8));
         source.0 != 0
     }
 }
@@ -144,7 +144,7 @@ impl Not for Choice {
     not(any(target_arch = "asmjs", target_arch = "wasm32"))
 ))]
 fn black_box(input: u8) -> u8 {
-    debug_assert!(input == 0u8 || input == 1u8);
+    debug_assert!((input == 0u8) | (input == 1u8));
 
     // Pretend to access a register containing the input.  We "volatile" here
     // because some optimisers treat assembly templates without output operands
@@ -160,7 +160,7 @@ fn black_box(input: u8) -> u8 {
 ))]
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
-    debug_assert!(input == 0u8 || input == 1u8);
+    debug_assert!((input == 0u8) | (input == 1u8));
     // We don't have access to inline assembly or test::black_box or ...
     //
     // Bailing out, hopefully the compiler doesn't use the fact that `input` is 0 or 1.
