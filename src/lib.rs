@@ -54,6 +54,8 @@ impl Choice {
     /// This function only exists as an escape hatch for the rare case
     /// where it's not possible to use one of the `subtle`-provided
     /// trait impls.
+    ///
+    /// To convert a `Choice` to a `bool`, use the `From` implementation instead.
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
