@@ -612,13 +612,7 @@ impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         CtOption::new(
             T::conditional_select(&a.value, &b.value, choice),
-            // TODO: subtle crate currently doesn't implement ConditionallySelectable
-            // for Choice so we must unwrap these manually.
-            Choice::from(u8::conditional_select(
-                &a.is_some.unwrap_u8(),
-                &b.is_some.unwrap_u8(),
-                choice,
-            )),
+            Choice::conditional_select(&a.is_some, &b.is_some, choice),
         )
     }
 }
