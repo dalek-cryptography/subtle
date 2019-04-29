@@ -446,6 +446,13 @@ generate_integer_conditional_select!( u64  i64);
 #[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
+impl ConditionallySelectable for Choice {
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        Choice(u8::conditional_select(&a.0, &b.0, choice))
+    }
+}
+
 /// A type which can be conditionally negated in constant time.
 ///
 /// # Note
