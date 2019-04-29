@@ -54,6 +54,8 @@ impl Choice {
     /// This function only exists as an escape hatch for the rare case
     /// where it's not possible to use one of the `subtle`-provided
     /// trait impls.
+    ///
+    /// To convert a `Choice` to a `bool`, use the `From` implementation instead.
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
@@ -446,6 +448,13 @@ generate_integer_conditional_select!( u64  i64);
 #[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
+impl ConditionallySelectable for Choice {
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        Choice(u8::conditional_select(&a.0, &b.0, choice))
+    }
+}
+
 /// A type which can be conditionally negated in constant time.
 ///
 /// # Note
@@ -605,13 +614,7 @@ impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         CtOption::new(
             T::conditional_select(&a.value, &b.value, choice),
-            // TODO: subtle crate currently doesn't implement ConditionallySelectable
-            // for Choice so we must unwrap these manually.
-            Choice::from(u8::conditional_select(
-                &a.is_some.unwrap_u8(),
-                &b.is_some.unwrap_u8(),
-                choice,
-            )),
+            Choice::conditional_select(&a.is_some, &b.is_some, choice),
         )
     }
 }

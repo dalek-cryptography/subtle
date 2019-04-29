@@ -125,6 +125,17 @@ fn choice_into_bool() {
 }
 
 #[test]
+fn conditional_select_choice() {
+    let t = Choice::from(1);
+    let f = Choice::from(0);
+
+    assert_eq!(bool::from(Choice::conditional_select(&t, &f, f)), true);
+    assert_eq!(bool::from(Choice::conditional_select(&t, &f, t)), false);
+    assert_eq!(bool::from(Choice::conditional_select(&f, &t, f)), false);
+    assert_eq!(bool::from(Choice::conditional_select(&f, &t, t)), true);
+}
+
+#[test]
 fn test_ctoption() {
     let a = CtOption::new(10, Choice::from(1));
     let b = CtOption::new(9, Choice::from(1));
