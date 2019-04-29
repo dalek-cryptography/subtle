@@ -504,7 +504,7 @@ impl<T> CtOption<T> {
     /// exposed.
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
-        CtOption { value, is_some }
+        CtOption { value: value, is_some: is_some }
     }
 
     /// This returns the underlying value but panics if it
