@@ -16,13 +16,14 @@ matrix:
       env: NAME="MSRV test"
       script: cargo test --no-default-features --features std
     # Test if crate can be truly built without std
-    - rust: nightly
-      env: TARGET=thumbv7em-none-eabi
-      script: xargo build --no-default-features --target $TARGET
-      install:
-        - cargo install xargo || true
-        - rustup target install armv7-unknown-linux-gnueabihf
-        - rustup component add rust-src
+    # Disabled because this tooling started to error, feel free to fix it
+    #- rust: nightly
+    #  env: TARGET=thumbv7em-none-eabi
+    #  script: xargo build --no-default-features --target $TARGET
+    #  install:
+    #    - cargo install xargo || true
+    #    - rustup target install armv7-unknown-linux-gnueabihf
+    #    - rustup component add rust-src
 
 script:
   - cargo test && cargo test --no-default-features &&
