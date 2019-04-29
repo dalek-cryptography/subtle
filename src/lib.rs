@@ -477,12 +477,16 @@ where
 
 /// The `CtOption<T>` type represents an optional value similar to the
 /// [`Option<T>`](core::option::Option) type but is intended for
-/// use in constant time APIs. Any given `CtOption<T>` is either
-/// `Some` or `None`, but unlike `Option<T>` these variants are
-/// not exposed. The `is_some()` method is used to determine if the
-/// value is `Some`, and `unwrap_or`/`unwrap_or_else` methods are
+/// use in constant time APIs.
+///
+/// Any given `CtOption<T>` is either `Some` or `None`, but unlike
+/// `Option<T>` these variants are not exposed. The
+/// [`is_some()`](CtOption::is_some) method is used to determine if
+/// the value is `Some`, and [`unwrap_or()`](CtOption::unwrap_or) and
+/// [`unwrap_or_else()`](CtOption::unwrap_or_else) methods are
 /// provided to access the underlying value. The value can also be
-/// obtained with `unwrap()` but this will panic if it is None.
+/// obtained with [`unwrap()`](CtOption::unwrap) but this will panic
+/// if it is `None`.
 ///
 /// Functions that are intended to be constant time may not produce
 /// valid results for all inputs, such as square root and inversion
