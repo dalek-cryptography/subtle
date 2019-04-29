@@ -123,3 +123,128 @@ fn choice_into_bool() {
 
     assert!(!choice_false);
 }
+
+#[test]
+fn conditional_select_choice() {
+    let t = Choice::from(1);
+    let f = Choice::from(0);
+
+    assert_eq!(bool::from(Choice::conditional_select(&t, &f, f)), true);
+    assert_eq!(bool::from(Choice::conditional_select(&t, &f, t)), false);
+    assert_eq!(bool::from(Choice::conditional_select(&f, &t, f)), false);
+    assert_eq!(bool::from(Choice::conditional_select(&f, &t, t)), true);
+}
+
+#[test]
+fn test_ctoption() {
+    let a = CtOption::new(10, Choice::from(1));
+    let b = CtOption::new(9, Choice::from(1));
+    let c = CtOption::new(10, Choice::from(0));
+    let d = CtOption::new(9, Choice::from(0));
+
+    // Test is_some / is_none
+    assert!(bool::from(a.is_some()));
+    assert!(bool::from(!a.is_none()));
+    assert!(bool::from(b.is_some()));
+    assert!(bool::from(!b.is_none()));
+    assert!(bool::from(!c.is_some()));
+    assert!(bool::from(c.is_none()));
+    assert!(bool::from(!d.is_some()));
+    assert!(bool::from(d.is_none()));
+
+    // Test unwrap for Some
+    assert_eq!(a.unwrap(), 10);
+    assert_eq!(b.unwrap(), 9);
+
+    // Test equality
+    assert!(bool::from(a.ct_eq(&a)));
+    assert!(bool::from(!a.ct_eq(&b)));
+    assert!(bool::from(!a.ct_eq(&c)));
+    assert!(bool::from(!a.ct_eq(&d)));
+
+    // Test equality of None with different
+    // dummy value
+    assert!(bool::from(c.ct_eq(&d)));
+
+    // Test unwrap_or
+    assert_eq!(CtOption::new(1, Choice::from(1)).unwrap_or(2), 1);
+    assert_eq!(CtOption::new(1, Choice::from(0)).unwrap_or(2), 2);
+
+    // Test unwrap_or_else
+    assert_eq!(CtOption::new(1, Choice::from(1)).unwrap_or_else(|| 2), 1);
+    assert_eq!(CtOption::new(1, Choice::from(0)).unwrap_or_else(|| 2), 2);
+
+    // Test map
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .map(|v| {
+                assert_eq!(v, 1);
+                2
+            })
+            .unwrap(),
+        2
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .map(|_| 2)
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+
+    // Test and_then
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .and_then(|v| {
+                assert_eq!(v, 1);
+                CtOption::new(2, Choice::from(0))
+            })
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .and_then(|v| {
+                assert_eq!(v, 1);
+                CtOption::new(2, Choice::from(1))
+            })
+            .unwrap(),
+        2
+    );
+
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .and_then(|_| CtOption::new(2, Choice::from(0)))
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .and_then(|_| CtOption::new(2, Choice::from(1)))
+            .is_none()
+            .unwrap_u8(),
+        1
+    );
+
+    // Test (in)equality
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+}
+
+#[test]
+#[should_panic]
+fn unwrap_none_ctoption() {
+    // This test might fail (in release mode?) if the
+    // compiler decides to optimize it away.
+    CtOption::new(10, Choice::from(0)).unwrap();
+}

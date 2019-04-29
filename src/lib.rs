@@ -54,6 +54,8 @@ impl Choice {
     /// This function only exists as an escape hatch for the rare case
     /// where it's not possible to use one of the `subtle`-provided
     /// trait impls.
+    ///
+    /// To convert a `Choice` to a `bool`, use the `From` implementation instead.
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
@@ -76,7 +78,7 @@ impl From<Choice> for bool {
     /// verification.
     #[inline]
     fn from(source: Choice) -> bool {
-        debug_assert!(source.0 == 0u8 || source.0 == 1u8);
+        debug_assert!((source.0 == 0u8) | (source.0 == 1u8));
         source.0 != 0
     }
 }
@@ -139,12 +141,9 @@ impl Not for Choice {
 /// than its type.
 ///
 /// Uses inline asm when available, otherwise it's a no-op.
-#[cfg(all(
-    feature = "nightly",
-    not(any(target_arch = "asmjs", target_arch = "wasm32"))
-))]
+#[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
 fn black_box(input: u8) -> u8 {
-    debug_assert!(input == 0u8 || input == 1u8);
+    debug_assert!((input == 0u8) | (input == 1u8));
 
     // Pretend to access a register containing the input.  We "volatile" here
     // because some optimisers treat assembly templates without output operands
@@ -153,14 +152,10 @@ fn black_box(input: u8) -> u8 {
 
     input
 }
-#[cfg(any(
-    target_arch = "asmjs",
-    target_arch = "wasm32",
-    not(feature = "nightly")
-))]
+#[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
-    debug_assert!(input == 0u8 || input == 1u8);
+    debug_assert!((input == 0u8) | (input == 1u8));
     // We don't have access to inline assembly or test::black_box or ...
     //
     // Bailing out, hopefully the compiler doesn't use the fact that `input` is 0 or 1.
@@ -453,6 +448,13 @@ generate_integer_conditional_select!( u64  i64);
 #[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
+impl ConditionallySelectable for Choice {
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        Choice(u8::conditional_select(&a.0, &b.0, choice))
+    }
+}
+
 /// A type which can be conditionally negated in constant time.
 ///
 /// # Note
@@ -479,5 +481,152 @@ where
         // Need to cast to eliminate mutability
         let self_neg: T = -(self as &T);
         self.conditional_assign(&self_neg, choice);
+    }
+}
+
+/// The `CtOption<T>` type represents an optional value similar to the
+/// [`Option<T>`](core::option::Option) type but is intended for
+/// use in constant time APIs.
+///
+/// Any given `CtOption<T>` is either `Some` or `None`, but unlike
+/// `Option<T>` these variants are not exposed. The
+/// [`is_some()`](CtOption::is_some) method is used to determine if
+/// the value is `Some`, and [`unwrap_or()`](CtOption::unwrap_or) and
+/// [`unwrap_or_else()`](CtOption::unwrap_or_else) methods are
+/// provided to access the underlying value. The value can also be
+/// obtained with [`unwrap()`](CtOption::unwrap) but this will panic
+/// if it is `None`.
+///
+/// Functions that are intended to be constant time may not produce
+/// valid results for all inputs, such as square root and inversion
+/// operations in finite field arithmetic. Returning an `Option<T>`
+/// from these functions makes it difficult for the caller to reason
+/// about the result in constant time, and returning an incorrect
+/// value burdens the caller and increases the chance of bugs.
+#[derive(Clone, Copy, Debug)]
+pub struct CtOption<T> {
+    value: T,
+    is_some: Choice,
+}
+
+impl<T> CtOption<T> {
+    /// This method is used to construct a new `CtOption<T>` and takes
+    /// a value of type `T`, and a `Choice` that determines whether
+    /// the optional value should be `Some` or not. If `is_some` is
+    /// false, the value will still be stored but its value is never
+    /// exposed.
+    #[inline]
+    pub fn new(value: T, is_some: Choice) -> CtOption<T> {
+        CtOption { value: value, is_some: is_some }
+    }
+
+    /// This returns the underlying value but panics if it
+    /// is not `Some`.
+    #[inline]
+    pub fn unwrap(self) -> T {
+        assert_eq!(self.is_some.unwrap_u8(), 1);
+
+        self.value
+    }
+
+    /// This returns the underlying value if it is `Some`
+    /// or the provided value otherwise.
+    #[inline]
+    pub fn unwrap_or(self, def: T) -> T
+    where
+        T: ConditionallySelectable,
+    {
+        T::conditional_select(&def, &self.value, self.is_some)
+    }
+
+    /// This returns the underlying value if it is `Some`
+    /// or the value produced by the provided closure otherwise.
+    #[inline]
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+    where
+        T: ConditionallySelectable,
+        F: FnOnce() -> T,
+    {
+        T::conditional_select(&f(), &self.value, self.is_some)
+    }
+
+    /// Returns a true `Choice` if this value is `Some`.
+    #[inline]
+    pub fn is_some(&self) -> Choice {
+        self.is_some
+    }
+
+    /// Returns a true `Choice` if this value is `None`.
+    #[inline]
+    pub fn is_none(&self) -> Choice {
+        !self.is_some
+    }
+
+    /// Returns a `None` value if the option is `None`, otherwise
+    /// returns a `CtOption` enclosing the value of the provided closure.
+    /// The closure is given the enclosed value or, if the option is
+    /// `None`, it is provided a dummy value computed using
+    /// `Default::default()`.
+    ///
+    /// This operates in constant time, because the provided closure
+    /// is always called.
+    #[inline]
+    pub fn map<U, F>(self, f: F) -> CtOption<U>
+    where
+        T: Default + ConditionallySelectable,
+        F: FnOnce(T) -> U,
+    {
+        CtOption::new(
+            f(T::conditional_select(
+                &T::default(),
+                &self.value,
+                self.is_some,
+            )),
+            self.is_some,
+        )
+    }
+
+    /// Returns a `None` value if the option is `None`, otherwise
+    /// returns the result of the provided closure. The closure is
+    /// given the enclosed value or, if the option is `None`, it
+    /// is provided a dummy value computed using `Default::default()`.
+    ///
+    /// This operates in constant time, because the provided closure
+    /// is always called.
+    #[inline]
+    pub fn and_then<U, F>(self, f: F) -> CtOption<U>
+    where
+        T: Default + ConditionallySelectable,
+        F: FnOnce(T) -> CtOption<U>,
+    {
+        let mut tmp = f(T::conditional_select(
+            &T::default(),
+            &self.value,
+            self.is_some,
+        ));
+        tmp.is_some &= self.is_some;
+
+        tmp
+    }
+}
+
+impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        CtOption::new(
+            T::conditional_select(&a.value, &b.value, choice),
+            Choice::conditional_select(&a.is_some, &b.is_some, choice),
+        )
+    }
+}
+
+impl<T: ConstantTimeEq> ConstantTimeEq for CtOption<T> {
+    /// Two `CtOption<T>`s are equal if they are both `Some` and
+    /// their values are equal, or both `None`.
+    #[inline]
+    fn ct_eq(&self, rhs: &CtOption<T>) -> Choice {
+        let a = self.is_some();
+        let b = rhs.is_some();
+
+        (a & b & self.value.ct_eq(&rhs.value)) | (!a & !b)
     }
 }
