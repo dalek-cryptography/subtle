@@ -26,7 +26,7 @@ enable it with no changes to the external interface).
 
 ```toml
 [dependencies.subtle]
-version = "2"
+version = "2.1"
 features = ["nightly"]
 ```
 
