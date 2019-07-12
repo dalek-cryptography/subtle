@@ -146,7 +146,8 @@ impl Not for Choice {
 fn black_box(mut input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
 
-    unsafe { asm!("" : "=r"(input) : "0"(input) }
+    // Move value through assembler, which is opaque to the compiler, even though we don't do anything.
+    unsafe { asm!("" : "=r"(input) : "0"(input) ) }
 
     input
 }
