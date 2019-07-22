@@ -249,24 +249,15 @@ macro_rules! generate_integer_equal {
         impl ConstantTimeEq for $t_u {
             #[inline]
             fn ct_eq(&self, other: &$t_u) -> Choice {
-                // First construct x such that self == other iff all bits of x are 1
-                let mut x: $t_u = !(self ^ other);
+                // x == 0 if and only if self == other
+                let x: $t_u = self ^ other;
 
-                // Now compute the and of all bits of x.
-                //
-                // e.g. for a u8, do:
-                //
-                //    x &= x >> 4;
-                //    x &= x >> 2;
-                //    x &= x >> 1;
-                //
-                let mut shift: usize = $bit_width / 2;
-                while shift >= 1 {
-                    x &= x >> shift;
-                    shift /= 2;
-                }
+                // If x == 0, then x and -x are both equal to zero;
+                // otherwise, one or both will have its high bit set.
+                let y: $t_u = (x | x.wrapping_neg()) >> ($bit_width - 1);
 
-                (x as u8).into()
+                // Result is the opposite of the high bit (now shifted to low).
+                ((y ^ (1 as $t_u)) as u8).into()
             }
         }
         impl ConstantTimeEq for $t_i {
