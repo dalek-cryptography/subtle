@@ -2,6 +2,11 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.1.1
+
+* Adds the "crypto" tag to crate metadata.
+* New shorter, more efficient ct_eq() for integers, contributed by Thomas Pornin.
+
 ## 2.1.0
 
 * Adds a new `CtOption<T>` which acts as a constant-time `Option<T>`
