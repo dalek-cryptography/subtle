@@ -228,6 +228,31 @@ fn test_ctoption() {
         1
     );
 
+    // Test or_else
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .or_else(|| CtOption::new(2, Choice::from(1)))
+            .unwrap(),
+        2
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .or_else(|| CtOption::new(2, Choice::from(0)))
+            .unwrap(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .or_else(|| CtOption::new(2, Choice::from(1)))
+            .unwrap(),
+        1
+    );
+    assert!(bool::from(
+        CtOption::new(1, Choice::from(0))
+            .or_else(|| CtOption::new(2, Choice::from(0)))
+            .is_none()
+    ));
+
     // Test (in)equality
     assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
     assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);

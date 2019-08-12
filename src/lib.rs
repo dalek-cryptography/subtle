@@ -599,6 +599,20 @@ impl<T> CtOption<T> {
 
         tmp
     }
+
+    /// Returns `self` if it contains a value, and otherwise returns the result of
+    /// calling `f`. The provided function `f` is always called.
+    #[inline]
+    pub fn or_else<F>(self, f: F) -> CtOption<T>
+    where
+        T: ConditionallySelectable,
+        F: FnOnce() -> CtOption<T>,
+    {
+        let is_none = self.is_none();
+        let f = f();
+
+        Self::conditional_select(&self, &f, is_none)
+    }
 }
 
 impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
