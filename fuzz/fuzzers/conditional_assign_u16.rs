@@ -7,7 +7,7 @@ extern crate core;
 
 use core::intrinsics::transmute;
 
-use subtle::ConditionallyAssignable;
+use subtle::ConditionallySelectable;
 
 fuzz_target!(|data: &[u8]| {
     let chunk_size: usize = 2;
@@ -21,10 +21,10 @@ fuzz_target!(|data: &[u8]| {
             let mut x: u16 = 0;
             let y: u16 = transmute::<[u8; 2], u16>([bytes[0], bytes[1]]);
 
-            x.conditional_assign(&y, 0);
+            x.conditional_assign(&y, 0.into());
             assert_eq!(x, 0);
 
-            x.conditional_assign(&y, 1);
+            x.conditional_assign(&y, 1.into());
             assert_eq!(x, y);
         }
     }
