@@ -156,10 +156,24 @@ fn black_box(input: u8) -> u8 {
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
-    // We don't have access to inline assembly or test::black_box or ...
+    // We don't have access to inline assembly or test::black_box, so we use the fact that
+    // volatile values will never be elided to register values.
     //
-    // Bailing out, hopefully the compiler doesn't use the fact that `input` is 0 or 1.
-    input
+    // Note: Rust's notion of "volatile" is subject to change over time. While this code may break
+    // in a non-destructive way in the future, it is better than doing nothing.
+    //
+    debug_assert!(!core::mem::needs_drop::<u8>());
+    unsafe {
+        // Optimization barrier
+        //
+        // Unsafe is ok, because:
+        //   - &input is not NULL;
+        //   - size of input is not zero;
+        //   - u8 is neither Sync, nor Send;
+        //   - u8 is Copy (also asserted just before), so input is always live;
+        //   - u8 type is always properly aligned.
+        core::ptr::read_volatile(&input as *const u8)
+    }
 }
 
 impl From<u8> for Choice {
