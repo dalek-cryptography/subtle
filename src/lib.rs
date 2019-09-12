@@ -161,8 +161,7 @@ fn black_box(input: u8) -> u8 {
     //
     // Note: Rust's notion of "volatile" is subject to change over time. While this code may break
     // in a non-destructive way in the future, it is better than doing nothing.
-    //
-    debug_assert!(!core::mem::needs_drop::<u8>());
+
     unsafe {
         // Optimization barrier
         //
@@ -170,7 +169,7 @@ fn black_box(input: u8) -> u8 {
         //   - &input is not NULL;
         //   - size of input is not zero;
         //   - u8 is neither Sync, nor Send;
-        //   - u8 is Copy (also asserted just before), so input is always live;
+        //   - u8 is Copy, so input is always live;
         //   - u8 type is always properly aligned.
         core::ptr::read_volatile(&input as *const u8)
     }
