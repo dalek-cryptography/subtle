@@ -2,6 +2,18 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.2.1
+
+* Adds an `or_else` combinator for `CtOption`, by @ebfull.
+* Optimized `black_box` for `nightly`, by @jethrogb.
+* Optimized `black_box` for `stable`, by @dsprenkels.
+* Fixed CI for `no_std`, by @dsprenkels.
+* Fixed fuzz target compilation, by @3for.
+
+## 2.2.0
+
+* Error during `cargo publish`, yanked.
+
 ## 2.1.1
 
 * Adds the "crypto" tag to crate metadata.
