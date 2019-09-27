@@ -142,13 +142,12 @@ impl Not for Choice {
 ///
 /// Uses inline asm when available, otherwise it's a no-op.
 #[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
-fn black_box(input: u8) -> u8 {
+#[inline(always)]
+fn black_box(mut input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
 
-    // Pretend to access a register containing the input.  We "volatile" here
-    // because some optimisers treat assembly templates without output operands
-    // as "volatile" while others do not.
-    unsafe { asm!("" :: "r"(&input) :: "volatile") }
+    // Move value through assembler, which is opaque to the compiler, even though we don't do anything.
+    unsafe { asm!("" : "=r"(input) : "0"(input) ) }
 
     input
 }
