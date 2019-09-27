@@ -19,11 +19,6 @@ To prevent the latter possibility, when using the `nightly` feature
 from the optimizer, by passing it through an inline assembly block.  For more
 information, see the _About_ section below.
 
-When not using the `nightly` feature, there is no protection against b).  This
-is unfortunate, but is at least no worse than C code, and has the advantange
-that if a suitable black box is stabilized, we will be able to transparently
-enable it with no changes to the external interface).
-
 ```toml
 [dependencies.subtle]
 version = "2.1"
