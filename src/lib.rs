@@ -183,6 +183,13 @@ impl From<u8> for Choice {
     }
 }
 
+impl From<bool> for Choice {
+    #[inline]
+    fn from(input: bool) -> Choice {
+        Choice(black_box(input as u8))
+    }
+}
+
 /// An `Eq`-like trait that produces a `Choice` instead of a `bool`.
 ///
 /// # Example
@@ -294,7 +301,7 @@ generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 ///
 /// This trait also provides generic implementations of conditional
 /// assignment and conditional swaps.
-pub trait ConditionallySelectable: Copy {
+pub trait ConditionallySelectable: Clone {
     /// Select `a` or `b` according to `choice`.
     ///
     /// # Returns
@@ -353,6 +360,11 @@ pub trait ConditionallySelectable: Copy {
     ///
     /// This function should execute in constant time.
     ///
+    /// The provided implementation `clone`s the first parameter,
+    /// to avoid this for your own types, overwrite this default implementation.
+    /// The provided implementations for primitive integral primitive types
+    /// already do so.
+    ///
     /// # Example
     ///
     /// ```
@@ -373,7 +385,7 @@ pub trait ConditionallySelectable: Copy {
     /// ```
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
-        let t: Self = *a;
+        let t: Self = a.clone();
         a.conditional_assign(&b, choice);
         b.conditional_assign(&t, choice);
     }
