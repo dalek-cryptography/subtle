@@ -2,6 +2,11 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.2.2
+
+* Update README.md to clarify that 2.2 and above do not require the `nightly`
+  feature.
+
 ## 2.2.1
 
 * Adds an `or_else` combinator for `CtOption`, by @ebfull.
