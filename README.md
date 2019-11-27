@@ -14,22 +14,18 @@ The traits are implemented using bitwise operations, and should execute in
 constant time provided that a) the bitwise operations are constant-time and b)
 the operations are not optimized into a branch.
 
-To prevent the latter possibility, when using the `nightly` feature
-(recommended), the crate attempts to hide the value of a `Choice`'s inner `u8`
-from the optimizer, by passing it through an inline assembly block.  For more
-information, see the _About_ section below.
+To prevent the latter possibility, the crate attempts to hide the value of a
+`Choice`'s inner `u8` from the optimizer, by passing it through either an
+inline assembly block or a volatile read.  For more information, see the
+_About_ section below.
 
 ```toml
 [dependencies.subtle]
-version = "2.1"
-features = ["nightly"]
+version = "2.2"
 ```
 
-## Features
-
-* The `nightly` feature enables the use of
-an optimization barrier to protect the `Choice` type.
-_Using the `nightly` feature is recommended for security_.
+Versions prior to `2.2` recommended use of the `nightly` feature to enable an
+optimization barrier; this is not required in versions `2.2` and above.
 
 ## Documentation
 
@@ -56,5 +52,5 @@ effort is fundamentally limited.
 
 **USE AT YOUR OWN RISK**
 
-[docs]: https://doc.dalek.rs/subtle
+[docs]: https://docs.rs/subtle
 [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
