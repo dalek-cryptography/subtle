@@ -24,3 +24,7 @@ default = ["std", "i128"]
 std = []
 i128 = []
 nightly = []
+
+[dev-dependencies]
+llvm-ir = "^0.5"
+pitchfork = { package = "haybale-pitchfork", version = "^0.2" }
