@@ -2,6 +2,11 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.2.3
+
+* Remove the `nightly`-only asm-based `black_box` barrier in favor of the
+  volatile-based one, fixing compilation on current nightlies.
+
 ## 2.2.2
 
 * Update README.md to clarify that 2.2 and above do not require the `nightly`
