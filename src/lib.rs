@@ -9,7 +9,6 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
-#![cfg_attr(feature = "nightly", feature(asm))]
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
@@ -24,25 +23,23 @@ extern crate std;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 
-/// The `Choice` struct represents a choice for use in conditional
-/// assignment.
-///
-/// It is a wrapper around a `u8`, which should have the value either
-/// `1` (true) or `0` (false).
-///
-/// With the `nightly` feature enabled, the conversion from `u8` to
-/// `Choice` passes the value through an optimization barrier, as a
-/// best-effort attempt to prevent the compiler from inferring that the
-/// `Choice` value is a boolean.  This strategy is based on Tim
-/// Maclean's [work on `rust-timing-shield`][rust-timing-shield],
-/// which attempts to provide a more comprehensive approach for
-/// preventing software side-channels in Rust code.
-///
-/// The `Choice` struct implements operators for AND, OR, XOR, and
-/// NOT, to allow combining `Choice` values.
-/// These operations do not short-circuit.
-///
-/// [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
+/// The `Choice` struct represents a choice for use in conditional assignment.
+/// 
+/// It is a wrapper around a `u8`, which should have the value either `1` (true)
+/// or `0` (false).
+/// 
+/// The conversion from `u8` to `Choice` passes the value through an optimization
+/// barrier, as a best-effort attempt to prevent the compiler from inferring that
+/// the `Choice` value is a boolean. This strategy is based on Tim Maclean's
+/// [work on `rust-timing-shield`][rust-timing-shield], which attempts to provide
+/// a more comprehensive approach for preventing software side-channels in Rust
+/// code.
+/// 
+/// The `Choice` struct implements operators for AND, OR, XOR, and NOT, to allow
+/// combining `Choice` values. These operations do not short-circuit.
+/// 
+/// [rust-timing-shield]:
+/// https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 #[derive(Copy, Clone, Debug)]
 pub struct Choice(u8);
 
@@ -51,11 +48,11 @@ impl Choice {
     ///
     /// # Note
     ///
-    /// This function only exists as an escape hatch for the rare case
+    /// This function only exists as an **escape hatch** for the rare case
     /// where it's not possible to use one of the `subtle`-provided
     /// trait impls.
     ///
-    /// To convert a `Choice` to a `bool`, use the `From` implementation instead.
+    /// **To convert a `Choice` to a `bool`, use the `From` implementation instead.**
     #[inline]
     pub fn unwrap_u8(&self) -> u8 {
         self.0
@@ -136,30 +133,19 @@ impl Not for Choice {
     }
 }
 
-/// This function is a best-effort attempt to prevent the compiler
-/// from knowing anything about the value of the returned `u8`, other
-/// than its type.
-///
-/// Uses inline asm when available, otherwise it's a no-op.
-#[cfg(all(feature = "nightly", not(any(target_arch = "asmjs", target_arch = "wasm32"))))]
-#[inline(always)]
-fn black_box(mut input: u8) -> u8 {
-    debug_assert!((input == 0u8) | (input == 1u8));
-
-    // Move value through assembler, which is opaque to the compiler, even though we don't do anything.
-    unsafe { asm!("" : "=r"(input) : "0"(input) ) }
-
-    input
-}
-#[cfg(any(target_arch = "asmjs", target_arch = "wasm32", not(feature = "nightly")))]
+/// This function is a best-effort attempt to prevent the compiler from knowing
+/// anything about the value of the returned `u8`, other than its type.
+/// 
+/// Because we want to support stable Rust, we don't have access to inline
+/// assembly or test::black_box, so we use the fact that volatile values will
+/// never be elided to register values.
+/// 
+/// Note: Rust's notion of "volatile" is subject to change over time. While this
+/// code may break in a non-destructive way in the future, “constant-time” code
+/// is a continually moving target, and this is better than doing nothing.
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
-    // We don't have access to inline assembly or test::black_box, so we use the fact that
-    // volatile values will never be elided to register values.
-    //
-    // Note: Rust's notion of "volatile" is subject to change over time. While this code may break
-    // in a non-destructive way in the future, it is better than doing nothing.
 
     unsafe {
         // Optimization barrier
