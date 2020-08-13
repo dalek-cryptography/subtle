@@ -23,7 +23,7 @@
 extern crate std;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
-use std::option::Option;
+use core::option::Option;
 
 /// The `Choice` struct represents a choice for use in conditional assignment.
 ///
@@ -500,7 +500,6 @@ pub struct CtOption<T> {
     is_some: Choice,
 }
 
-#[cfg(feature = "std")]
 impl<T> From<CtOption<T>> for Option<T> {
     /// Convert the `CtOption<T>` wrapper into an `Option<T>`, depending on whether
     /// the underlying `is_some` `Choice` was a `0` or a `1` once unwrapped.
