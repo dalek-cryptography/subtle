@@ -4,7 +4,7 @@ name = "subtle"
 # - update CHANGELOG
 # - update html_root_url
 # - update README if necessary by semver
-version = "2.2.3"
+version = "2.3.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"

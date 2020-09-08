@@ -13,7 +13,7 @@ matrix:
       env: NAME="nightly feature"
       script: cargo test --features nightly
     # Test MSRV
-    - rust: 1.13.0
+    - rust: 1.41.0
       env: NAME="MSRV test"
       script: cargo test --no-default-features --features std
     # Test if crate can be truly built without std

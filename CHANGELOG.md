@@ -2,6 +2,14 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.3.0
+
+* Add `impl ConstantTimeEq for Choice` by @tarcieri.
+* Add `impl From<CtOption<T>> for Option<T>` by @CPerezz.  This is useful for
+  handling library code that produces `CtOption`s in contexts where timing
+  doesn't matter.
+* Introduce an MSRV policy.
+
 ## 2.2.3
 
 * Remove the `nightly`-only asm-based `black_box` barrier in favor of the
