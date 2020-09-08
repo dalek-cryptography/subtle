@@ -240,6 +240,13 @@ impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
     }
 }
 
+impl ConstantTimeEq for Choice {
+    #[inline]
+    fn ct_eq(&self, rhs: &Choice) -> Choice {
+        !(*self ^ *rhs)
+    }
+}
+
 /// Given the bit-width `$bit_width` and the corresponding primitive
 /// unsigned and signed types `$t_u` and `$t_i` respectively, generate
 /// an `ConstantTimeEq` implementation.

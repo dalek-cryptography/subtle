@@ -136,6 +136,14 @@ fn conditional_select_choice() {
 }
 
 #[test]
+fn choice_equal() {
+    assert!(Choice::from(0).ct_eq(&Choice::from(0)).unwrap_u8() == 1);
+    assert!(Choice::from(0).ct_eq(&Choice::from(1)).unwrap_u8() == 0);
+    assert!(Choice::from(1).ct_eq(&Choice::from(0)).unwrap_u8() == 0);
+    assert!(Choice::from(1).ct_eq(&Choice::from(1)).unwrap_u8() == 1);
+}
+
+#[test]
 fn test_ctoption() {
     let a = CtOption::new(10, Choice::from(1));
     let b = CtOption::new(9, Choice::from(1));
