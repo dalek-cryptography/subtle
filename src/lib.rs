@@ -23,22 +23,23 @@
 extern crate std;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
+use core::option::Option;
 
 /// The `Choice` struct represents a choice for use in conditional assignment.
-/// 
+///
 /// It is a wrapper around a `u8`, which should have the value either `1` (true)
 /// or `0` (false).
-/// 
+///
 /// The conversion from `u8` to `Choice` passes the value through an optimization
 /// barrier, as a best-effort attempt to prevent the compiler from inferring that
 /// the `Choice` value is a boolean. This strategy is based on Tim Maclean's
 /// [work on `rust-timing-shield`][rust-timing-shield], which attempts to provide
 /// a more comprehensive approach for preventing software side-channels in Rust
 /// code.
-/// 
+///
 /// The `Choice` struct implements operators for AND, OR, XOR, and NOT, to allow
 /// combining `Choice` values. These operations do not short-circuit.
-/// 
+///
 /// [rust-timing-shield]:
 /// https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 #[derive(Copy, Clone, Debug)]
@@ -136,11 +137,11 @@ impl Not for Choice {
 
 /// This function is a best-effort attempt to prevent the compiler from knowing
 /// anything about the value of the returned `u8`, other than its type.
-/// 
+///
 /// Because we want to support stable Rust, we don't have access to inline
 /// assembly or test::black_box, so we use the fact that volatile values will
 /// never be elided to register values.
-/// 
+///
 /// Note: Rust's notion of "volatile" is subject to change over time. While this
 /// code may break in a non-destructive way in the future, “constant-time” code
 /// is a continually moving target, and this is better than doing nothing.
@@ -506,6 +507,25 @@ pub struct CtOption<T> {
     is_some: Choice,
 }
 
+impl<T> From<CtOption<T>> for Option<T> {
+    /// Convert the `CtOption<T>` wrapper into an `Option<T>`, depending on whether
+    /// the underlying `is_some` `Choice` was a `0` or a `1` once unwrapped.
+    ///
+    /// # Note
+    ///
+    /// This function exists to avoid ending up with ugly, verbose and/or bad handled
+    /// conversions from the `CtOption<T>` wraps to an `Option<T>` or `Result<T, E>`.
+    /// This implementation doesn't intend to be constant-time nor try to protect the
+    /// leakage of the `T` since the `Option<T>` will do it anyways.
+    fn from(source: CtOption<T>) -> Option<T> {
+        if source.is_some().unwrap_u8() == 1u8 {
+            Option::Some(source.value)
+        } else {
+            None
+        }
+    }
+}
+
 impl<T> CtOption<T> {
     /// This method is used to construct a new `CtOption<T>` and takes
     /// a value of type `T`, and a `Choice` that determines whether
@@ -514,7 +534,10 @@ impl<T> CtOption<T> {
     /// exposed.
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
-        CtOption { value: value, is_some: is_some }
+        CtOption {
+            value: value,
+            is_some: is_some,
+        }
     }
 
     /// This returns the underlying value but panics if it

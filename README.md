@@ -38,6 +38,12 @@ used in release mode.
 
 Documentation is available [here][docs].
 
+## Minimum Supported Rust Version
+
+Rust **1.41** or higher.
+
+Minimum supported Rust version can be changed in the future, but it will be done with a minor version bump.
+
 ## About
 
 This library aims to be the Rust equivalent of Go’s `crypto/subtle` module.
