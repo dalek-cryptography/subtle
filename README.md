@@ -7,7 +7,7 @@ instead of `bool` which are intended to execute in constant-time.  The `Choice`
 type is a wrapper around a `u8` that holds a `0` or `1`.
 
 ```toml
-subtle = "2.2"
+subtle = "2.3"
 ```
 
 This crate represents a “best-effort” attempt, since side-channels
