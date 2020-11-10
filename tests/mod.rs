@@ -1,4 +1,8 @@
+extern crate rand;
 extern crate subtle;
+
+use rand::rngs::OsRng;
+use rand::RngCore;
 
 use subtle::*;
 
@@ -280,4 +284,50 @@ fn unwrap_none_ctoption() {
     // This test might fail (in release mode?) if the
     // compiler decides to optimize it away.
     CtOption::new(10, Choice::from(0)).unwrap();
+}
+
+macro_rules! generate_greater_than_test {
+    ($ty: ty) => {
+        for _ in 0..100 {
+            let x = OsRng.next_u64() as $ty;
+            let y = OsRng.next_u64() as $ty;
+            let z = x.ct_gt(&y);
+
+            println!("x={}, y={}, z={:?}", x, y, z);
+
+            if x < y {
+                assert!(z.unwrap_u8() == 0);
+            } else if x == y {
+                assert!(z.unwrap_u8() == 0);
+            } else if x > y {
+                assert!(z.unwrap_u8() == 1);
+            }
+        }
+    }
+}
+
+#[test]
+fn greater_than_u8() {
+    generate_greater_than_test!(u8);
+}
+
+#[test]
+fn greater_than_u16() {
+    generate_greater_than_test!(u16);
+}
+
+#[test]
+fn greater_than_u32() {
+    generate_greater_than_test!(u32);
+}
+
+#[test]
+fn greater_than_u64() {
+    generate_greater_than_test!(u64);
+}
+
+#[cfg(feature = "i128")]
+#[test]
+fn greater_than_u128() {
+    generate_greater_than_test!(u128);
 }
