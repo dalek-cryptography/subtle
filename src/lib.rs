@@ -744,3 +744,17 @@ generate_unsigned_integer_greater_than!(u32, 32);
 generate_unsigned_integer_greater_than!(u64, 64);
 #[cfg(feature = "i128")]
 generate_unsigned_integer_greater_than!(u128, 128);
+
+pub trait ConstantTimeLessThan: ConstantTimeEq + ConstantTimeGreaterThan {
+    #[inline]
+    fn ct_lt(&self, other: &Self) -> Choice {
+        !self.ct_gt(other) & !self.ct_eq(other)
+    }
+}
+
+impl ConstantTimeLessThan for u8 {}
+impl ConstantTimeLessThan for u16 {}
+impl ConstantTimeLessThan for u32 {}
+impl ConstantTimeLessThan for u64 {}
+#[cfg(feature = "i128")]
+impl ConstantTimeLessThan for u128 {}
