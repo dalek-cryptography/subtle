@@ -699,6 +699,10 @@ pub trait ConstantTimeGreaterThan {
     /// let y_gt_x = y.ct_gt(&x);
     ///
     /// assert_eq!(y_gt_x.unwrap_u8(), 1);
+    ///
+    /// let x_gt_x = x.ct_gt(&x);
+    ///
+    /// assert_eq!(x_gt_x.unwrap_u8(), 0);
     /// ```
     fn ct_gt(&self, other: &Self) -> Choice;
 }
