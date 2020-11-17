@@ -670,7 +670,7 @@ impl<T: ConstantTimeEq> ConstantTimeEq for CtOption<T> {
 
 /// A type which can be compared in some manner and be determined to be greater
 /// than another of the same type.
-pub trait ConstantTimeGreaterThan {
+pub trait ConstantTimeGreater {
     /// Determine whether `self > other`.
     ///
     /// The bitwise-NOT of the return value of this function should be usable to
@@ -687,7 +687,7 @@ pub trait ConstantTimeGreaterThan {
     ///
     /// ```
     /// # extern crate subtle;
-    /// use subtle::ConstantTimeGreaterThan;
+    /// use subtle::ConstantTimeGreater;
     ///
     /// let x: u8 = 13;
     /// let y: u8 = 42;
@@ -707,9 +707,9 @@ pub trait ConstantTimeGreaterThan {
     fn ct_gt(&self, other: &Self) -> Choice;
 }
 
-macro_rules! generate_unsigned_integer_greater_than {
+macro_rules! generate_unsigned_integer_greater {
     ($t_u: ty, $bit_width: expr) => {
-        impl ConstantTimeGreaterThan for $t_u {
+        impl ConstantTimeGreater for $t_u {
             /// Returns Choice::from(1) iff x > y, and Choice::from(0) iff x <= y.
             ///
             /// # Note
@@ -742,16 +742,16 @@ macro_rules! generate_unsigned_integer_greater_than {
     }
 }
 
-generate_unsigned_integer_greater_than!(u8, 8);
-generate_unsigned_integer_greater_than!(u16, 16);
-generate_unsigned_integer_greater_than!(u32, 32);
-generate_unsigned_integer_greater_than!(u64, 64);
+generate_unsigned_integer_greater!(u8, 8);
+generate_unsigned_integer_greater!(u16, 16);
+generate_unsigned_integer_greater!(u32, 32);
+generate_unsigned_integer_greater!(u64, 64);
 #[cfg(feature = "i128")]
-generate_unsigned_integer_greater_than!(u128, 128);
+generate_unsigned_integer_greater!(u128, 128);
 
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.
-pub trait ConstantTimeLessThan: ConstantTimeEq + ConstantTimeGreaterThan {
+pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
     /// Determine whether `self < other`.
     ///
     /// The bitwise-NOT of the return value of this function should be usable to
@@ -771,7 +771,7 @@ pub trait ConstantTimeLessThan: ConstantTimeEq + ConstantTimeGreaterThan {
     ///
     /// ```
     /// # extern crate subtle;
-    /// use subtle::ConstantTimeLessThan;
+    /// use subtle::ConstantTimeLess;
     ///
     /// let x: u8 = 13;
     /// let y: u8 = 42;
@@ -794,9 +794,9 @@ pub trait ConstantTimeLessThan: ConstantTimeEq + ConstantTimeGreaterThan {
     }
 }
 
-impl ConstantTimeLessThan for u8 {}
-impl ConstantTimeLessThan for u16 {}
-impl ConstantTimeLessThan for u32 {}
-impl ConstantTimeLessThan for u64 {}
+impl ConstantTimeLess for u8 {}
+impl ConstantTimeLess for u16 {}
+impl ConstantTimeLess for u32 {}
+impl ConstantTimeLess for u64 {}
 #[cfg(feature = "i128")]
-impl ConstantTimeLessThan for u128 {}
+impl ConstantTimeLess for u128 {}
