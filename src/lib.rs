@@ -25,6 +25,7 @@ extern crate std;
 #[cfg(test)]
 extern crate rand;
 
+use core::cmp::Ordering;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
 
@@ -758,3 +759,92 @@ impl ConstantTimeLessThan for u32 {}
 impl ConstantTimeLessThan for u64 {}
 #[cfg(feature = "i128")]
 impl ConstantTimeLessThan for u128 {}
+
+pub trait ConstantTimePartialOrd: ConstantTimeEq + ConstantTimeGreaterThan {
+    fn ct_partial_cmp(&self, other: &Self) -> CtOption<Ordering>;
+}
+
+macro_rules! generate_unsigned_integer_partial_ord {
+    ($t_u: ty, $t_i: ty, $bit_width: expr) => {
+        impl ConstantTimePartialOrd for $t_u
+        {
+            fn ct_partial_cmp(&self, other: &$t_u) -> CtOption<Ordering> {
+                let eq = self.ct_eq(other).unwrap_u8();
+                let gt = self.ct_gt(other).unwrap_u8();
+
+                let cmp = ((gt + gt + eq) as $t_i) - 1;
+                let ord = Ordering(cmp);
+
+                // XXX is this match constant-time?
+                match ((gt + gt + eq) as $t_i) - 1 {
+                    -1 => CtOption{ value: Ordering::Less, is_some: Choice::from(1u8) },
+                    0  => CtOption{ value: Ordering::Equal, is_some: Choice::from(1u8) },
+                    1  => CtOption{ value: Ordering::Greater, is_some: Choice::from(1u8) },
+                    _  => panic!("Comparison resulted in number other than -1, 0, or 1"),
+                }
+            }
+        }
+    }
+}
+
+generate_unsigned_integer_partial_ord!(u8, i8, 8);
+generate_unsigned_integer_partial_ord!(u16, i16, 16);
+generate_unsigned_integer_partial_ord!(u32, i32, 32);
+generate_unsigned_integer_partial_ord!(u64, i64, 64);
+#[cfg(feature = "i128")]
+generate_unsigned_integer_partial_ord!(u128, i128, 128);
+
+pub trait ConstantTimeOrd: ConstantTimeEq + ConstantTimePartialOrd {
+    fn ct_cmp(&self, other: &Self) -> Ordering;
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use rand::rngs::OsRng;
+    use rand::RngCore;
+
+    #[test]
+    fn partial_ord_u8() {
+        for _ in 0..100 {
+            let x = OsRng.next_u32() as u8;
+            let y = OsRng.next_u32() as u8;
+            let z: CtOption<Ordering> = x.ct_partial_cmp(&y);
+
+            assert!(z.is_some().unwrap_u8() == 1);
+
+            println!("{:?}", z.unwrap());
+
+            if x < y {
+                assert!(z.unwrap() == Ordering::Less);
+            } else if x == y {
+                assert!(z.unwrap() == Ordering::Equal);
+            } else if x > y {
+                assert!(z.unwrap() == Ordering::Greater);
+            }
+        }
+    }
+
+    #[test]
+    fn partial_ord_eq() {
+        let _32_eq_32 = 32u16.ct_partial_cmp(&32u16);
+
+        assert!(_32_eq_32.is_some().unwrap_u8() == 1);
+
+        println!("{:?}", _32_eq_32.unwrap());
+
+        assert!(_32_eq_32.unwrap() == Ordering::Equal);
+    }
+
+    #[test]
+    fn partial_ord_gt() {
+        let _32_gt_15 = 32u16.ct_partial_cmp(&15u16);
+
+        assert!(_32_gt_15.is_some().unwrap_u8() == 1);
+
+        println!("{:?}", _32_gt_15.unwrap());
+
+        assert!(_32_gt_15.unwrap() == Ordering::Greater);
+    }
+}
