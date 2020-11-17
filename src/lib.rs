@@ -745,7 +745,45 @@ generate_unsigned_integer_greater_than!(u64, 64);
 #[cfg(feature = "i128")]
 generate_unsigned_integer_greater_than!(u128, 128);
 
+/// A type which can be compared in some manner and be determined to be less
+/// than another of the same type.
 pub trait ConstantTimeLessThan: ConstantTimeEq + ConstantTimeGreaterThan {
+    /// Determine whether `self < other`.
+    ///
+    /// The bitwise-NOT of the return value of this function should be usable to
+    /// determine if `self >= other`.
+    ///
+    /// A default implementation is provided and implemented for the unsigned
+    /// integer types.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Returns
+    ///
+    /// A `Choice` with a set bit if `self < other`, and with no set bits
+    /// otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConstantTimeLessThan;
+    ///
+    /// let x: u8 = 13;
+    /// let y: u8 = 42;
+    ///
+    /// let x_lt_y = x.ct_lt(&y);
+    ///
+    /// assert_eq!(x_lt_y.unwrap_u8(), 1);
+    ///
+    /// let y_lt_x = y.ct_lt(&x);
+    ///
+    /// assert_eq!(y_lt_x.unwrap_u8(), 0);
+    ///
+    /// let x_lt_x = x.ct_lt(&x);
+    ///
+    /// assert_eq!(x_lt_x.unwrap_u8(), 0);
+    /// ```
     #[inline]
     fn ct_lt(&self, other: &Self) -> Choice {
         !self.ct_gt(other) & !self.ct_eq(other)
