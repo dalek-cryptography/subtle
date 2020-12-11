@@ -9,9 +9,9 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
+#![cfg_attr(feature = "nightly-docs", feature(external_doc))]
+#![cfg_attr(feature = "nightly-docs", doc(include = "../README.md"))]
+#![deny(missing_docs)]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
 #![doc(html_root_url = "https://docs.rs/subtle/2.3.0")]
 
@@ -56,7 +56,7 @@ impl Choice {
     ///
     /// **To convert a `Choice` to a `bool`, use the `From` implementation instead.**
     #[inline]
-    pub fn unwrap_u8(&self) -> u8 {
+    pub fn unwrap_u8(self) -> u8 {
         self.0
     }
 }
@@ -192,7 +192,6 @@ pub trait ConstantTimeEq {
     ///
     /// * `Choice(1u8)` if `self == other`;
     /// * `Choice(0u8)` if `self != other`.
-    #[inline]
     fn ct_eq(&self, other: &Self) -> Choice;
 }
 
@@ -305,7 +304,6 @@ pub trait ConditionallySelectable: Copy {
     /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
-    /// # fn main() {
     /// let x: u8 = 13;
     /// let y: u8 = 42;
     ///
@@ -313,9 +311,7 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(z, x);
     /// let z = u8::conditional_select(&x, &y, 1.into());
     /// assert_eq!(z, y);
-    /// # }
     /// ```
-    #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 
     /// Conditionally assign `other` to `self`, according to `choice`.
@@ -328,7 +324,6 @@ pub trait ConditionallySelectable: Copy {
     /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
-    /// # fn main() {
     /// let mut x: u8 = 13;
     /// let mut y: u8 = 42;
     ///
@@ -336,7 +331,6 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(x, 13);
     /// x.conditional_assign(&y, 1.into());
     /// assert_eq!(x, 42);
-    /// # }
     /// ```
     #[inline]
     fn conditional_assign(&mut self, other: &Self, choice: Choice) {
@@ -354,7 +348,6 @@ pub trait ConditionallySelectable: Copy {
     /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
-    /// # fn main() {
     /// let mut x: u8 = 13;
     /// let mut y: u8 = 42;
     ///
@@ -364,7 +357,6 @@ pub trait ConditionallySelectable: Copy {
     /// u8::conditional_swap(&mut x, &mut y, 1.into());
     /// assert_eq!(x, 42);
     /// assert_eq!(y, 13);
-    /// # }
     /// ```
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
@@ -465,7 +457,6 @@ pub trait ConditionallyNegatable {
     /// unchanged.
     ///
     /// This function should execute in constant time.
-    #[inline]
     fn conditional_negate(&mut self, choice: Choice);
 }
 
@@ -535,8 +526,8 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
         CtOption {
-            value: value,
-            is_some: is_some,
+            value,
+            is_some,
         }
     }
 
