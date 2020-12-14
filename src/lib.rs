@@ -45,8 +45,11 @@ use core::option::Option;
 #[derive(Copy, Clone, Debug)]
 pub struct Choice(u8);
 
-pub const CTRUE: Choice = Choice(1);
-pub const CFALSE: Choice = Choice(0);
+/// A constant representing the value True
+pub const TRUE: Choice = Choice(1);
+
+/// A constant representing the value False
+pub const FALSE: Choice = Choice(0);
 
 impl Choice {
     /// Unwrap the `Choice` wrapper to reveal the underlying `u8`.
