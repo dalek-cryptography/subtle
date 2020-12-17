@@ -23,6 +23,9 @@ exclude = [
 [badges]
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
+[dev-dependencies]
+rand = { version = "0.7" }
+
 [features]
 default = ["std", "i128"]
 std = []
