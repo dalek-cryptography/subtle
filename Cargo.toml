@@ -4,7 +4,7 @@ name = "subtle"
 # - update CHANGELOG
 # - update html_root_url
 # - update README if necessary by semver
-version = "2.3.0"
+version = "2.4.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
@@ -22,6 +22,9 @@ exclude = [
 
 [badges]
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
+
+[dev-dependencies]
+rand = { version = "0.7" }
 
 [features]
 default = ["std", "i128"]

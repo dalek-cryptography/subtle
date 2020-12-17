@@ -13,7 +13,7 @@
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
-#![doc(html_root_url = "https://docs.rs/subtle/2.3.0")]
+#![doc(html_root_url = "https://docs.rs/subtle/2.4.0")]
 
 //! Note that docs will only build on nightly Rust until
 //! [RFC 1990 stabilizes](https://github.com/rust-lang/rust/issues/44732).
@@ -21,6 +21,9 @@
 #[cfg(feature = "std")]
 #[macro_use]
 extern crate std;
+
+#[cfg(test)]
+extern crate rand;
 
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
@@ -664,3 +667,136 @@ impl<T: ConstantTimeEq> ConstantTimeEq for CtOption<T> {
         (a & b & self.value.ct_eq(&rhs.value)) | (!a & !b)
     }
 }
+
+/// A type which can be compared in some manner and be determined to be greater
+/// than another of the same type.
+pub trait ConstantTimeGreater {
+    /// Determine whether `self > other`.
+    ///
+    /// The bitwise-NOT of the return value of this function should be usable to
+    /// determine if `self <= other`.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Returns
+    ///
+    /// A `Choice` with a set bit if `self > other`, and with no set bits
+    /// otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConstantTimeGreater;
+    ///
+    /// let x: u8 = 13;
+    /// let y: u8 = 42;
+    ///
+    /// let x_gt_y = x.ct_gt(&y);
+    ///
+    /// assert_eq!(x_gt_y.unwrap_u8(), 0);
+    ///
+    /// let y_gt_x = y.ct_gt(&x);
+    ///
+    /// assert_eq!(y_gt_x.unwrap_u8(), 1);
+    ///
+    /// let x_gt_x = x.ct_gt(&x);
+    ///
+    /// assert_eq!(x_gt_x.unwrap_u8(), 0);
+    /// ```
+    fn ct_gt(&self, other: &Self) -> Choice;
+}
+
+macro_rules! generate_unsigned_integer_greater {
+    ($t_u: ty, $bit_width: expr) => {
+        impl ConstantTimeGreater for $t_u {
+            /// Returns Choice::from(1) iff x > y, and Choice::from(0) iff x <= y.
+            ///
+            /// # Note
+            ///
+            /// This algoritm would also work for signed integers if we first
+            /// flip the top bit, e.g. `let x: u8 = x ^ 0x80`, etc.
+            #[inline]
+            fn ct_gt(&self, other: &$t_u) -> Choice {
+                let gtb = self & !other; // All the bits in self that are greater than their corresponding bits in other.
+                let mut ltb = !self & other; // All the bits in self that are less than their corresponding bits in other.
+                let mut pow = 1;
+
+                // Less-than operator is okay here because it's dependent on the bit-width.
+                while pow < $bit_width {
+                    ltb |= ltb >> pow; // Bit-smear the highest set bit to the right.
+                    pow += pow;
+                }
+                let mut bit = gtb & !ltb; // Select the highest set bit.
+                let mut pow = 1;
+
+                while pow < $bit_width {
+                    bit |= bit >> pow; // Shift it to the right until we end up with either 0 or 1.
+                    pow += pow;
+                }
+                // XXX We should possibly do the above flattening to 0 or 1 in the
+                //     Choice constructor rather than making it a debug error?
+                Choice::from((bit & 1) as u8)
+            }
+        }
+    }
+}
+
+generate_unsigned_integer_greater!(u8, 8);
+generate_unsigned_integer_greater!(u16, 16);
+generate_unsigned_integer_greater!(u32, 32);
+generate_unsigned_integer_greater!(u64, 64);
+#[cfg(feature = "i128")]
+generate_unsigned_integer_greater!(u128, 128);
+
+/// A type which can be compared in some manner and be determined to be less
+/// than another of the same type.
+pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
+    /// Determine whether `self < other`.
+    ///
+    /// The bitwise-NOT of the return value of this function should be usable to
+    /// determine if `self >= other`.
+    ///
+    /// A default implementation is provided and implemented for the unsigned
+    /// integer types.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Returns
+    ///
+    /// A `Choice` with a set bit if `self < other`, and with no set bits
+    /// otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # extern crate subtle;
+    /// use subtle::ConstantTimeLess;
+    ///
+    /// let x: u8 = 13;
+    /// let y: u8 = 42;
+    ///
+    /// let x_lt_y = x.ct_lt(&y);
+    ///
+    /// assert_eq!(x_lt_y.unwrap_u8(), 1);
+    ///
+    /// let y_lt_x = y.ct_lt(&x);
+    ///
+    /// assert_eq!(y_lt_x.unwrap_u8(), 0);
+    ///
+    /// let x_lt_x = x.ct_lt(&x);
+    ///
+    /// assert_eq!(x_lt_x.unwrap_u8(), 0);
+    /// ```
+    #[inline]
+    fn ct_lt(&self, other: &Self) -> Choice {
+        !self.ct_gt(other) & !self.ct_eq(other)
+    }
+}
+
+impl ConstantTimeLess for u8 {}
+impl ConstantTimeLess for u16 {}
+impl ConstantTimeLess for u32 {}
+impl ConstantTimeLess for u64 {}
+#[cfg(feature = "i128")]
+impl ConstantTimeLess for u128 {}
