@@ -292,7 +292,7 @@ generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 ///
 /// This trait also provides generic implementations of conditional
 /// assignment and conditional swaps.
-pub trait ConditionallySelectable: Copy {
+pub trait ConditionallySelectable: Clone {
     /// Select `a` or `b` according to `choice`.
     ///
     /// # Returns
@@ -371,7 +371,7 @@ pub trait ConditionallySelectable: Copy {
     /// ```
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
-        let t: Self = *a;
+        let t: Self = a.clone();
         a.conditional_assign(&b, choice);
         b.conditional_assign(&t, choice);
     }
@@ -504,11 +504,13 @@ where
 /// from these functions makes it difficult for the caller to reason
 /// about the result in constant time, and returning an incorrect
 /// value burdens the caller and increases the chance of bugs.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct CtOption<T> {
     value: T,
     is_some: Choice,
 }
+
+impl<T: Copy> Copy for CtOption<T> {}
 
 impl<T> From<CtOption<T>> for Option<T> {
     /// Convert the `CtOption<T>` wrapper into an `Option<T>`, depending on whether
