@@ -393,6 +393,9 @@ macro_rules! to_signed_int {
     (u128) => {
         i128
     };
+    (usize) => {
+        isize
+    };
     (i8) => {
         i8
     };
@@ -407,6 +410,9 @@ macro_rules! to_signed_int {
     };
     (i128) => {
         i128
+    };
+    (isize) => {
+        isize
     };
 }
 
@@ -448,6 +454,7 @@ generate_integer_conditional_select!( u32  i32);
 generate_integer_conditional_select!( u64  i64);
 #[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
+generate_integer_conditional_select!(usize isize);
 
 impl ConditionallySelectable for Choice {
     #[inline]
