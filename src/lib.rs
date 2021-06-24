@@ -9,8 +9,7 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
+#![cfg_attr(feature = "nightly", doc = include_str!("../README.md"))]
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
 #![doc(html_root_url = "https://docs.rs/subtle/2.4.0")]
