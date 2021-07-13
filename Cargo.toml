@@ -4,6 +4,7 @@ name = "subtle"
 # - update CHANGELOG
 # - update html_root_url
 # - update README if necessary by semver
+# - if any updates were made to the README, also update the module documentation in src/lib.rs
 version = "2.4.0"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
@@ -30,4 +31,5 @@ rand = { version = "0.7" }
 default = ["std", "i128"]
 std = []
 i128 = []
+# DEPRECATED: As of 2.4.1, this feature does nothing.
 nightly = []
