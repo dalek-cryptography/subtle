@@ -21,9 +21,6 @@
 #[macro_use]
 extern crate std;
 
-#[cfg(test)]
-extern crate rand;
-
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
 
