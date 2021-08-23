@@ -597,8 +597,8 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
         CtOption {
-            value: value,
-            is_some: is_some,
+            value,
+            is_some,
         }
     }
 
