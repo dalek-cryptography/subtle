@@ -6,6 +6,7 @@ name = "subtle"
 # - update README if necessary by semver
 # - if any updates were made to the README, also update the module documentation in src/lib.rs
 version = "2.4.1"
+edition = "2018"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"

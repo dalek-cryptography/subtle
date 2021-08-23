@@ -388,7 +388,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -411,7 +410,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -437,7 +435,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -784,7 +781,6 @@ pub trait ConstantTimeGreater {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConstantTimeGreater;
     ///
     /// let x: u8 = 13;
@@ -868,7 +864,6 @@ pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConstantTimeLess;
     ///
     /// let x: u8 = 13;

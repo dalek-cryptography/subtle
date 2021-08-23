@@ -1,6 +1,3 @@
-extern crate rand;
-extern crate subtle;
-
 use rand::rngs::OsRng;
 use rand::RngCore;
 
