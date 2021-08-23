@@ -593,10 +593,7 @@ impl<T> CtOption<T> {
     /// exposed.
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
-        CtOption {
-            value,
-            is_some,
-        }
+        CtOption { value, is_some }
     }
 
     /// This returns the underlying value but panics if it
@@ -794,7 +791,7 @@ macro_rules! generate_unsigned_integer_greater {
                 Choice::from((bit & 1) as u8)
             }
         }
-    }
+    };
 }
 
 generate_unsigned_integer_greater!(u8, 8);
