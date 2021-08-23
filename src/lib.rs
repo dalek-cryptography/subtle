@@ -257,7 +257,6 @@ pub trait ConstantTimeEq {
     ///
     /// * `Choice(1u8)` if `self == other`;
     /// * `Choice(0u8)` if `self != other`.
-    #[inline]
     fn ct_eq(&self, other: &Self) -> Choice;
 }
 
@@ -380,7 +379,6 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(z, y);
     /// # }
     /// ```
-    #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 
     /// Conditionally assign `other` to `self`, according to `choice`.
@@ -434,7 +432,7 @@ pub trait ConditionallySelectable: Copy {
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
         let t: Self = *a;
-        a.conditional_assign(&b, choice);
+        a.conditional_assign(b, choice);
         b.conditional_assign(&t, choice);
     }
 }
@@ -530,7 +528,6 @@ pub trait ConditionallyNegatable {
     /// unchanged.
     ///
     /// This function should execute in constant time.
-    #[inline]
     fn conditional_negate(&mut self, choice: Choice);
 }
 
