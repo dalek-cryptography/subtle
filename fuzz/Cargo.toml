@@ -1,9 +1,9 @@
-
 [package]
 name = "subtle-fuzz"
 version = "0.0.1"
 authors = ["Automatically generated"]
 publish = false
+edition = "2018"
 
 [package.metadata]
 cargo-fuzz = true
@@ -11,8 +11,9 @@ cargo-fuzz = true
 [dependencies.subtle]
 path = ".."
 features = ["nightly"]
-[dependencies.libfuzzer-sys]
-git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+
+[dependencies]
+libfuzzer-sys = "0.4"
 
 # Prevent this from interfering with workspaces
 [workspace]
@@ -21,15 +22,23 @@ members = ["."]
 [[bin]]
 name = "conditional_assign_u8"
 path = "fuzzers/conditional_assign_u8.rs"
+test = false
+doc = false
 
 [[bin]]
 name = "conditional_assign_u16"
 path = "fuzzers/conditional_assign_u16.rs"
+test = false
+doc = false
 
 [[bin]]
 name = "conditional_assign_i8"
 path = "fuzzers/conditional_assign_i8.rs"
+test = false
+doc = false
 
 [[bin]]
 name = "conditional_assign_i128"
 path = "fuzzers/conditional_assign_i128.rs"
+test = false
+doc = false

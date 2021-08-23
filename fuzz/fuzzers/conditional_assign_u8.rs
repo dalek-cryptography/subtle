@@ -1,10 +1,5 @@
 #![no_main]
-
-#[macro_use]
-extern crate libfuzzer_sys;
-extern crate subtle;
-extern crate core;
-
+use libfuzzer_sys::fuzz_target;
 use subtle::ConditionallySelectable;
 
 fuzz_target!(|data: &[u8]| {
