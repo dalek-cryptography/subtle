@@ -33,3 +33,7 @@ path = "fuzzers/conditional_assign_i8.rs"
 [[bin]]
 name = "conditional_assign_i128"
 path = "fuzzers/conditional_assign_i128.rs"
+
+[[bin]]
+name = "conditional_assign_array"
+path = "fuzzers/conditional_assign_array.rs"

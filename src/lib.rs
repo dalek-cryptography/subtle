@@ -55,7 +55,7 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! Rust **1.41** or higher.
+//! Rust **1.51** or higher.
 //!
 //! Minimum supported Rust version can be changed in the future, but it will be done with a minor version bump.
 //!
@@ -536,6 +536,23 @@ impl ConditionallySelectable for Choice {
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         Choice(u8::conditional_select(&a.0, &b.0, choice))
+    }
+}
+
+impl<T, const N: usize> ConditionallySelectable for [T; N]
+where T: ConditionallySelectable
+{
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        let mut output = *a;
+        output.conditional_assign(b, choice);
+        output
+    }
+
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        for (a_i, b_i) in self.iter_mut().zip(other) {
+            a_i.conditional_assign(b_i, choice)
+        }
     }
 }
 
