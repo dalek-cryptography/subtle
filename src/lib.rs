@@ -1,7 +1,7 @@
 // -*- mode: rust; -*-
 //
 // This file is part of subtle, part of the dalek cryptography project.
-// Copyright (c) 2016-2018 isis lovecruft, Henry de Valence
+// Copyright (c) 2016-2022 isis lovecruft, Henry de Valence
 // See LICENSE for licensing information.
 //
 // Authors:
@@ -87,6 +87,10 @@
 #[macro_use]
 extern crate std;
 
+#[cfg(test)]
+extern crate rand;
+
+use core::cmp::Ordering;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
 
@@ -111,6 +115,11 @@ use core::option::Option;
 pub struct Choice(u8);
 
 impl Choice {
+    /// Create an instance in `const` context.
+    pub const fn of_bool(of: bool) -> Self {
+        Self(of as u8)
+    }
+
     /// Unwrap the `Choice` wrapper to reveal the underlying `u8`.
     ///
     /// # Note
@@ -236,7 +245,7 @@ impl From<u8> for Choice {
     }
 }
 
-/// An `Eq`-like trait that produces a `Choice` instead of a `bool`.
+/// An [`Eq`]-like trait that produces a `Choice` instead of a `bool`.
 ///
 /// # Example
 ///
@@ -257,7 +266,6 @@ pub trait ConstantTimeEq {
     ///
     /// * `Choice(1u8)` if `self == other`;
     /// * `Choice(0u8)` if `self != other`.
-    #[inline]
     fn ct_eq(&self, other: &Self) -> Choice;
 }
 
@@ -380,7 +388,6 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(z, y);
     /// # }
     /// ```
-    #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 
     /// Conditionally assign `other` to `self`, according to `choice`.
@@ -530,7 +537,6 @@ pub trait ConditionallyNegatable {
     /// unchanged.
     ///
     /// This function should execute in constant time.
-    #[inline]
     fn conditional_negate(&mut self, choice: Choice);
 }
 
@@ -801,7 +807,7 @@ macro_rules! generate_unsigned_integer_greater {
                 Choice::from((bit & 1) as u8)
             }
         }
-    }
+    };
 }
 
 generate_unsigned_integer_greater!(u8, 8);
@@ -813,7 +819,7 @@ generate_unsigned_integer_greater!(u128, 128);
 
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.
-pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
+pub trait ConstantTimeLess: ConstantTimeGreater {
     /// Determine whether `self < other`.
     ///
     /// The bitwise-NOT of the return value of this function should be usable to
@@ -852,7 +858,7 @@ pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
     /// ```
     #[inline]
     fn ct_lt(&self, other: &Self) -> Choice {
-        !self.ct_gt(other) & !self.ct_eq(other)
+        other.ct_gt(self)
     }
 }
 
@@ -862,3 +868,146 @@ impl ConstantTimeLess for u32 {}
 impl ConstantTimeLess for u64 {}
 #[cfg(feature = "i128")]
 impl ConstantTimeLess for u128 {}
+
+/// A [`PartialOrd`][core::cmp::PartialOrd]-like trait for constant-time comparisons.
+///
+/// This trait is automatically implemented for types supporting the "equals", "less", and
+/// "greater" comparisons.
+///
+/// # Example
+///
+/// ```
+/// use std::cmp::Ordering;
+/// use subtle::{ConstantTimePartialOrd, CtOption};
+/// let x: u8 = 5;
+/// let y: u8 = 13;
+///
+/// assert_eq!(x.ct_partial_cmp(&x).unwrap(), Ordering::Equal);
+/// assert_eq!(x.ct_partial_cmp(&y).unwrap(), Ordering::Less);
+/// assert_eq!(y.ct_partial_cmp(&x).unwrap(), Ordering::Greater);
+/// ```
+pub trait ConstantTimePartialOrd {
+    /// This method returns an ordering between `self` and `other`, if it exists.
+    ///
+    /// This method should execute in constant time.
+    fn ct_partial_cmp(&self, other: &Self) -> CtOption<Ordering>;
+}
+
+impl ConstantTimeEq for Ordering {
+    /// Use our `#[repr(i8)]` to get a `ct_eq()` implementation without relying on any `match`es.
+    ///
+    /// This also means `CtOption<Ordering>` implements `ConstantTimeEq`.
+    #[inline]
+    fn ct_eq(&self, other: &Self) -> Choice {
+        let a = *self as i8;
+        let b = *other as i8;
+        a.ct_eq(&b)
+    }
+}
+
+/// Select among `N + 1` results given `N` logical values, of which at most one should be true.
+///
+/// This method requires a whole set of logical checks to be performed before evaluating their
+/// result, and uses a lookup table to avoid branching in a `match` expression.
+///
+///```
+/// use subtle::index_mutually_exclusive_logical_results;
+///
+/// let r = [0xA, 0xB, 0xC];
+///
+/// let a = index_mutually_exclusive_logical_results(&r, [0.into(), 0.into()]);
+/// assert_eq!(*a, 0xA);
+/// let b = index_mutually_exclusive_logical_results(&r, [1.into(), 0.into()]);
+/// assert_eq!(*b, 0xB);
+/// let c = index_mutually_exclusive_logical_results(&r, [0.into(), 1.into()]);
+/// assert_eq!(*c, 0xC);
+///```
+pub fn index_mutually_exclusive_logical_results<T, const N: usize>(
+    results: &[T],
+    logicals: [Choice; N],
+) -> &T {
+    assert_eq!(results.len(), N + 1);
+    let combined_result: u8 = logicals.iter().enumerate().fold(0u8, |x, (i, choice)| {
+        x + ((i as u8) + 1) * choice.unwrap_u8()
+    });
+    results
+        .get(combined_result as usize)
+        .expect("multiple inconsistent mutually exclusive logical operations returned true")
+}
+
+impl<T: ConstantTimeGreater + ConstantTimeLess + ConstantTimeEq> ConstantTimePartialOrd for T {
+    /// We do not assume a total ordering for `T`, so we have to individually check "less than",
+    /// "equal", and "greater". This also respects non-default implementations of `ct_lt()`.
+    fn ct_partial_cmp(&self, other: &Self) -> CtOption<Ordering> {
+        let is_eq = self.ct_eq(other);
+        let is_lt = self.ct_lt(other);
+        let is_gt = self.ct_gt(other);
+
+        static PARTIAL_ORDERS: [CtOption<Ordering>; 4] = [
+            CtOption {
+                value: Ordering::Equal,
+                is_some: Choice::of_bool(false),
+            },
+            CtOption {
+                value: Ordering::Equal,
+                is_some: Choice::of_bool(true),
+            },
+            CtOption {
+                value: Ordering::Less,
+                is_some: Choice::of_bool(true),
+            },
+            CtOption {
+                value: Ordering::Greater,
+                is_some: Choice::of_bool(true),
+            },
+        ];
+        *index_mutually_exclusive_logical_results(&PARTIAL_ORDERS, [is_eq, is_lt, is_gt])
+    }
+}
+
+/// An [`Ord`][core::cmp::Ord]-like trait for constant-time comparisons.
+///
+/// This trait can be automatically implemented for types supporting the "equals" and "greater"
+/// comparisons.
+///
+/// # Example
+///
+/// ```
+/// use std::cmp::Ordering;
+/// use subtle::ConstantTimeOrd;
+/// let x: u8 = 5;
+/// let y: u8 = 13;
+///
+/// assert_eq!(x.ct_cmp(&x), Ordering::Equal);
+/// assert_eq!(x.ct_cmp(&y), Ordering::Less);
+/// assert_eq!(y.ct_cmp(&x), Ordering::Greater);
+/// ```
+pub trait ConstantTimeOrd: ConstantTimeEq + ConstantTimeGreater {
+    /// This method returns an ordering between `self` and other`.
+    ///
+    /// Although this method should never need to be overridden, it is exposed as a default method
+    /// here to force types to explicitly implement this trait. This ensures that types which are
+    /// *only* partially orderable do not pick up an incorrect `ConstantTimeOrd` impl just by
+    /// implementing the pairwise comparison operations. Contrast this with
+    /// [`ConstantTimePartialOrd`], which is automatically implemented for all types implementing
+    /// [`ConstantTimeGreater`], [`ConstantTimeLess`], and [`ConstantTimeEq`].
+    ///
+    /// Here we assume a total ordering for `T`, so we need to check only "equal" and "greater", and
+    /// can assume "less" if both `ct_eq()` and `ct_gt()` are false.
+    ///
+    /// This method should execute in constant time.
+    fn ct_cmp(&self, other: &Self) -> Ordering {
+        let is_gt = self.ct_gt(other);
+        let is_eq = self.ct_eq(other);
+
+        static ORDERS: [Ordering; 3] = [Ordering::Less, Ordering::Greater, Ordering::Equal];
+        *index_mutually_exclusive_logical_results(&ORDERS, [is_gt, is_eq])
+    }
+}
+
+impl ConstantTimeOrd for u8 {}
+impl ConstantTimeOrd for u16 {}
+impl ConstantTimeOrd for u32 {}
+impl ConstantTimeOrd for u64 {}
+#[cfg(feature = "i128")]
+impl ConstantTimeOrd for u128 {}
