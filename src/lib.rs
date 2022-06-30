@@ -1,7 +1,7 @@
 // -*- mode: rust; -*-
 //
 // This file is part of subtle, part of the dalek cryptography project.
-// Copyright (c) 2016-2018 isis lovecruft, Henry de Valence
+// Copyright (c) 2016-2022 isis lovecruft, Henry de Valence
 // See LICENSE for licensing information.
 //
 // Authors:
@@ -470,6 +470,12 @@ macro_rules! to_signed_int {
     (i128) => {
         i128
     };
+    (usize) => {
+        isize
+    };
+    (isize) => {
+        isize
+    };
 }
 
 macro_rules! generate_integer_conditional_select {
@@ -504,12 +510,13 @@ macro_rules! generate_integer_conditional_select {
     )*)
 }
 
-generate_integer_conditional_select!(  u8   i8);
-generate_integer_conditional_select!( u16  i16);
-generate_integer_conditional_select!( u32  i32);
-generate_integer_conditional_select!( u64  i64);
+generate_integer_conditional_select!(   u8    i8);
+generate_integer_conditional_select!(  u16   i16);
+generate_integer_conditional_select!(  u32   i32);
+generate_integer_conditional_select!(  u64   i64);
 #[cfg(feature = "i128")]
-generate_integer_conditional_select!(u128 i128);
+generate_integer_conditional_select!( u128  i128);
+generate_integer_conditional_select!(usize isize);
 
 impl ConditionallySelectable for Choice {
     #[inline]
@@ -810,6 +817,7 @@ generate_unsigned_integer_greater!(u32, 32);
 generate_unsigned_integer_greater!(u64, 64);
 #[cfg(feature = "i128")]
 generate_unsigned_integer_greater!(u128, 128);
+generate_unsigned_integer_greater!(usize, ::core::mem::size_of::<usize>() * 8);
 
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.
@@ -862,3 +870,4 @@ impl ConstantTimeLess for u32 {}
 impl ConstantTimeLess for u64 {}
 #[cfg(feature = "i128")]
 impl ConstantTimeLess for u128 {}
+impl ConstantTimeLess for usize {}
