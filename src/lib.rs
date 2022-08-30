@@ -626,6 +626,9 @@ impl<T> CtOption<T> {
 
     /// This returns the underlying value if it is `Some`
     /// or the value produced by the provided closure otherwise.
+    ///
+    /// This operates in constant time, because the provided closure
+    /// is always called.
     #[inline]
     pub fn unwrap_or_else<F>(self, f: F) -> T
     where
