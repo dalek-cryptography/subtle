@@ -200,39 +200,12 @@ impl Not for Choice {
     }
 }
 
-/// This function is a best-effort attempt to prevent the compiler from knowing
-/// anything about the value of the returned `u8`, other than its type.
-///
-/// Because we want to support stable Rust, we don't have access to inline
-/// assembly or test::black_box, so we use the fact that volatile values will
-/// never be elided to register values.
-///
-/// Note: Rust's notion of "volatile" is subject to change over time. While this
-/// code may break in a non-destructive way in the future, “constant-time” code
-/// is a continually moving target, and this is better than doing nothing.
-#[inline(never)]
-fn black_box(input: u8) -> u8 {
-    debug_assert!((input == 0u8) | (input == 1u8));
-
-    unsafe {
-        // Optimization barrier
-        //
-        // Unsafe is ok, because:
-        //   - &input is not NULL;
-        //   - size of input is not zero;
-        //   - u8 is neither Sync, nor Send;
-        //   - u8 is Copy, so input is always live;
-        //   - u8 type is always properly aligned.
-        core::ptr::read_volatile(&input as *const u8)
-    }
-}
-
 impl From<u8> for Choice {
     #[inline]
     fn from(input: u8) -> Choice {
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
-        Choice(black_box(input))
+        Choice(core::hint::black_box(input))
     }
 }
 

@@ -40,7 +40,7 @@ Documentation is available [here][docs].
 
 ## Minimum Supported Rust Version
 
-Rust **1.41** or higher.
+Rust **1.66** or higher.
 
 Minimum supported Rust version can be changed in the future, but it will be done with a minor version bump.
 
