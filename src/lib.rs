@@ -441,7 +441,7 @@ pub trait ConditionallySelectable: Copy {
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
         let t: Self = *a;
-        a.conditional_assign(&b, choice);
+        a.conditional_assign(b, choice);
         b.conditional_assign(&t, choice);
     }
 }
@@ -605,10 +605,7 @@ impl<T> CtOption<T> {
     /// exposed.
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
-        CtOption {
-            value: value,
-            is_some: is_some,
-        }
+        CtOption { value, is_some }
     }
 
     /// This returns the underlying value but panics if it
@@ -905,34 +902,15 @@ impl ConstantTimeEq for Ordering {
     }
 }
 
-/// Select among `N + 1` results given `N` logical values, of which at most one should be true.
-///
-/// This method requires a whole set of logical checks to be performed before evaluating their
-/// result, and uses a lookup table to avoid branching in a `match` expression.
-///
-///```
-/// use subtle::index_mutually_exclusive_logical_results;
-///
-/// let r = [0xA, 0xB, 0xC];
-///
-/// let a = index_mutually_exclusive_logical_results(&r, [0.into(), 0.into()]);
-/// assert_eq!(*a, 0xA);
-/// let b = index_mutually_exclusive_logical_results(&r, [1.into(), 0.into()]);
-/// assert_eq!(*b, 0xB);
-/// let c = index_mutually_exclusive_logical_results(&r, [0.into(), 1.into()]);
-/// assert_eq!(*c, 0xC);
-///```
-pub fn index_mutually_exclusive_logical_results<T, const N: usize>(
-    results: &[T],
-    logicals: [Choice; N],
-) -> &T {
-    assert_eq!(results.len(), N + 1);
-    let combined_result: u8 = logicals.iter().enumerate().fold(0u8, |x, (i, choice)| {
-        x + ((i as u8) + 1) * choice.unwrap_u8()
-    });
-    results
-        .get(combined_result as usize)
-        .expect("multiple inconsistent mutually exclusive logical operations returned true")
+impl ConditionallySelectable for Ordering {
+    /// Delegate to [`i8::conditional_select()`], since [`Ordering`] is `#[repr(i8)]`.
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        let delegated: i8 = i8::conditional_select(&(*a as i8), &(*b as i8), choice);
+        // TODO: is there a canonical way to construct a repr(i8) enum like Ordering from an i8
+        // without this unsafe call to transmute?
+        unsafe { core::mem::transmute::<i8, Self>(delegated) }
+    }
 }
 
 impl<T: ConstantTimeGreater + ConstantTimeLess + ConstantTimeEq> ConstantTimePartialOrd for T {
@@ -943,25 +921,32 @@ impl<T: ConstantTimeGreater + ConstantTimeLess + ConstantTimeEq> ConstantTimePar
         let is_lt = self.ct_lt(other);
         let is_gt = self.ct_gt(other);
 
-        static PARTIAL_ORDERS: [CtOption<Ordering>; 4] = [
-            CtOption {
-                value: Ordering::Equal,
-                is_some: Choice::of_bool(false),
-            },
-            CtOption {
+        let mut ret = CtOption {
+            value: Ordering::Equal,
+            is_some: Choice::of_bool(false),
+        };
+        ret.conditional_assign(
+            &CtOption {
                 value: Ordering::Equal,
                 is_some: Choice::of_bool(true),
             },
-            CtOption {
+            is_eq,
+        );
+        ret.conditional_assign(
+            &CtOption {
                 value: Ordering::Less,
                 is_some: Choice::of_bool(true),
             },
-            CtOption {
+            is_lt,
+        );
+        ret.conditional_assign(
+            &CtOption {
                 value: Ordering::Greater,
                 is_some: Choice::of_bool(true),
             },
-        ];
-        *index_mutually_exclusive_logical_results(&PARTIAL_ORDERS, [is_eq, is_lt, is_gt])
+            is_gt,
+        );
+        ret
     }
 }
 
@@ -1000,8 +985,10 @@ pub trait ConstantTimeOrd: ConstantTimeEq + ConstantTimeGreater {
         let is_gt = self.ct_gt(other);
         let is_eq = self.ct_eq(other);
 
-        static ORDERS: [Ordering; 3] = [Ordering::Less, Ordering::Greater, Ordering::Equal];
-        *index_mutually_exclusive_logical_results(&ORDERS, [is_gt, is_eq])
+        let mut ret = Ordering::Less;
+        ret.conditional_assign(&Ordering::Equal, is_eq);
+        ret.conditional_assign(&Ordering::Greater, is_gt);
+        ret
     }
 }
 
