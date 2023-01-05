@@ -203,6 +203,7 @@ impl Not for Choice {
 impl From<u8> for Choice {
     #[inline]
     fn from(input: u8) -> Choice {
+        debug_assert!((input == 0u8) | (input == 1u8));
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
         Choice(core::hint::black_box(input))
