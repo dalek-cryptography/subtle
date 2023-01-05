@@ -25,7 +25,9 @@ matrix:
 script:
   - cargo test && cargo test --no-default-features &&
     cargo test --no-default-features --features std &&
-    cargo test --no-default-features --features "std i128"
+    cargo test --no-default-features --features "std i128" &&
+    cargo test --no-default-features --features "std core_hint_black_box" &&
+    cargo test --no-default-features --features "std i128 core_hint_black_box"
 
 notifications:
   slack:
