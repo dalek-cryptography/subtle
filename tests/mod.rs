@@ -1,6 +1,8 @@
 extern crate rand;
 extern crate subtle;
 
+use std::cmp;
+
 use rand::rngs::OsRng;
 use rand::RngCore;
 
@@ -96,6 +98,19 @@ fn custom_conditional_select_i16() {
     assert_eq!(i16::conditional_select(&x, &y, 1.into()), 514);
 }
 
+#[test]
+fn ordering_conditional_select() {
+    assert_eq!(
+        cmp::Ordering::conditional_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 0.into()),
+        cmp::Ordering::Less
+    );
+
+    assert_eq!(
+        cmp::Ordering::conditional_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 1.into()),
+        cmp::Ordering::Greater
+    );
+}
+
 macro_rules! generate_integer_equal_tests {
     ($($t:ty),*) => ($(
         let y: $t = 0;  // all 0 bits
@@ -147,6 +162,16 @@ fn choice_equal() {
     assert!(Choice::from(0).ct_eq(&Choice::from(1)).unwrap_u8() == 0);
     assert!(Choice::from(1).ct_eq(&Choice::from(0)).unwrap_u8() == 0);
     assert!(Choice::from(1).ct_eq(&Choice::from(1)).unwrap_u8() == 1);
+}
+
+#[test]
+fn ordering_equal() {
+    let a = cmp::Ordering::Equal;
+    let b = cmp::Ordering::Greater;
+    let c = a;
+
+    assert_eq!(a.ct_eq(&b).unwrap_u8(), 0);
+    assert_eq!(a.ct_eq(&c).unwrap_u8(), 1);
 }
 
 #[test]
@@ -335,6 +360,12 @@ fn greater_than_u128() {
 }
 
 #[test]
+fn greater_than_ordering() {
+    assert_eq!(cmp::Ordering::Less.ct_gt(&cmp::Ordering::Greater).unwrap_u8(), 0);
+    assert_eq!(cmp::Ordering::Greater.ct_gt(&cmp::Ordering::Less).unwrap_u8(), 1);
+}
+
+#[test]
 /// Test that the two's compliment min and max, i.e. 0000...0001 < 1111...1110,
 /// gives the correct result. (This fails using the bit-twiddling algorithm that
 /// go/crypto/subtle uses.)
@@ -388,4 +419,10 @@ fn less_than_u64() {
 #[test]
 fn less_than_u128() {
     generate_less_than_test!(u128);
+}
+
+#[test]
+fn less_than_ordering() {
+    assert_eq!(cmp::Ordering::Greater.ct_lt(&cmp::Ordering::Less).unwrap_u8(), 0);
+    assert_eq!(cmp::Ordering::Less.ct_lt(&cmp::Ordering::Greater).unwrap_u8(), 1);
 }
