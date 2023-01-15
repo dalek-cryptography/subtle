@@ -605,6 +605,18 @@ impl<T> CtOption<T> {
         }
     }
 
+    /// Returns the contained value, consuming the `self` value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is none with a custom panic message provided by
+    /// `msg`.
+    pub fn expect(self, msg: &str) -> T {
+        assert_eq!(self.is_some.unwrap_u8(), 1, "{}", msg);
+
+        self.value
+    }
+
     /// This returns the underlying value but panics if it
     /// is not `Some`.
     #[inline]
