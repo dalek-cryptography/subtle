@@ -105,6 +105,8 @@ macro_rules! generate_integer_equal_tests {
 
         assert_eq!(x.ct_eq(&y).unwrap_u8(), 0);
         assert_eq!(x.ct_eq(&z).unwrap_u8(), 1);
+        assert_eq!(x.ct_ne(&y).unwrap_u8(), 1);
+        assert_eq!(x.ct_ne(&z).unwrap_u8(), 0);
     )*)
 }
 

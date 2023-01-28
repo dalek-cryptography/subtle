@@ -259,6 +259,19 @@ pub trait ConstantTimeEq {
     /// * `Choice(0u8)` if `self != other`.
     #[inline]
     fn ct_eq(&self, other: &Self) -> Choice;
+
+    /// Determine if two items are NOT equal.
+    ///
+    /// The `ct_ne` function should execute in constant time.
+    ///
+    /// # Returns
+    ///
+    /// * `Choice(0u8)` if `self == other`;
+    /// * `Choice(1u8)` if `self != other`.
+    #[inline]
+    fn ct_ne(&self, other: &Self) -> Choice {
+        !self.ct_eq(other)
+    }
 }
 
 impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
