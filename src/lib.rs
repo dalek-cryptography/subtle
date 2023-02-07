@@ -372,7 +372,7 @@ generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
 generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
-/// `Ordering` is `#[repr(i8)] making it possible to leverage `i8::ct_eq`.
+/// `Ordering` is `#[repr(i8)]` making it possible to leverage `i8::ct_eq`.
 impl ConstantTimeEq for cmp::Ordering {
     #[inline]
     fn ct_eq(&self, other: &Self) -> Choice {
