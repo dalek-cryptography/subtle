@@ -210,6 +210,7 @@ impl Not for Choice {
 /// Note: Rust's notion of "volatile" is subject to change over time. While this
 /// code may break in a non-destructive way in the future, “constant-time” code
 /// is a continually moving target, and this is better than doing nothing.
+#[cfg(not(feature = "core_hint_black_box"))]
 #[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
@@ -225,6 +226,13 @@ fn black_box(input: u8) -> u8 {
         //   - u8 type is always properly aligned.
         core::ptr::read_volatile(&input as *const u8)
     }
+}
+
+#[cfg(feature = "core_hint_black_box")]
+#[inline]
+fn black_box(input: u8) -> u8 {
+    debug_assert!((input == 0u8) | (input == 1u8));
+    core::hint::black_box(input)
 }
 
 impl From<u8> for Choice {
