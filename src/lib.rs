@@ -805,6 +805,32 @@ pub trait ConstantTimeGreater {
     fn ct_gt(&self, other: &Self) -> Choice;
 }
 
+macro_rules! integer_greater_algorithm {
+    ($self: expr, $other: expr, $bit_width: expr) => {
+        {
+        let gtb = $self & !$other; // All the bits in self that are greater than their corresponding bits in other.
+        let mut ltb = !$self & $other; // All the bits in self that are less than their corresponding bits in other.
+        let mut pow = 1;
+
+        // Less-than operator is okay here because it's dependent on the bit-width.
+        while pow < $bit_width {
+            ltb |= ltb >> pow; // Bit-smear the highest set bit to the right.
+            pow += pow;
+        }
+        let mut bit = gtb & !ltb; // Select the highest set bit.
+        let mut pow = 1;
+
+        while pow < $bit_width {
+            bit |= bit >> pow; // Shift it to the right until we end up with either 0 or 1.
+            pow += pow;
+        }
+        // XXX We should possibly do the above flattening to 0 or 1 in the
+        //     Choice constructor rather than making it a debug error?
+        Choice::from((bit & 1) as u8)
+    };
+}
+}
+
 macro_rules! generate_unsigned_integer_greater {
     ($t_u: ty, $bit_width: expr) => {
         impl ConstantTimeGreater for $t_u {
@@ -816,28 +842,29 @@ macro_rules! generate_unsigned_integer_greater {
             /// flip the top bit, e.g. `let x: u8 = x ^ 0x80`, etc.
             #[inline]
             fn ct_gt(&self, other: &$t_u) -> Choice {
-                let gtb = self & !other; // All the bits in self that are greater than their corresponding bits in other.
-                let mut ltb = !self & other; // All the bits in self that are less than their corresponding bits in other.
-                let mut pow = 1;
-
-                // Less-than operator is okay here because it's dependent on the bit-width.
-                while pow < $bit_width {
-                    ltb |= ltb >> pow; // Bit-smear the highest set bit to the right.
-                    pow += pow;
-                }
-                let mut bit = gtb & !ltb; // Select the highest set bit.
-                let mut pow = 1;
-
-                while pow < $bit_width {
-                    bit |= bit >> pow; // Shift it to the right until we end up with either 0 or 1.
-                    pow += pow;
-                }
-                // XXX We should possibly do the above flattening to 0 or 1 in the
-                //     Choice constructor rather than making it a debug error?
-                Choice::from((bit & 1) as u8)
+                integer_greater_algorithm!(self, other, $bit_width)
             }
         }
-    }
+    };
+}
+
+macro_rules! generate_signed_integer_greater {
+    ($t_u: ty, $bit_width: expr) => {
+        impl ConstantTimeGreater for $t_u {
+            /// Returns Choice::from(1) iff x > y, and Choice::from(0) iff x <= y.
+            ///
+            /// # Note
+            ///
+            /// This is an implementation of the usigned gt algoritm which works for signed integers by first
+            /// flipping the top bit, e.g. `let x: u8 = x ^ 0x80`, etc.
+            #[inline]
+            fn ct_gt(&self, other: &$t_u) -> Choice {
+                let flipped_self = self ^ (1 << ($bit_width - 1));
+                let flipped_other = other ^ (1 << ($bit_width - 1));
+                integer_greater_algorithm!(flipped_self, flipped_other, $bit_width)
+            }
+        }
+    };
 }
 
 generate_unsigned_integer_greater!(u8, 8);
@@ -846,6 +873,13 @@ generate_unsigned_integer_greater!(u32, 32);
 generate_unsigned_integer_greater!(u64, 64);
 #[cfg(feature = "i128")]
 generate_unsigned_integer_greater!(u128, 128);
+
+generate_signed_integer_greater!(i8, 8);
+generate_signed_integer_greater!(i16, 16);
+generate_signed_integer_greater!(i32, 32);
+generate_signed_integer_greater!(i64, 64);
+#[cfg(feature = "i128")]
+generate_signed_integer_greater!(i128, 128);
 
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.

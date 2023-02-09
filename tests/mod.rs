@@ -268,16 +268,66 @@ fn test_ctoption() {
     ));
 
     // Test (in)equality
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 1
+    );
 }
 
 #[test]
@@ -305,7 +355,7 @@ macro_rules! generate_greater_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
@@ -333,13 +383,37 @@ fn greater_than_u64() {
 fn greater_than_u128() {
     generate_greater_than_test!(u128);
 }
+#[test]
+fn greater_than_i8() {
+    generate_greater_than_test!(i8);
+}
 
+#[test]
+fn greater_than_i16() {
+    generate_greater_than_test!(i16);
+}
+
+#[test]
+fn greater_than_i32() {
+    generate_greater_than_test!(i32);
+}
+
+#[test]
+fn greater_than_i64() {
+    generate_greater_than_test!(i64);
+}
+
+#[cfg(feature = "i128")]
+#[test]
+fn greater_than_i128() {
+    generate_greater_than_test!(i128);
+}
 #[test]
 /// Test that the two's compliment min and max, i.e. 0000...0001 < 1111...1110,
 /// gives the correct result. (This fails using the bit-twiddling algorithm that
 /// go/crypto/subtle uses.)
 fn less_than_twos_compliment_minmax() {
-    let z = 1u32.ct_lt(&(2u32.pow(31)-1));
+    let z = 1u32.ct_lt(&(2u32.pow(31) - 1));
 
     assert!(z.unwrap_u8() == 1);
 }
@@ -361,7 +435,7 @@ macro_rules! generate_less_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
