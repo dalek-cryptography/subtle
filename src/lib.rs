@@ -539,8 +539,10 @@ impl ConditionallySelectable for Choice {
     }
 }
 
+#[cfg(feature = "const-generics")]
 impl<T, const N: usize> ConditionallySelectable for [T; N]
-where T: ConditionallySelectable
+where
+    T: ConditionallySelectable,
 {
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {

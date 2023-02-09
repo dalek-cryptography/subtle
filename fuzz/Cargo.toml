@@ -10,7 +10,7 @@ cargo-fuzz = true
 
 [dependencies.subtle]
 path = ".."
-features = ["nightly"]
+features = ["nightly", "const-generics"]
 [dependencies.libfuzzer-sys]
 git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
 

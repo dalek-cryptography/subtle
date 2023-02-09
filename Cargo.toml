@@ -28,6 +28,7 @@ travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 rand = { version = "0.7" }
 
 [features]
+const-generics = []
 core_hint_black_box = []
 default = ["std", "i128"]
 std = []
