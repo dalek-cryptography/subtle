@@ -230,7 +230,7 @@ fn black_box(input: u8) -> u8 {
 }
 
 #[cfg(feature = "core_hint_black_box")]
-#[inline]
+#[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
     core::hint::black_box(input)
