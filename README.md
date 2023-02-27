@@ -7,7 +7,7 @@ instead of `bool` which are intended to execute in constant-time.  The `Choice`
 type is a wrapper around a `u8` that holds a `0` or `1`.
 
 ```toml
-subtle = "2.4"
+subtle = "2.5"
 ```
 
 This crate represents a “best-effort” attempt, since side-channels
@@ -58,7 +58,7 @@ which attempts to provide a more comprehensive approach for preventing
 software side-channels in Rust code.
 
 From version `2.2`, it was based on Diane Hosfelt and Amber Sprenkels' work on
-"Secret Types in Rust".  Version `2.3` adds the `core_hint_black_box` feature,
+"Secret Types in Rust".  Version `2.5` adds the `core_hint_black_box` feature,
 which uses the original method through the [`core::hint::black_box`] function
 from the Rust standard library.
 
