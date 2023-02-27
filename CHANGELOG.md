@@ -2,6 +2,16 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.5.0
+
+* Add constant-timedness note to the documentation for `CtOption::unwrap_or_else`.
+* Add `CtOption::expect`.
+* Add `ConstantTimeEq::ct_ne` with default implementation.
+* Add new `core_hint_black_box` feature from Diane Hosfelt and Amber
+  Sprenkels which utilises the original `black_box` functionality from
+  when subtle was first written, which has now found it's way into the
+  Rust standard library.
+
 ## 2.4.1
 
 * Fix a bug in how the README was included in the documentation builds
