@@ -270,6 +270,9 @@ impl From<u8> for Choice {
 /// assert_eq!(x.ct_eq(&y).unwrap_u8(), 0);
 /// assert_eq!(x.ct_eq(&x).unwrap_u8(), 1);
 /// ```
+//
+// #[inline] is specified on these function prototypes to signify that they
+#[allow(unused_attributes)] // should be in the actual implementation
 pub trait ConstantTimeEq {
     /// Determine if two items are equal.
     ///
@@ -397,6 +400,9 @@ impl ConstantTimeEq for cmp::Ordering {
 ///
 /// This trait also provides generic implementations of conditional
 /// assignment and conditional swaps.
+//
+// #[inline] is specified on these function prototypes to signify that they
+#[allow(unused_attributes)] // should be in the actual implementation
 pub trait ConditionallySelectable: Copy {
     /// Select `a` or `b` according to `choice`.
     ///
@@ -604,6 +610,9 @@ where
 /// A generic implementation of `ConditionallyNegatable` is provided
 /// for types `T` which are `ConditionallySelectable` and have `Neg`
 /// implemented on `&T`.
+//
+// #[inline] is specified on these function prototypes to signify that they
+#[allow(unused_attributes)] // should be in the actual implementation
 pub trait ConditionallyNegatable {
     /// Negate `self` if `choice == Choice(1)`; otherwise, leave it
     /// unchanged.
