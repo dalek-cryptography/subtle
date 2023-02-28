@@ -45,6 +45,9 @@
 //! barrier ([`core::hint::black_box`]).  To use the new optimization barrier,
 //! enable the `core_hint_black_box` feature.
 //!
+//! Rust versions from 1.51 or higher have const generics support. You may enable
+//! `const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
+//!
 //! Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 //! optimization barrier; this is not required in versions `2.2` and above.
 //!
@@ -97,6 +100,7 @@
 #[macro_use]
 extern crate std;
 
+use core::cmp;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
 
@@ -239,7 +243,7 @@ fn black_box(input: u8) -> u8 {
 }
 
 #[cfg(feature = "core_hint_black_box")]
-#[inline]
+#[inline(never)]
 fn black_box(input: u8) -> u8 {
     debug_assert!((input == 0u8) | (input == 1u8));
     core::hint::black_box(input)
@@ -381,6 +385,14 @@ generate_integer_equal!(u64, i64, 64);
 generate_integer_equal!(u128, i128, 128);
 generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
+/// `Ordering` is `#[repr(i8)]` making it possible to leverage `i8::ct_eq`.
+impl ConstantTimeEq for cmp::Ordering {
+    #[inline]
+    fn ct_eq(&self, other: &Self) -> Choice {
+        (*self as i8).ct_eq(&(*other as i8))
+    }
+}
+
 /// A type which can be conditionally selected in constant time.
 ///
 /// This trait also provides generic implementations of conditional
@@ -398,7 +410,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -421,7 +432,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -447,7 +457,6 @@ pub trait ConditionallySelectable: Copy {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConditionallySelectable;
     /// #
     /// # fn main() {
@@ -542,10 +551,49 @@ generate_integer_conditional_select!( u64  i64);
 #[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
+/// `Ordering` is `#[repr(i8)]` where:
+///
+/// - `Less` => -1
+/// - `Equal` => 0
+/// - `Greater` => 1
+///
+/// Given this, it's possible to operate on orderings as if they're integers,
+/// which allows leveraging conditional masking for predication.
+impl ConditionallySelectable for cmp::Ordering {
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        let a = *a as i8;
+        let b = *b as i8;
+        let ret = i8::conditional_select(&a, &b, choice);
+
+        // SAFETY: `Ordering` is `#[repr(i8)]` and `ret` has been assigned to
+        // a value which was originally a valid `Ordering` then cast to `i8`
+        unsafe { *((&ret as *const _) as *const cmp::Ordering) }
+    }
+}
+
 impl ConditionallySelectable for Choice {
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         Choice(u8::conditional_select(&a.0, &b.0, choice))
+    }
+}
+
+#[cfg(feature = "const-generics")]
+impl<T, const N: usize> ConditionallySelectable for [T; N]
+where
+    T: ConditionallySelectable,
+{
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        let mut output = *a;
+        output.conditional_assign(b, choice);
+        output
+    }
+
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        for (a_i, b_i) in self.iter_mut().zip(other) {
+            a_i.conditional_assign(b_i, choice)
+        }
     }
 }
 
@@ -794,7 +842,6 @@ pub trait ConstantTimeGreater {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConstantTimeGreater;
     ///
     /// let x: u8 = 13;
@@ -847,7 +894,7 @@ macro_rules! generate_unsigned_integer_greater {
                 Choice::from((bit & 1) as u8)
             }
         }
-    }
+    };
 }
 
 generate_unsigned_integer_greater!(u8, 8);
@@ -856,6 +903,16 @@ generate_unsigned_integer_greater!(u32, 32);
 generate_unsigned_integer_greater!(u64, 64);
 #[cfg(feature = "i128")]
 generate_unsigned_integer_greater!(u128, 128);
+
+impl ConstantTimeGreater for cmp::Ordering {
+    #[inline]
+    fn ct_gt(&self, other: &Self) -> Choice {
+        // No impl of `ConstantTimeGreater` for `i8`, so use `u8`
+        let a = (*self as i8) + 1;
+        let b = (*other as i8) + 1;
+        (a as u8).ct_gt(&(b as u8))
+    }
+}
 
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.
@@ -878,7 +935,6 @@ pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
     /// # Example
     ///
     /// ```
-    /// # extern crate subtle;
     /// use subtle::ConstantTimeLess;
     ///
     /// let x: u8 = 13;
@@ -908,3 +964,13 @@ impl ConstantTimeLess for u32 {}
 impl ConstantTimeLess for u64 {}
 #[cfg(feature = "i128")]
 impl ConstantTimeLess for u128 {}
+
+impl ConstantTimeLess for cmp::Ordering {
+    #[inline]
+    fn ct_lt(&self, other: &Self) -> Choice {
+        // No impl of `ConstantTimeLess` for `i8`, so use `u8`
+        let a = (*self as i8) + 1;
+        let b = (*other as i8) + 1;
+        (a as u8).ct_lt(&(b as u8))
+    }
+}

@@ -6,6 +6,7 @@ name = "subtle"
 # - update README if necessary by semver
 # - if any updates were made to the README, also update the module documentation in src/lib.rs
 version = "2.5.0"
+edition = "2018"
 authors = ["Isis Lovecruft <isis@patternsinthevoid.net>",
            "Henry de Valence <hdevalence@hdevalence.ca>"]
 readme = "README.md"
@@ -25,9 +26,10 @@ exclude = [
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
 [dev-dependencies]
-rand = { version = "0.7" }
+rand = { version = "0.8" }
 
 [features]
+const-generics = []
 core_hint_black_box = []
 default = ["std", "i128"]
 std = []
