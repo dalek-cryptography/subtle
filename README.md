@@ -7,7 +7,7 @@ instead of `bool` which are intended to execute in constant-time.  The `Choice`
 type is a wrapper around a `u8` that holds a `0` or `1`.
 
 ```toml
-subtle = "2.4"
+subtle = "2.5"
 ```
 
 This crate represents a “best-effort” attempt, since side-channels
@@ -29,6 +29,9 @@ the _About_ section below.
 Rust versions from 1.66 or higher support a new best-effort optimization
 barrier ([`core::hint::black_box`]).  To use the new optimization barrier,
 enable the `core_hint_black_box` feature.
+
+Rust versions from 1.51 or higher have const generics support. You may enable
+`const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
 
 Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 optimization barrier; this is not required in versions `2.2` and above.
@@ -58,7 +61,7 @@ which attempts to provide a more comprehensive approach for preventing
 software side-channels in Rust code.
 
 From version `2.2`, it was based on Diane Hosfelt and Amber Sprenkels' work on
-"Secret Types in Rust".  Version `2.3` adds the `core_hint_black_box` feature,
+"Secret Types in Rust".  Version `2.5` adds the `core_hint_black_box` feature,
 which uses the original method through the [`core::hint::black_box`] function
 from the Rust standard library.
 
