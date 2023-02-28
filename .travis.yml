@@ -27,7 +27,9 @@ script:
     cargo test --no-default-features --features std &&
     cargo test --no-default-features --features "std i128" &&
     cargo test --no-default-features --features "std core_hint_black_box" &&
-    cargo test --no-default-features --features "std i128 core_hint_black_box"
+    cargo test --no-default-features --features "std const-generics" &&
+    cargo test --no-default-features --features "std i128 core_hint_black_box" &&
+    cargo test --no-default-features --features "std i128 core_hint_black_box const-generics"
 
 notifications:
   slack:

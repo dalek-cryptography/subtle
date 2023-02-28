@@ -10,7 +10,7 @@ cargo-fuzz = true
 
 [dependencies.subtle]
 path = ".."
-features = ["nightly"]
+features = ["nightly", "const-generics"]
 
 [dependencies]
 libfuzzer-sys = "0.4"
@@ -42,3 +42,7 @@ name = "conditional_assign_i128"
 path = "fuzzers/conditional_assign_i128.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "conditional_assign_array"
+path = "fuzzers/conditional_assign_array.rs"

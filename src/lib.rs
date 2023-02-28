@@ -41,6 +41,13 @@
 //! inner `u8` by passing it through a volatile read. For more information, see
 //! the _About_ section below.
 //!
+//! Rust versions from 1.66 or higher support a new best-effort optimization
+//! barrier ([`core::hint::black_box`]).  To use the new optimization barrier,
+//! enable the `core_hint_black_box` feature.
+//!
+//! Rust versions from 1.51 or higher have const generics support. You may enable
+//! `const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
+//!
 //! Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 //! optimization barrier; this is not required in versions `2.2` and above.
 //!
@@ -63,10 +70,15 @@
 //!
 //! This library aims to be the Rust equivalent of Go’s `crypto/subtle` module.
 //!
-//! The optimization barrier in `impl From<u8> for Choice` was based on Tim
-//! Maclean's [work on `rust-timing-shield`][rust-timing-shield], which attempts to
-//! provide a more comprehensive approach for preventing software side-channels in
-//! Rust code.
+//! Old versions of the optimization barrier in `impl From<u8> for Choice` were
+//! based on Tim Maclean's [work on `rust-timing-shield`][rust-timing-shield],
+//! which attempts to provide a more comprehensive approach for preventing
+//! software side-channels in Rust code.
+//!
+//! From version `2.2`, it was based on Diane Hosfelt and Amber Sprenkels' work on
+//! "Secret Types in Rust".  Version `2.3` adds the `core_hint_black_box` feature,
+//! which uses the original method through the [`core::hint::black_box`] function
+//! from the Rust standard library.
 //!
 //! `subtle` is authored by isis agora lovecruft and Henry de Valence.
 //!
@@ -81,6 +93,7 @@
 //! **USE AT YOUR OWN RISK**
 //!
 //! [docs]: https://docs.rs/subtle
+//! [`core::hint::black_box`]: https://doc.rust-lang.org/core/hint/fn.black_box.html
 //! [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 
 #[cfg(feature = "std")]
@@ -565,6 +578,25 @@ impl ConditionallySelectable for Choice {
     }
 }
 
+#[cfg(feature = "const-generics")]
+impl<T, const N: usize> ConditionallySelectable for [T; N]
+where
+    T: ConditionallySelectable,
+{
+    #[inline]
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        let mut output = *a;
+        output.conditional_assign(b, choice);
+        output
+    }
+
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        for (a_i, b_i) in self.iter_mut().zip(other) {
+            a_i.conditional_assign(b_i, choice)
+        }
+    }
+}
+
 /// A type which can be conditionally negated in constant time.
 ///
 /// # Note
@@ -862,7 +894,7 @@ macro_rules! generate_unsigned_integer_greater {
                 Choice::from((bit & 1) as u8)
             }
         }
-    }
+    };
 }
 
 generate_unsigned_integer_greater!(u8, 8);
