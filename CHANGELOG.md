@@ -11,6 +11,11 @@ Entries are listed in reverse chronological order.
   Sprenkels which utilises the original `black_box` functionality from
   when subtle was first written, which has now found it's way into the
   Rust standard library.
+* Add new `const-generics` feature from @survived which adds support
+  for subtle traits for generic arrays `[T; N]`.
+* Add new feature for supporting `core::cmp::Ordering` for types which
+  implement subtle traits, patch from @tarcieri.
+* Update `rand` dependency to 0.8.
 
 ## 2.4.1
 
