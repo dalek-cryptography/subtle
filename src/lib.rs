@@ -41,10 +41,6 @@
 //! inner `u8` by passing it through a volatile read. For more information, see
 //! the _About_ section below.
 //!
-//! Rust versions from 1.66 or higher support a new best-effort optimization
-//! barrier ([`core::hint::black_box`]).  To use the new optimization barrier,
-//! enable the `core_hint_black_box` feature.
-//!
 //! Rust versions from 1.51 or higher have const generics support. You may enable
 //! `const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
 //!
@@ -74,11 +70,8 @@
 //! based on Tim Maclean's [work on `rust-timing-shield`][rust-timing-shield],
 //! which attempts to provide a more comprehensive approach for preventing
 //! software side-channels in Rust code.
-//!
 //! From version `2.2`, it was based on Diane Hosfelt and Amber Sprenkels' work on
-//! "Secret Types in Rust". Version `2.5` adds the `core_hint_black_box` feature,
-//! which uses the original method through the [`core::hint::black_box`] function
-//! from the Rust standard library.
+//! "Secret Types in Rust".
 //!
 //! `subtle` is authored by isis agora lovecruft and Henry de Valence.
 //!
@@ -93,7 +86,6 @@
 //! **USE AT YOUR OWN RISK**
 //!
 //! [docs]: https://docs.rs/subtle
-//! [`core::hint::black_box`]: https://doc.rust-lang.org/core/hint/fn.black_box.html
 //! [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 
 #[cfg(feature = "std")]
@@ -214,47 +206,13 @@ impl Not for Choice {
     }
 }
 
-/// This function is a best-effort attempt to prevent the compiler from knowing
-/// anything about the value of the returned `u8`, other than its type.
-///
-/// Because we want to support stable Rust, we don't have access to inline
-/// assembly or test::black_box, so we use the fact that volatile values will
-/// never be elided to register values.
-///
-/// Note: Rust's notion of "volatile" is subject to change over time. While this
-/// code may break in a non-destructive way in the future, “constant-time” code
-/// is a continually moving target, and this is better than doing nothing.
-#[cfg(not(feature = "core_hint_black_box"))]
-#[inline(never)]
-fn black_box(input: u8) -> u8 {
-    debug_assert!((input == 0u8) | (input == 1u8));
-
-    unsafe {
-        // Optimization barrier
-        //
-        // Unsafe is ok, because:
-        //   - &input is not NULL;
-        //   - size of input is not zero;
-        //   - u8 is neither Sync, nor Send;
-        //   - u8 is Copy, so input is always live;
-        //   - u8 type is always properly aligned.
-        core::ptr::read_volatile(&input as *const u8)
-    }
-}
-
-#[cfg(feature = "core_hint_black_box")]
-#[inline]
-fn black_box(input: u8) -> u8 {
-    debug_assert!((input == 0u8) | (input == 1u8));
-    core::hint::black_box(input)
-}
-
 impl From<u8> for Choice {
     #[inline]
     fn from(input: u8) -> Choice {
+        debug_assert!((input == 0u8) | (input == 1u8));
         // Our goal is to prevent the compiler from inferring that the value held inside the
         // resulting `Choice` struct is really an `i1` instead of an `i8`.
-        Choice(black_box(input))
+        Choice(core::hint::black_box(input))
     }
 }
 
