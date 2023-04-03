@@ -42,11 +42,21 @@ jobs:
         with:
           command: test
           args: --no-default-features --features std
+      - name: std const-generics
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-default-features --features "std const-generics"
       - name: std i128
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --no-default-features --features "std i128"
+      - name: std i128 const-generics
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-default-features --features "std i128 const-generics"
       - name: no std build
         uses: actions-rs/cargo@v1
         with:
