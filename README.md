@@ -31,10 +31,36 @@ barrier ([`core::hint::black_box`]).  To use the new optimization barrier,
 enable the `core_hint_black_box` feature.
 
 Rust versions from 1.51 or higher have const generics support. You may enable
-`const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
+`const-generics` feature to have `subtle` traits implemented for arrays `[T; N]`.
 
 Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 optimization barrier; this is not required in versions `2.2` and above.
+
+Enable `derive` feature to generate implementations for traits using procedural 
+macros in [`subtle-derive`].
+
+```toml
+subtle = { version = "2.6", features = ["derive"] }
+```
+
+## Example
+
+```ignore
+use subtle::ConstantTimeEq;
+
+#[derive(ConstantTimeEq)]
+struct MyStruct {
+    data: [u8; 16]
+}
+
+
+fn main() {
+    let first = MyStruct { data: [1u8;16]};
+    let second = MyStruct { data: [1u8;16]};
+
+    assert!(bool::from(first.ct_eq(&second)));
+}
+```
 
 Note: the `subtle` crate contains `debug_assert`s to check invariants during
 debug builds. These invariant checks involve secret-dependent branches, and
@@ -80,3 +106,4 @@ effort is fundamentally limited.
 [docs]: https://docs.rs/subtle
 [`core::hint::black_box`]: https://doc.rust-lang.org/core/hint/fn.black_box.html
 [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
+[`subtle-derive`]: https://crates.io/crates/subtle-derive
