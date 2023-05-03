@@ -1,0 +1,24 @@
+[package]
+name = "subtle-derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Varsha Jayadev <varsha@mobilecoin.com>"]
+readme = "README.md"
+license = "BSD-3-Clause"
+repository = "https://github.com/dalek-cryptography/subtle"
+homepage = "https://dalek.rs/"
+documentation = "https://docs.rs/crate/subtle-derive"
+categories = ["cryptography", "no-std"]
+keywords = ["cryptography", "crypto", "constant-time", "utilities"]
+description = "Macros implementation of #[derive(ConstantTimeEq)]"
+
+[features]
+default = []
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.8"
+quote = "1.0"
+syn = "2.0.15"

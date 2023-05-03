@@ -1,3 +1,8 @@
+[workspace]
+members = [
+    "subtle-derive"
+]
+
 [package]
 name = "subtle"
 # Before incrementing:
@@ -25,6 +30,9 @@ exclude = [
 [badges]
 travis-ci = { repository = "dalek-cryptography/subtle", branch = "master"}
 
+[dependencies]
+subtle-derive = { version = "0.1.0", optional = true, path = "subtle-derive" }
+
 [dev-dependencies]
 rand = { version = "0.8" }
 
@@ -32,6 +40,7 @@ rand = { version = "0.8" }
 const-generics = []
 core_hint_black_box = []
 default = ["std", "i128"]
+derive = ["subtle-derive"]
 std = []
 i128 = []
 # DEPRECATED: As of 2.4.1, this feature does nothing.
