@@ -44,6 +44,8 @@ jobs:
           args: --no-default-features --features std
       - name: std const-generics
         uses: actions-rs/cargo@v1
+        exclude:
+          - rust: 1.41.1
         with:
           command: test
           args: --no-default-features --features "std const-generics"
@@ -54,6 +56,8 @@ jobs:
           args: --no-default-features --features "std i128"
       - name: std i128 const-generics
         uses: actions-rs/cargo@v1
+        exclude:
+          - rust: 1.41.1
         with:
           command: test
           args: --no-default-features --features "std i128 const-generics"
