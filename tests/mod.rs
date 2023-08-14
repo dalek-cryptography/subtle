@@ -58,7 +58,7 @@ macro_rules! generate_integer_conditional_select_tests {
         let x: $t = 0;  // all 0 bits
         let y: $t = !0; // all 1 bits
 
-        assert_eq!(<$t>::conditional_select(&x, &y, 0.into()), 0);
+        assert_eq!(<$t>::conditional_select(&x, &y, 0.into()), x);
         assert_eq!(<$t>::conditional_select(&x, &y, 1.into()), y);
 
         let mut z = x;
