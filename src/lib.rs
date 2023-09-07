@@ -46,7 +46,7 @@
 //! enable the `core_hint_black_box` feature.
 //!
 //! Rust versions from 1.51 or higher have const generics support. You may enable
-//! `const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
+//! `const-generics` feature to have `subtle` traits implemented for arrays `[T; N]`.
 //!
 //! Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 //! optimization barrier; this is not required in versions `2.2` and above.
@@ -594,6 +594,23 @@ where
         for (a_i, b_i) in self.iter_mut().zip(other) {
             a_i.conditional_assign(b_i, choice)
         }
+    }
+}
+
+#[cfg(feature = "const-generics")]
+impl<T, const N: usize> ConstantTimeEq for [T; N]
+where
+    T: ConstantTimeEq,
+{
+    fn ct_eq(&self, other: &Self) -> Choice {
+        // This loop shouldn't be shortcircuitable, since the compiler
+        // shouldn't be able to reason about the value of the `u8`
+        // unwrapped from the `ct_eq` result.
+        let mut x = 1u8;
+        for (ai, bi) in self.iter().zip(other.iter()) {
+            x &= ai.ct_eq(bi).unwrap_u8();
+        }
+        x.into()
     }
 }
 
