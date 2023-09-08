@@ -8,14 +8,32 @@ use subtle::*;
 #[test]
 #[should_panic]
 fn slices_equal_different_lengths() {
-    let a: [u8; 3] = [0, 0, 0];
-    let b: [u8; 4] = [0, 0, 0, 0];
+    let a: &[u8] = &[0, 0, 0];
+    let b: &[u8] = &[0, 0, 0, 0];
 
     assert_eq!((&a).ct_eq(&b).unwrap_u8(), 1);
 }
 
 #[test]
 fn slices_equal() {
+    let a: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8];
+    let b: &[u8] = &[1, 2, 3, 4, 4, 3, 2, 1];
+
+    let a_eq_a = (&a).ct_eq(&a);
+    let a_eq_b = (&a).ct_eq(&b);
+
+    assert_eq!(a_eq_a.unwrap_u8(), 1);
+    assert_eq!(a_eq_b.unwrap_u8(), 0);
+
+    let c: &[u8] = &[0u8; 16];
+
+    let a_eq_c = (&a).ct_eq(&c);
+    assert_eq!(a_eq_c.unwrap_u8(), 0);
+}
+
+#[cfg(feature = "const-generics")]
+#[test]
+fn arrays_equal() {
     let a: [u8; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
     let b: [u8; 8] = [1, 2, 3, 4, 4, 3, 2, 1];
 
@@ -24,11 +42,6 @@ fn slices_equal() {
 
     assert_eq!(a_eq_a.unwrap_u8(), 1);
     assert_eq!(a_eq_b.unwrap_u8(), 0);
-
-    let c: [u8; 16] = [0u8; 16];
-
-    let a_eq_c = (&a).ct_eq(&c);
-    assert_eq!(a_eq_c.unwrap_u8(), 0);
 }
 
 #[test]
