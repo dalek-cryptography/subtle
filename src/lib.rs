@@ -603,14 +603,7 @@ where
     T: ConstantTimeEq,
 {
     fn ct_eq(&self, other: &Self) -> Choice {
-        // This loop shouldn't be shortcircuitable, since the compiler
-        // shouldn't be able to reason about the value of the `u8`
-        // unwrapped from the `ct_eq` result.
-        let mut x = 1u8;
-        for (ai, bi) in self.iter().zip(other.iter()) {
-            x &= ai.ct_eq(bi).unwrap_u8();
-        }
-        x.into()
+        self.as_slice().ct_eq(other)
     }
 }
 
