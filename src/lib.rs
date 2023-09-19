@@ -341,6 +341,13 @@ impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
     }
 }
 
+impl ConstantTimeEq for str {
+    #[inline]
+    fn ct_eq(&self, rhs: &Self) -> Choice {
+        self.as_bytes().ct_eq(rhs.as_bytes())
+    }
+}
+
 impl ConstantTimeEq for Choice {
     #[inline]
     fn ct_eq(&self, rhs: &Choice) -> Choice {
