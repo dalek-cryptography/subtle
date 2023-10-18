@@ -493,3 +493,104 @@ fn less_than_ordering() {
         1
     );
 }
+
+#[test]
+fn slices_ordering() {
+    let mut buf = [0u8; 50];
+
+    for _ in 0..1000 {
+        OsRng.fill_bytes(&mut buf);
+
+        let l_start = (OsRng.next_u64() as usize) % buf.len();
+        let l_end = (OsRng.next_u64() as usize) % buf.len();
+
+        let r_start = (OsRng.next_u64() as usize) % buf.len();
+        let r_end = (OsRng.next_u64() as usize) % buf.len();
+
+        let lhs = &buf[l_start..=l_end.max(l_start)];
+        let rhs = &buf[r_start..=r_end.max(r_start)];
+
+        let is_lt = lhs.ct_lt(rhs);
+        let is_gt = lhs.ct_gt(rhs);
+
+        println!(
+            "lhs={:?} rhs={:?} is_lt={:?} is_gt={:?}",
+            lhs, rhs, is_lt, is_gt
+        );
+
+        if lhs < rhs {
+            assert_eq!(lhs.ct_lt(rhs).unwrap_u8(), 1);
+            assert_eq!(lhs.ct_gt(rhs).unwrap_u8(), 0);
+
+            // Comparison should be commutative
+            assert_eq!(rhs.ct_lt(lhs).unwrap_u8(), 0);
+            assert_eq!(rhs.ct_gt(lhs).unwrap_u8(), 1);
+        } else if lhs == rhs {
+            assert_eq!(lhs.ct_lt(rhs).unwrap_u8(), 0);
+            assert_eq!(lhs.ct_gt(rhs).unwrap_u8(), 0);
+
+            // Comparison should be commutative
+            assert_eq!(rhs.ct_lt(lhs).unwrap_u8(), 0);
+            assert_eq!(rhs.ct_gt(lhs).unwrap_u8(), 0);
+        } else if lhs > rhs {
+            assert_eq!(lhs.ct_lt(rhs).unwrap_u8(), 0);
+            assert_eq!(lhs.ct_gt(rhs).unwrap_u8(), 1);
+
+            // Comparison should be commutative
+            assert_eq!(rhs.ct_lt(lhs).unwrap_u8(), 1);
+            assert_eq!(rhs.ct_gt(lhs).unwrap_u8(), 0);
+        }
+    }
+
+    // Strings
+    let tests = [
+        ("www", "www", cmp::Ordering::Equal),
+        ("wwwa", "www", cmp::Ordering::Greater),
+        ("wwwb", "www", cmp::Ordering::Greater),
+        ("wwwc", "www", cmp::Ordering::Greater),
+        (" www", "www", cmp::Ordering::Less),
+        ("www", "", cmp::Ordering::Greater),
+        (".", "", cmp::Ordering::Greater),
+        ("", ".", cmp::Ordering::Less),
+        ("", "", cmp::Ordering::Equal),
+    ];
+
+    for (lhs, rhs, order) in tests {
+        let lhs_bytes = lhs.as_bytes();
+        let rhs_bytes = rhs.as_bytes();
+
+        let msg = format!(
+            "'{}' {} '{}'",
+            lhs,
+            match order {
+                cmp::Ordering::Less => "<",
+                cmp::Ordering::Equal => "==",
+                cmp::Ordering::Greater => ">",
+            },
+            rhs
+        );
+
+        if lhs < rhs {
+            assert_eq!(lhs_bytes.ct_lt(rhs_bytes).unwrap_u8(), 1, "{}", &msg);
+            assert_eq!(lhs_bytes.ct_gt(rhs_bytes).unwrap_u8(), 0, "{}", &msg);
+
+            // Comparison should be commutative.
+            assert_eq!(rhs_bytes.ct_lt(lhs_bytes).unwrap_u8(), 0, "{}", &msg);
+            assert_eq!(rhs_bytes.ct_gt(lhs_bytes).unwrap_u8(), 1, "{}", &msg);
+        } else if lhs == rhs {
+            assert_eq!(lhs_bytes.ct_lt(rhs_bytes).unwrap_u8(), 0, "{}", &msg);
+            assert_eq!(lhs_bytes.ct_gt(rhs_bytes).unwrap_u8(), 0, "{}", &msg);
+
+            // Comparison should be commutative.
+            assert_eq!(rhs_bytes.ct_lt(lhs_bytes).unwrap_u8(), 0, "{}", &msg);
+            assert_eq!(rhs_bytes.ct_gt(lhs_bytes).unwrap_u8(), 0, "{}", &msg);
+        } else if lhs > rhs {
+            assert_eq!(lhs_bytes.ct_lt(rhs_bytes).unwrap_u8(), 0, "{}", &msg);
+            assert_eq!(lhs_bytes.ct_gt(rhs_bytes).unwrap_u8(), 1, "{}", &msg);
+
+            // Comparison should be commutative.
+            assert_eq!(rhs_bytes.ct_lt(lhs_bytes).unwrap_u8(), 1, "{}", &msg);
+            assert_eq!(rhs_bytes.ct_gt(lhs_bytes).unwrap_u8(), 0, "{}", &msg);
+        }
+    }
+}

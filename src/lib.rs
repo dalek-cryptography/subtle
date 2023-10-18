@@ -914,6 +914,106 @@ impl ConstantTimeGreater for cmp::Ordering {
     }
 }
 
+/// Compares two slices lexicographically in constant time whose
+/// elements can be ordered in constant time.
+///
+/// Returns:
+///
+/// - `Ordering::Less` if `lhs < rhs`
+/// - `Ordering::Equal` if `lhs == rhs`
+/// - `Ordering::Greater` if `lhs > rhs`
+#[inline]
+fn ct_slice_lex_cmp<T>(lhs: &[T], rhs: &[T]) -> cmp::Ordering
+where
+    T: ConstantTimeEq + ConstantTimeGreater,
+{
+    let mut whole_slice_is_eq = Choice(1);
+    let mut whole_slice_is_gt = Choice(0);
+
+    // Zip automatically stops iterating once one of the zipped
+    // iterators has been exhausted.
+    for (v1, v2) in lhs.iter().zip(rhs.iter()) {
+        // If the previous elements in the array were all equal, but `v1 > v2` in this
+        // position, then `lhs` is deemed to be greater than `rhs`.
+        //
+        // We want `whole_slice_is_gt` to remain true if we ever found this condition,
+        // but since we're aiming for constant-time, we cannot break the loop.
+        whole_slice_is_gt |= whole_slice_is_eq & v1.ct_gt(&v2);
+
+        // Track whether all elements in the slices up to this point are equal.
+        whole_slice_is_eq &= v1.ct_eq(&v2);
+    }
+
+    let l_len = lhs.len() as u64;
+    let r_len = rhs.len() as u64;
+    let lhs_is_longer = l_len.ct_gt(&r_len);
+    let rhs_is_longer = r_len.ct_gt(&l_len);
+
+    // Fallback: lhs < rhs
+    let mut order = cmp::Ordering::Less;
+
+    // both slices up to `min(l_len, r_len)` were equal.
+    order.conditional_assign(&cmp::Ordering::Equal, whole_slice_is_eq);
+
+    // `rhs` is a prefix of `lhs`. `lhs` is lexicographically greater.
+    order.conditional_assign(&cmp::Ordering::Greater, whole_slice_is_eq & lhs_is_longer);
+
+    // `lhs` is a prefix of `rhs`. `rhs` is lexicographically greater.
+    order.conditional_assign(&cmp::Ordering::Less, whole_slice_is_eq & rhs_is_longer);
+
+    // `lhs` contains the earliest strictly-greater element.
+    order.conditional_assign(&cmp::Ordering::Greater, whole_slice_is_gt);
+
+    order
+}
+
+/// A slice is greater than another slice lexicographically if it contains the earliest
+/// element which is strictly greater than its counterpart element at the same index. If
+/// one slice is a prefix of the other, then the longer of the two slices is deemed to be
+/// greater. We stop performing pairwise comparisons on slice elements after
+/// `min(lhs.len(), rhs.len())` loop iterations.
+///
+/// This blanket slice implementation requires the element type `T` to implement
+/// [`ConstantTimeEq`](ConstantTimeEq) so that we can compare slices lexicographically.
+///
+/// # Example
+///
+/// It is easy to see in slices of integer-like types.
+///
+/// ```
+/// use subtle::ConstantTimeGreater;
+///
+/// assert_eq!((&[1u32, 2, 4]).ct_gt(&[1, 2, 3]).unwrap_u8(), 1);
+/// assert_eq!((&[0u32, 1, 2, 4]).ct_gt(&[1, 2, 3, 4]).unwrap_u8(), 0);
+/// assert_eq!((&[5u8, 5, 5, 5]).ct_gt(&[5, 5, 5]).unwrap_u8(), 1);
+/// assert_eq!((&[5u8, 5, 5, 5]).ct_gt(&[5, 5, 5, 5]).unwrap_u8(), 0);
+/// ```
+///
+/// Strings can also be ordered this way.
+///
+/// ```
+/// use subtle::ConstantTimeGreater;
+///
+/// assert_eq!("aab".as_bytes().ct_gt("aaa".as_bytes()).unwrap_u8(), 1);
+/// assert_eq!("aaa".as_bytes().ct_gt("aa".as_bytes()).unwrap_u8(), 1);
+/// assert_eq!("aaac".as_bytes().ct_gt("aaa".as_bytes()).unwrap_u8(), 1);
+///
+/// assert_eq!("aaa".as_bytes().ct_gt("aaa".as_bytes()).unwrap_u8(), 0);
+/// assert_eq!("aaa".as_bytes().ct_gt("aab".as_bytes()).unwrap_u8(), 0);
+/// assert_eq!("aaac".as_bytes().ct_gt("aab".as_bytes()).unwrap_u8(), 0);
+/// ```
+impl<T> ConstantTimeGreater for [T]
+where
+    T: ConstantTimeGreater + ConstantTimeEq,
+{
+    /// Returns `Choice::from(1)` if `self > other` using lexicographical sorting rules.
+    /// Returns `Choice::from(0)` if `self <= other`.
+    #[inline]
+    fn ct_gt(&self, other: &[T]) -> Choice {
+        ct_slice_lex_cmp(self, other).ct_eq(&cmp::Ordering::Greater)
+    }
+}
+
 /// A type which can be compared in some manner and be determined to be less
 /// than another of the same type.
 pub trait ConstantTimeLess: ConstantTimeEq + ConstantTimeGreater {
@@ -972,5 +1072,19 @@ impl ConstantTimeLess for cmp::Ordering {
         let a = (*self as i8) + 1;
         let b = (*other as i8) + 1;
         (a as u8).ct_lt(&(b as u8))
+    }
+}
+
+/// Lexicographical comparison of slices of constant-time ordered elements.
+///
+/// See the blanket implementation of [`ConstantTimeGreater`](ConstantTimeGreater)
+/// on `[T]` for details.
+impl<T> ConstantTimeLess for [T]
+where
+    T: ConstantTimeGreater + ConstantTimeEq,
+{
+    #[inline]
+    fn ct_lt(&self, other: &[T]) -> Choice {
+        ct_slice_lex_cmp(self, other).ct_eq(&cmp::Ordering::Less)
     }
 }
