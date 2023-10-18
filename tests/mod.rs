@@ -290,16 +290,66 @@ fn test_ctoption() {
     ));
 
     // Test (in)equality
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8()
+            == 0
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 1
+    );
+    assert!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8()
+            == 1
+    );
 }
 
 #[test]
@@ -327,7 +377,7 @@ macro_rules! generate_greater_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
@@ -358,8 +408,18 @@ fn greater_than_u128() {
 
 #[test]
 fn greater_than_ordering() {
-    assert_eq!(cmp::Ordering::Less.ct_gt(&cmp::Ordering::Greater).unwrap_u8(), 0);
-    assert_eq!(cmp::Ordering::Greater.ct_gt(&cmp::Ordering::Less).unwrap_u8(), 1);
+    assert_eq!(
+        cmp::Ordering::Less
+            .ct_gt(&cmp::Ordering::Greater)
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        cmp::Ordering::Greater
+            .ct_gt(&cmp::Ordering::Less)
+            .unwrap_u8(),
+        1
+    );
 }
 
 #[test]
@@ -367,7 +427,7 @@ fn greater_than_ordering() {
 /// gives the correct result. (This fails using the bit-twiddling algorithm that
 /// go/crypto/subtle uses.)
 fn less_than_twos_compliment_minmax() {
-    let z = 1u32.ct_lt(&(2u32.pow(31)-1));
+    let z = 1u32.ct_lt(&(2u32.pow(31) - 1));
 
     assert!(z.unwrap_u8() == 1);
 }
@@ -389,7 +449,7 @@ macro_rules! generate_less_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
@@ -420,6 +480,16 @@ fn less_than_u128() {
 
 #[test]
 fn less_than_ordering() {
-    assert_eq!(cmp::Ordering::Greater.ct_lt(&cmp::Ordering::Less).unwrap_u8(), 0);
-    assert_eq!(cmp::Ordering::Less.ct_lt(&cmp::Ordering::Greater).unwrap_u8(), 1);
+    assert_eq!(
+        cmp::Ordering::Greater
+            .ct_lt(&cmp::Ordering::Less)
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        cmp::Ordering::Less
+            .ct_lt(&cmp::Ordering::Greater)
+            .unwrap_u8(),
+        1
+    );
 }
