@@ -865,7 +865,7 @@ pub trait ConstantTimeGreater {
 macro_rules! generate_unsigned_integer_greater {
     ($t_u: ty, $bit_width: expr) => {
         impl ConstantTimeGreater for $t_u {
-            /// Returns Choice::from(1) iff x > y, and Choice::from(0) iff x <= y.
+            /// Returns Choice::from(1) if x > y, and Choice::from(0) if x <= y.
             ///
             /// # Note
             ///
