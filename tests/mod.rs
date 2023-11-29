@@ -32,78 +32,78 @@ fn slices_equal() {
 }
 
 #[test]
-fn conditional_assign_i32() {
+fn ct_assign_i32() {
     let mut a: i32 = 5;
     let b: i32 = 13;
 
-    a.conditional_assign(&b, 0.into());
+    a.ct_assign(&b, 0.into());
     assert_eq!(a, 5);
-    a.conditional_assign(&b, 1.into());
+    a.ct_assign(&b, 1.into());
     assert_eq!(a, 13);
 }
 
 #[test]
-fn conditional_assign_i64() {
+fn ct_assign_i64() {
     let mut c: i64 = 2343249123;
     let d: i64 = 8723884895;
 
-    c.conditional_assign(&d, 0.into());
+    c.ct_assign(&d, 0.into());
     assert_eq!(c, 2343249123);
-    c.conditional_assign(&d, 1.into());
+    c.ct_assign(&d, 1.into());
     assert_eq!(c, 8723884895);
 }
 
-macro_rules! generate_integer_conditional_select_tests {
+macro_rules! generate_integer_ct_select_tests {
     ($($t:ty)*) => ($(
         let x: $t = 0;  // all 0 bits
         let y: $t = !0; // all 1 bits
 
-        assert_eq!(<$t>::conditional_select(&x, &y, 0.into()), 0);
-        assert_eq!(<$t>::conditional_select(&x, &y, 1.into()), y);
+        assert_eq!(<$t>::ct_select(&x, &y, 0.into()), 0);
+        assert_eq!(<$t>::ct_select(&x, &y, 1.into()), y);
 
         let mut z = x;
         let mut w = y;
 
-        <$t>::conditional_swap(&mut z, &mut w, 0.into());
+        <$t>::ct_swap(&mut z, &mut w, 0.into());
         assert_eq!(z, x);
         assert_eq!(w, y);
-        <$t>::conditional_swap(&mut z, &mut w, 1.into());
+        <$t>::ct_swap(&mut z, &mut w, 1.into());
         assert_eq!(z, y);
         assert_eq!(w, x);
 
-        z.conditional_assign(&x, 1.into());
-        w.conditional_assign(&y, 0.into());
+        z.ct_assign(&x, 1.into());
+        w.ct_assign(&y, 0.into());
         assert_eq!(z, x);
         assert_eq!(w, x);
     )*)
 }
 
 #[test]
-fn integer_conditional_select() {
-    generate_integer_conditional_select_tests!(u8 u16 u32 u64);
-    generate_integer_conditional_select_tests!(i8 i16 i32 i64);
+fn integer_ct_select() {
+    generate_integer_ct_select_tests!(u8 u16 u32 u64);
+    generate_integer_ct_select_tests!(i8 i16 i32 i64);
     #[cfg(feature = "i128")]
-    generate_integer_conditional_select_tests!(i128 u128);
+    generate_integer_ct_select_tests!(i128 u128);
 }
 
 #[test]
-fn custom_conditional_select_i16() {
+fn custom_ct_select_i16() {
     let x: i16 = 257;
     let y: i16 = 514;
 
-    assert_eq!(i16::conditional_select(&x, &y, 0.into()), 257);
-    assert_eq!(i16::conditional_select(&x, &y, 1.into()), 514);
+    assert_eq!(i16::ct_select(&x, &y, 0.into()), 257);
+    assert_eq!(i16::ct_select(&x, &y, 1.into()), 514);
 }
 
 #[test]
-fn ordering_conditional_select() {
+fn ordering_ct_select() {
     assert_eq!(
-        cmp::Ordering::conditional_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 0.into()),
+        cmp::Ordering::ct_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 0.into()),
         cmp::Ordering::Less
     );
 
     assert_eq!(
-        cmp::Ordering::conditional_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 1.into()),
+        cmp::Ordering::ct_select(&cmp::Ordering::Less, &cmp::Ordering::Greater, 1.into()),
         cmp::Ordering::Greater
     );
 }
@@ -143,14 +143,14 @@ fn choice_into_bool() {
 }
 
 #[test]
-fn conditional_select_choice() {
+fn ct_select_choice() {
     let t = Choice::from(1);
     let f = Choice::from(0);
 
-    assert_eq!(bool::from(Choice::conditional_select(&t, &f, f)), true);
-    assert_eq!(bool::from(Choice::conditional_select(&t, &f, t)), false);
-    assert_eq!(bool::from(Choice::conditional_select(&f, &t, f)), false);
-    assert_eq!(bool::from(Choice::conditional_select(&f, &t, t)), true);
+    assert_eq!(bool::from(Choice::ct_select(&t, &f, f)), true);
+    assert_eq!(bool::from(Choice::ct_select(&t, &f, t)), false);
+    assert_eq!(bool::from(Choice::ct_select(&f, &t, f)), false);
+    assert_eq!(bool::from(Choice::ct_select(&f, &t, t)), true);
 }
 
 #[test]

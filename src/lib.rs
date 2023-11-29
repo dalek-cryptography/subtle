@@ -258,6 +258,11 @@ impl From<u8> for Choice {
     }
 }
 
+/// Marker trait for types whose [`Clone`] impl operates in constant-time.
+pub trait ConstantTimeClone: Clone {}
+
+impl<T: Copy> ConstantTimeClone for T {}
+
 /// An `Eq`-like trait that produces a `Choice` instead of a `bool`.
 ///
 /// # Example
@@ -397,6 +402,89 @@ impl ConstantTimeEq for cmp::Ordering {
 ///
 /// This trait also provides generic implementations of conditional
 /// assignment and conditional swaps.
+pub trait ConstantTimeSelect: ConstantTimeClone {
+    /// Select `a` or `b` according to `choice`.
+    ///
+    /// # Returns
+    ///
+    /// * `a` if `choice == Choice(0)`;
+    /// * `b` if `choice == Choice(1)`.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use subtle::ConstantTimeSelect;
+    /// #
+    /// # fn main() {
+    /// let x: u8 = 13;
+    /// let y: u8 = 42;
+    ///
+    /// let z = u8::ct_select(&x, &y, 0.into());
+    /// assert_eq!(z, x);
+    /// let z = u8::ct_select(&x, &y, 1.into());
+    /// assert_eq!(z, y);
+    /// # }
+    /// ```
+    fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self;
+
+    /// Conditionally assign `other` to `self`, according to `choice`.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use subtle::ConstantTimeSelect;
+    /// #
+    /// # fn main() {
+    /// let mut x: u8 = 13;
+    /// let mut y: u8 = 42;
+    ///
+    /// x.ct_assign(&y, 0.into());
+    /// assert_eq!(x, 13);
+    /// x.ct_assign(&y, 1.into());
+    /// assert_eq!(x, 42);
+    /// # }
+    /// ```
+    #[inline]
+    fn ct_assign(&mut self, other: &Self, choice: Choice) {
+        *self = Self::ct_select(self, other, choice);
+    }
+
+    /// Conditionally swap `self` and `other` if `choice == 1`; otherwise,
+    /// reassign both unto themselves.
+    ///
+    /// This function should execute in constant time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use subtle::ConstantTimeSelect;
+    /// #
+    /// # fn main() {
+    /// let mut x: u8 = 13;
+    /// let mut y: u8 = 42;
+    ///
+    /// u8::ct_swap(&mut x, &mut y, 0.into());
+    /// assert_eq!(x, 13);
+    /// assert_eq!(y, 42);
+    /// u8::ct_swap(&mut x, &mut y, 1.into());
+    /// assert_eq!(x, 42);
+    /// assert_eq!(y, 13);
+    /// # }
+    /// ```
+    #[inline]
+    fn ct_swap(a: &mut Self, b: &mut Self, choice: Choice) {
+        let t: Self = a.clone();
+        a.ct_assign(&b, choice);
+        b.ct_assign(&t, choice);
+    }
+}
+
+/// Deprecated legacy equivalent of [`ConstantTimeSelect`]: please migrate to the new trait.
+#[deprecated(since = "2.6.0", note = "use ConstantTimeSelect instead")]
 pub trait ConditionallySelectable: Copy {
     /// Select `a` or `b` according to `choice`.
     ///
@@ -422,7 +510,6 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(z, y);
     /// # }
     /// ```
-    #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 
     /// Conditionally assign `other` to `self`, according to `choice`.
@@ -479,6 +566,24 @@ pub trait ConditionallySelectable: Copy {
     }
 }
 
+#[allow(deprecated)]
+impl<T: ConditionallySelectable> ConstantTimeSelect for T {
+    #[inline]
+    fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        Self::conditional_select(a, b, choice)
+    }
+
+    #[inline]
+    fn ct_assign(&mut self, other: &Self, choice: Choice) {
+        Self::conditional_assign(self, other, choice)
+    }
+
+    #[inline]
+    fn ct_swap(a: &mut Self, b: &mut Self, choice: Choice) {
+        Self::conditional_swap(a, b, choice)
+    }
+}
+
 macro_rules! to_signed_int {
     (u8) => {
         i8
@@ -514,6 +619,7 @@ macro_rules! to_signed_int {
 
 macro_rules! generate_integer_conditional_select {
     ($($t:tt)*) => ($(
+        #[allow(deprecated)]
         impl ConditionallySelectable for $t {
             #[inline]
             fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
@@ -559,6 +665,7 @@ generate_integer_conditional_select!(u128 i128);
 ///
 /// Given this, it's possible to operate on orderings as if they're integers,
 /// which allows leveraging conditional masking for predication.
+#[allow(deprecated)]
 impl ConditionallySelectable for cmp::Ordering {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         let a = *a as i8;
@@ -571,6 +678,7 @@ impl ConditionallySelectable for cmp::Ordering {
     }
 }
 
+#[allow(deprecated)]
 impl ConditionallySelectable for Choice {
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
@@ -579,6 +687,7 @@ impl ConditionallySelectable for Choice {
 }
 
 #[cfg(feature = "const-generics")]
+#[allow(deprecated)]
 impl<T, const N: usize> ConditionallySelectable for [T; N]
 where
     T: ConditionallySelectable,
@@ -613,6 +722,7 @@ pub trait ConditionallyNegatable {
     fn conditional_negate(&mut self, choice: Choice);
 }
 
+#[allow(deprecated)]
 impl<T> ConditionallyNegatable for T
 where
     T: ConditionallySelectable,
@@ -710,9 +820,9 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn unwrap_or(self, def: T) -> T
     where
-        T: ConditionallySelectable,
+        T: ConstantTimeSelect,
     {
-        T::conditional_select(&def, &self.value, self.is_some)
+        T::ct_select(&def, &self.value, self.is_some)
     }
 
     /// This returns the underlying value if it is `Some`
@@ -723,10 +833,10 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn unwrap_or_else<F>(self, f: F) -> T
     where
-        T: ConditionallySelectable,
+        T: ConstantTimeSelect,
         F: FnOnce() -> T,
     {
-        T::conditional_select(&f(), &self.value, self.is_some)
+        T::ct_select(&f(), &self.value, self.is_some)
     }
 
     /// Returns a true `Choice` if this value is `Some`.
@@ -752,17 +862,9 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn map<U, F>(self, f: F) -> CtOption<U>
     where
-        T: Default + ConditionallySelectable,
         F: FnOnce(T) -> U,
     {
-        CtOption::new(
-            f(T::conditional_select(
-                &T::default(),
-                &self.value,
-                self.is_some,
-            )),
-            self.is_some,
-        )
+        CtOption::new(f(self.value), self.is_some)
     }
 
     /// Returns a `None` value if the option is `None`, otherwise
@@ -775,17 +877,11 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn and_then<U, F>(self, f: F) -> CtOption<U>
     where
-        T: Default + ConditionallySelectable,
         F: FnOnce(T) -> CtOption<U>,
     {
-        let mut tmp = f(T::conditional_select(
-            &T::default(),
-            &self.value,
-            self.is_some,
-        ));
-        tmp.is_some &= self.is_some;
-
-        tmp
+        let mut ret = f(self.value);
+        ret.is_some &= self.is_some;
+        ret
     }
 
     /// Returns `self` if it contains a value, and otherwise returns the result of
@@ -793,16 +889,19 @@ impl<T> CtOption<T> {
     #[inline]
     pub fn or_else<F>(self, f: F) -> CtOption<T>
     where
-        T: ConditionallySelectable,
+        T: ConstantTimeSelect,
         F: FnOnce() -> CtOption<T>,
     {
-        let is_none = self.is_none();
+        let mut is_some = self.is_some();
         let f = f();
 
-        Self::conditional_select(&self, &f, is_none)
+        let value = T::ct_select(&f.value, &self.value, is_some);
+        is_some |= f.is_some();
+        CtOption::new(value, is_some)
     }
 }
 
+#[allow(deprecated)]
 impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         CtOption::new(
