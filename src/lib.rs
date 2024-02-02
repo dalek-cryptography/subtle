@@ -801,6 +801,22 @@ impl<T> CtOption<T> {
 
         Self::conditional_select(&self, &f, is_none)
     }
+
+    /// Convert the `CtOption<T>` wrapper into an `Option<T>`, depending on whether
+    /// the underlying `is_some` `Choice` was a `0` or a `1` once unwrapped.
+    ///
+    /// # Note
+    ///
+    /// This function exists to avoid ending up with ugly, verbose and/or bad handled
+    /// conversions from the `CtOption<T>` wraps to an `Option<T>` or `Result<T, E>`.
+    /// This implementation doesn't intend to be constant-time nor try to protect the
+    /// leakage of the `T` since the `Option<T>` will do it anyways.
+    ///
+    /// It's equivalent to the corresponding `From` impl, however this version is is
+    /// friendlier for type inference.
+    pub fn into_option(self) -> Option<T> {
+        self.into()
+    }
 }
 
 impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {
