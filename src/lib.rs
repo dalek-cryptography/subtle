@@ -812,7 +812,7 @@ impl<T> CtOption<T> {
     /// This implementation doesn't intend to be constant-time nor try to protect the
     /// leakage of the `T` since the `Option<T>` will do it anyways.
     ///
-    /// It's equivalent to the corresponding `From` impl, however this version is is
+    /// It's equivalent to the corresponding `From` impl, however this version is
     /// friendlier for type inference.
     pub fn into_option(self) -> Option<T> {
         self.into()
