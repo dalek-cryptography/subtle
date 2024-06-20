@@ -32,6 +32,13 @@ fn slices_equal() {
 }
 
 #[test]
+fn str_equal() {
+    assert_eq!("".ct_eq("").unwrap_u8(), 1);
+    assert_eq!("xxx".ct_eq("xxxx").unwrap_u8(), 0);
+    assert_eq!("abcd".ct_eq("abcd").unwrap_u8(), 1);
+}
+
+#[test]
 fn conditional_assign_i32() {
     let mut a: i32 = 5;
     let b: i32 = 13;
