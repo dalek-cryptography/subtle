@@ -2,6 +2,15 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.6.1
+
+* Add `CtOption::into_option` by @tarcieri.
+* Add `BlackBox` by @tarcieri.
+
+## 2.6.0
+
+* Inadvertent MSRV break, yanked.
+
 ## 2.5.0
 
 * Add constant-timedness note to the documentation for `CtOption::unwrap_or_else`.
