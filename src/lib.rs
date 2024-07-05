@@ -286,6 +286,16 @@ pub trait ConstantTimeEq {
     }
 }
 
+/// A marker trait indicating that `Eq` equality testing uses `ConstantTimeEq` under the hood.
+/// 
+/// Even though `Eq`-based equality testing returns a `bool`, it's a common design pattern
+/// to have some types implement this using `ConstantTimeEq`, and then coerce the resulting
+/// `Choice` into a `bool`.
+/// 
+/// This marker trait should be used if and only if you do this, in order to signal this
+/// functionality to implementers.
+pub trait EqIsConstantTimeEq {}
+
 impl<T: ConstantTimeEq> ConstantTimeEq for [T] {
     /// Check whether two slices of `ConstantTimeEq` types are equal.
     ///
