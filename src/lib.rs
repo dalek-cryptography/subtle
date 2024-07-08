@@ -815,6 +815,18 @@ impl<T> CtOption<T> {
     pub fn into_option(self) -> Option<T> {
         self.into()
     }
+
+    /// Take a `CtOption<T>` and merge it with a `CtOption<U>` to produce a
+    /// `CtOption<(T, U)>`.
+    /// 
+    /// The result contains each option's value, and is `Some` if and only if each
+    /// of the options is `Some`.
+    pub fn merge<U>(self, other: CtOption<U>) -> CtOption<(T, U)> {
+        CtOption {
+            value: (self.value, other.value),
+            is_some: self.is_some & other.is_some,
+        }
+    }
 }
 
 impl<T: ConditionallySelectable> ConditionallySelectable for CtOption<T> {

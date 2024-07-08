@@ -300,6 +300,12 @@ fn test_ctoption() {
     assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
     assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
     assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+
+    // Test merging
+    assert!(CtOption::new(1u8, Choice::from(0)).merge(CtOption::new(0u32, Choice::from(0))).into_option().is_none());
+    assert!(CtOption::new(1u8, Choice::from(1)).merge(CtOption::new(0u32, Choice::from(0))).into_option().is_none());
+    assert!(CtOption::new(1u8, Choice::from(0)).merge(CtOption::new(0u32, Choice::from(1))).into_option().is_none());
+    assert_eq!(CtOption::new(1u8, Choice::from(1)).merge(CtOption::new(0u32, Choice::from(1))).into_option(), Some((1u8, 0u32)));
 }
 
 #[test]
