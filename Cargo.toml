@@ -32,7 +32,7 @@ rand = { version = "0.8" }
 const-generics = []
 # DEPRECATED: As of 2.5.1, this feature does nothing.
 core_hint_black_box = []
-default = ["std", "i128"]
+default = ["std", "i128", "const-generics"]
 std = []
 i128 = []
 # DEPRECATED: As of 2.4.1, this feature does nothing.

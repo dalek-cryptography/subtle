@@ -220,6 +220,7 @@ impl Not for Choice {
 /// code may break in a non-destructive way in the future, “constant-time” code
 /// is a continually moving target, and this is better than doing nothing.
 #[inline(never)]
+#[cfg(not(feature = "core_hint_black_box"))]
 fn black_box<T: Copy>(input: T) -> T {
     unsafe {
         // Optimization barrier
