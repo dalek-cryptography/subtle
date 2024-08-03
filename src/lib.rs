@@ -390,7 +390,7 @@ impl ConstantTimeEq for cmp::Ordering {
 //
 // #[inline] is specified on these function prototypes to signify that they
 #[allow(unused_attributes)] // should be in the actual implementation
-pub trait ConditionallySelectable: Copy {
+pub trait ConditionallySelectable: Sized {
     /// Select `a` or `b` according to `choice`.
     ///
     /// # Returns
@@ -467,9 +467,9 @@ pub trait ConditionallySelectable: Copy {
     /// ```
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
-        let t: Self = *a;
-        a.conditional_assign(&b, choice);
-        b.conditional_assign(&t, choice);
+        let t = Self::conditional_select(a, b, choice);
+        *b = Self::conditional_select(b, a, choice);
+        *a = t;
     }
 }
 
@@ -575,7 +575,7 @@ impl ConditionallySelectable for Choice {
 #[cfg(feature = "const-generics")]
 impl<T, const N: usize> ConditionallySelectable for [T; N]
 where
-    T: ConditionallySelectable,
+    T: ConditionallySelectable + Copy,
 {
     #[inline]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
