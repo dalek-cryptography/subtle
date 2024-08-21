@@ -6,12 +6,11 @@ use rand::RngCore;
 use subtle::*;
 
 #[test]
-#[should_panic]
-fn slices_equal_different_lengths() {
+fn slices_different_lengths() {
     let a: [u8; 3] = [0, 0, 0];
     let b: [u8; 4] = [0, 0, 0, 0];
 
-    assert_eq!((&a).ct_eq(&b).unwrap_u8(), 1);
+    assert_eq!((&a).ct_eq(&b).unwrap_u8(), 0);
 }
 
 #[test]
