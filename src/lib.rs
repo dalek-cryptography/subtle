@@ -116,7 +116,7 @@ use core::hint::black_box;
 ///
 /// [rust-timing-shield]:
 /// https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 pub struct Choice(u8);
 
 impl Choice {
@@ -642,7 +642,7 @@ where
 /// from these functions makes it difficult for the caller to reason
 /// about the result in constant time, and returning an incorrect
 /// value burdens the caller and increases the chance of bugs.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash)]
 pub struct CtOption<T> {
     value: T,
     is_some: Choice,
