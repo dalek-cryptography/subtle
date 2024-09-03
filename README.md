@@ -27,7 +27,7 @@ inner `u8` by passing it through a volatile read. For more information, see
 the _About_ section below.
 
 Rust versions from 1.51 or higher have const generics support. You may enable
-`const-generics` feautre to have `subtle` traits implemented for arrays `[T; N]`.
+`const-generics` feature to have `subtle` traits implemented for arrays `[T; N]`.
 
 Versions prior to `2.2` recommended use of the `nightly` feature to enable an
 optimization barrier; this is not required in versions `2.2` and above.
