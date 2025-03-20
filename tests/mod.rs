@@ -1,7 +1,7 @@
 use std::cmp;
 
 use rand::rngs::OsRng;
-use rand::RngCore;
+use rand::TryRngCore;
 
 use subtle::*;
 
@@ -313,8 +313,8 @@ fn unwrap_none_ctoption() {
 macro_rules! generate_greater_than_test {
     ($ty: ty) => {
         for _ in 0..100 {
-            let x = OsRng.next_u64() as $ty;
-            let y = OsRng.next_u64() as $ty;
+            let x = OsRng.try_next_u64().unwrap() as $ty;
+            let y = OsRng.try_next_u64().unwrap() as $ty;
             let z = x.ct_gt(&y);
 
             println!("x={}, y={}, z={:?}", x, y, z);
@@ -375,8 +375,8 @@ fn less_than_twos_compliment_minmax() {
 macro_rules! generate_less_than_test {
     ($ty: ty) => {
         for _ in 0..100 {
-            let x = OsRng.next_u64() as $ty;
-            let y = OsRng.next_u64() as $ty;
+            let x = OsRng.try_next_u64().unwrap() as $ty;
+            let y = OsRng.try_next_u64().unwrap() as $ty;
             let z = x.ct_gt(&y);
 
             println!("x={}, y={}, z={:?}", x, y, z);

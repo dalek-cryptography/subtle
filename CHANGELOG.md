@@ -2,6 +2,10 @@
 
 Entries are listed in reverse chronological order.
 
+## 2.7.0
+
+* Update `rand` dependency to 0.9
+
 ## 2.5.0
 
 * Add constant-timedness note to the documentation for `CtOption::unwrap_or_else`.
