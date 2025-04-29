@@ -1,0 +1,10 @@
+[package]
+name = "asm_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+subtle = { path = "../", default-features = false }
+
+[features]
+core_hint_black_box = ["subtle/core_hint_black_box"]

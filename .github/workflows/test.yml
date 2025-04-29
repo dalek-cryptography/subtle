@@ -62,3 +62,6 @@ jobs:
         with:
           command: build
           args: --no-default-features --target thumbv7em-none-eabi
+      - name: test assembly
+        run: ./test.sh
+        working-directory: ./asm_test

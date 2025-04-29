@@ -96,9 +96,6 @@ use core::cmp;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
 
-#[cfg(feature = "core_hint_black_box")]
-use core::hint::black_box;
-
 /// The `Choice` struct represents a choice for use in conditional assignment.
 ///
 /// It is a wrapper around a `u8`, which should have the value either `1` (true)
@@ -220,6 +217,7 @@ impl Not for Choice {
 /// code may break in a non-destructive way in the future, “constant-time” code
 /// is a continually moving target, and this is better than doing nothing.
 #[inline(never)]
+#[cfg(not(feature = "core_hint_black_box"))]
 fn black_box<T: Copy>(input: T) -> T {
     unsafe {
         // Optimization barrier
@@ -230,6 +228,12 @@ fn black_box<T: Copy>(input: T) -> T {
         //   - input is always properly aligned.
         core::ptr::read_volatile(&input)
     }
+}
+
+#[cfg(feature = "core_hint_black_box")]
+#[inline(never)]
+const fn black_box<T>(input: T) -> T {
+    core::hint::black_box(input)
 }
 
 impl From<u8> for Choice {
