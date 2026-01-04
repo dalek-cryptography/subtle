@@ -9,9 +9,9 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 #![no_std]
+#![allow(clippy::inline_fn_without_body)]
 #![deny(missing_docs)]
 #![doc(html_logo_url = "https://doc.dalek.rs/assets/dalek-logo-clear.png")]
-#![doc(html_root_url = "https://docs.rs/subtle/2.6.0")]
 
 //! # subtle [![](https://img.shields.io/crates/v/subtle.svg)](https://crates.io/crates/subtle) [![](https://img.shields.io/badge/dynamic/json.svg?label=docs&uri=https%3A%2F%2Fcrates.io%2Fapi%2Fv1%2Fcrates%2Fsubtle%2Fversions&query=%24.versions%5B0%5D.num&colorB=4F74A6)](https://doc.dalek.rs/subtle) [![](https://travis-ci.org/dalek-cryptography/subtle.svg?branch=master)](https://travis-ci.org/dalek-cryptography/subtle)
 //!
@@ -22,7 +22,7 @@
 //! type is a wrapper around a `u8` that holds a `0` or `1`.
 //!
 //! ```toml
-//! subtle = "2.6"
+//! subtle = "3.0.0-pre"
 //! ```
 //!
 //! This crate represents a “best-effort” attempt, since side-channels
@@ -58,7 +58,7 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! Rust **1.41** or higher.
+//! Rust **1.85** or higher.
 //!
 //! Minimum supported Rust version can be changed in the future, but it will be done with a minor version bump.
 //!
@@ -88,16 +88,10 @@
 //! [docs]: https://docs.rs/subtle
 //! [rust-timing-shield]: https://www.chosenplaintext.ca/open-source/rust-timing-shield/security
 
-#[cfg(feature = "std")]
-#[macro_use]
-extern crate std;
-
 use core::cmp;
+use core::hint::black_box;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use core::option::Option;
-
-#[cfg(feature = "core_hint_black_box")]
-use core::hint::black_box;
 
 /// The `Choice` struct represents a choice for use in conditional assignment.
 ///
@@ -206,30 +200,6 @@ impl Not for Choice {
     #[inline]
     fn not(self) -> Choice {
         (1u8 & (!self.0)).into()
-    }
-}
-
-/// This function is a best-effort attempt to prevent the compiler from knowing
-/// anything about the value of the returned `u8`, other than its type.
-///
-/// Because we want to support stable Rust, we don't have access to inline
-/// assembly or test::black_box, so we use the fact that volatile values will
-/// never be elided to register values.
-///
-/// Note: Rust's notion of "volatile" is subject to change over time. While this
-/// code may break in a non-destructive way in the future, “constant-time” code
-/// is a continually moving target, and this is better than doing nothing.
-#[cfg(not(feature = "core_hint_black_box"))]
-#[inline(never)]
-fn black_box<T: Copy>(input: T) -> T {
-    unsafe {
-        // Optimization barrier
-        //
-        // SAFETY:
-        //   - &input is not NULL because we own input;
-        //   - input is Copy and always live;
-        //   - input is always properly aligned.
-        core::ptr::read_volatile(&input)
     }
 }
 
@@ -371,7 +341,6 @@ generate_integer_equal!(u8, i8, 8);
 generate_integer_equal!(u16, i16, 16);
 generate_integer_equal!(u32, i32, 32);
 generate_integer_equal!(u64, i64, 64);
-#[cfg(feature = "i128")]
 generate_integer_equal!(u128, i128, 128);
 generate_integer_equal!(usize, isize, ::core::mem::size_of::<usize>() * 8);
 
@@ -468,7 +437,7 @@ pub trait ConditionallySelectable: Copy {
     #[inline]
     fn conditional_swap(a: &mut Self, b: &mut Self, choice: Choice) {
         let t: Self = *a;
-        a.conditional_assign(&b, choice);
+        a.conditional_assign(b, choice);
         b.conditional_assign(&t, choice);
     }
 }
@@ -542,7 +511,6 @@ generate_integer_conditional_select!(  u8   i8);
 generate_integer_conditional_select!( u16  i16);
 generate_integer_conditional_select!( u32  i32);
 generate_integer_conditional_select!( u64  i64);
-#[cfg(feature = "i128")]
 generate_integer_conditional_select!(u128 i128);
 
 /// `Ordering` is `#[repr(i8)]` where:
@@ -572,7 +540,6 @@ impl ConditionallySelectable for Choice {
     }
 }
 
-#[cfg(feature = "const-generics")]
 impl<T, const N: usize> ConditionallySelectable for [T; N]
 where
     T: ConditionallySelectable,
@@ -676,10 +643,7 @@ impl<T> CtOption<T> {
     /// exposed.
     #[inline]
     pub fn new(value: T, is_some: Choice) -> CtOption<T> {
-        CtOption {
-            value: value,
-            is_some: is_some,
-        }
+        CtOption { value, is_some }
     }
 
     /// Returns the contained value, consuming the `self` value.
@@ -915,7 +879,6 @@ generate_unsigned_integer_greater!(u8, 8);
 generate_unsigned_integer_greater!(u16, 16);
 generate_unsigned_integer_greater!(u32, 32);
 generate_unsigned_integer_greater!(u64, 64);
-#[cfg(feature = "i128")]
 generate_unsigned_integer_greater!(u128, 128);
 
 impl ConstantTimeGreater for cmp::Ordering {
@@ -976,7 +939,6 @@ impl ConstantTimeLess for u8 {}
 impl ConstantTimeLess for u16 {}
 impl ConstantTimeLess for u32 {}
 impl ConstantTimeLess for u64 {}
-#[cfg(feature = "i128")]
 impl ConstantTimeLess for u128 {}
 
 impl ConstantTimeLess for cmp::Ordering {

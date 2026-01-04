@@ -1,7 +1,6 @@
 use std::cmp;
 
-use rand::rngs::OsRng;
-use rand::RngCore;
+use rand::{RngCore, TryRngCore, rngs::OsRng};
 
 use subtle::*;
 
@@ -11,7 +10,7 @@ fn slices_equal_different_lengths() {
     let a: [u8; 3] = [0, 0, 0];
     let b: [u8; 4] = [0, 0, 0, 0];
 
-    assert_eq!((&a).ct_eq(&b).unwrap_u8(), 1);
+    assert_eq!(a.ct_eq(&b).unwrap_u8(), 1);
 }
 
 #[test]
@@ -19,15 +18,15 @@ fn slices_equal() {
     let a: [u8; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
     let b: [u8; 8] = [1, 2, 3, 4, 4, 3, 2, 1];
 
-    let a_eq_a = (&a).ct_eq(&a);
-    let a_eq_b = (&a).ct_eq(&b);
+    let a_eq_a = a.ct_eq(&a);
+    let a_eq_b = a.ct_eq(&b);
 
     assert_eq!(a_eq_a.unwrap_u8(), 1);
     assert_eq!(a_eq_b.unwrap_u8(), 0);
 
     let c: [u8; 16] = [0u8; 16];
 
-    let a_eq_c = (&a).ct_eq(&c);
+    let a_eq_c = a.ct_eq(&c);
     assert_eq!(a_eq_c.unwrap_u8(), 0);
 }
 
@@ -54,7 +53,7 @@ fn conditional_assign_i64() {
 }
 
 macro_rules! generate_integer_conditional_select_tests {
-    ($($t:ty)*) => ($(
+    ($($t:ty),*) => ($(
         let x: $t = 0;  // all 0 bits
         let y: $t = !0; // all 1 bits
 
@@ -80,10 +79,8 @@ macro_rules! generate_integer_conditional_select_tests {
 
 #[test]
 fn integer_conditional_select() {
-    generate_integer_conditional_select_tests!(u8 u16 u32 u64);
-    generate_integer_conditional_select_tests!(i8 i16 i32 i64);
-    #[cfg(feature = "i128")]
-    generate_integer_conditional_select_tests!(i128 u128);
+    generate_integer_conditional_select_tests!(u8, u16, u32, u64, i128);
+    generate_integer_conditional_select_tests!(i8, i16, i32, i64, u128);
 }
 
 #[test]
@@ -124,11 +121,8 @@ macro_rules! generate_integer_equal_tests {
 
 #[test]
 fn integer_equal() {
-    generate_integer_equal_tests!(u8, u16, u32, u64);
-    generate_integer_equal_tests!(i8, i16, i32, i64);
-    #[cfg(feature = "i128")]
-    generate_integer_equal_tests!(i128, u128);
-    generate_integer_equal_tests!(isize, usize);
+    generate_integer_equal_tests!(u8, u16, u32, u64, u128, usize);
+    generate_integer_equal_tests!(i8, i16, i32, i64, i128, isize);
 }
 
 #[test]
@@ -147,18 +141,18 @@ fn conditional_select_choice() {
     let t = Choice::from(1);
     let f = Choice::from(0);
 
-    assert_eq!(bool::from(Choice::conditional_select(&t, &f, f)), true);
-    assert_eq!(bool::from(Choice::conditional_select(&t, &f, t)), false);
-    assert_eq!(bool::from(Choice::conditional_select(&f, &t, f)), false);
-    assert_eq!(bool::from(Choice::conditional_select(&f, &t, t)), true);
+    assert!(bool::from(Choice::conditional_select(&t, &f, f)));
+    assert!(!bool::from(Choice::conditional_select(&t, &f, t)));
+    assert!(!bool::from(Choice::conditional_select(&f, &t, f)));
+    assert!(bool::from(Choice::conditional_select(&f, &t, t)));
 }
 
 #[test]
 fn choice_equal() {
-    assert!(Choice::from(0).ct_eq(&Choice::from(0)).unwrap_u8() == 1);
-    assert!(Choice::from(0).ct_eq(&Choice::from(1)).unwrap_u8() == 0);
-    assert!(Choice::from(1).ct_eq(&Choice::from(0)).unwrap_u8() == 0);
-    assert!(Choice::from(1).ct_eq(&Choice::from(1)).unwrap_u8() == 1);
+    assert_eq!(Choice::from(0).ct_eq(&Choice::from(0)).unwrap_u8(), 1);
+    assert_eq!(Choice::from(0).ct_eq(&Choice::from(1)).unwrap_u8(), 0);
+    assert_eq!(Choice::from(1).ct_eq(&Choice::from(0)).unwrap_u8(), 0);
+    assert_eq!(Choice::from(1).ct_eq(&Choice::from(1)).unwrap_u8(), 1);
 }
 
 #[test]
@@ -290,16 +284,66 @@ fn test_ctoption() {
     ));
 
     // Test (in)equality
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(1, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(0)).ct_eq(&CtOption::new(2, Choice::from(0))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(2, Choice::from(1))).unwrap_u8() == 0);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
-    assert!(CtOption::new(1, Choice::from(1)).ct_eq(&CtOption::new(1, Choice::from(1))).unwrap_u8() == 1);
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(1, Choice::from(0)))
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(0))
+            .ct_eq(&CtOption::new(2, Choice::from(0)))
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(2, Choice::from(1)))
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8(),
+        1
+    );
+    assert_eq!(
+        CtOption::new(1, Choice::from(1))
+            .ct_eq(&CtOption::new(1, Choice::from(1)))
+            .unwrap_u8(),
+        1
+    );
 }
 
 #[test]
@@ -313,8 +357,9 @@ fn unwrap_none_ctoption() {
 macro_rules! generate_greater_than_test {
     ($ty: ty) => {
         for _ in 0..100 {
-            let x = OsRng.next_u64() as $ty;
-            let y = OsRng.next_u64() as $ty;
+            let mut rng = OsRng.unwrap_err();
+            let x = rng.next_u64() as $ty;
+            let y = rng.next_u64() as $ty;
             let z = x.ct_gt(&y);
 
             println!("x={}, y={}, z={:?}", x, y, z);
@@ -327,7 +372,7 @@ macro_rules! generate_greater_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
@@ -350,7 +395,6 @@ fn greater_than_u64() {
     generate_greater_than_test!(u64);
 }
 
-#[cfg(feature = "i128")]
 #[test]
 fn greater_than_u128() {
     generate_greater_than_test!(u128);
@@ -358,8 +402,18 @@ fn greater_than_u128() {
 
 #[test]
 fn greater_than_ordering() {
-    assert_eq!(cmp::Ordering::Less.ct_gt(&cmp::Ordering::Greater).unwrap_u8(), 0);
-    assert_eq!(cmp::Ordering::Greater.ct_gt(&cmp::Ordering::Less).unwrap_u8(), 1);
+    assert_eq!(
+        cmp::Ordering::Less
+            .ct_gt(&cmp::Ordering::Greater)
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        cmp::Ordering::Greater
+            .ct_gt(&cmp::Ordering::Less)
+            .unwrap_u8(),
+        1
+    );
 }
 
 #[test]
@@ -367,7 +421,7 @@ fn greater_than_ordering() {
 /// gives the correct result. (This fails using the bit-twiddling algorithm that
 /// go/crypto/subtle uses.)
 fn less_than_twos_compliment_minmax() {
-    let z = 1u32.ct_lt(&(2u32.pow(31)-1));
+    let z = 1u32.ct_lt(&(2u32.pow(31) - 1));
 
     assert!(z.unwrap_u8() == 1);
 }
@@ -375,8 +429,9 @@ fn less_than_twos_compliment_minmax() {
 macro_rules! generate_less_than_test {
     ($ty: ty) => {
         for _ in 0..100 {
-            let x = OsRng.next_u64() as $ty;
-            let y = OsRng.next_u64() as $ty;
+            let mut rng = OsRng.unwrap_err();
+            let x = rng.next_u64() as $ty;
+            let y = rng.next_u64() as $ty;
             let z = x.ct_gt(&y);
 
             println!("x={}, y={}, z={:?}", x, y, z);
@@ -389,7 +444,7 @@ macro_rules! generate_less_than_test {
                 assert!(z.unwrap_u8() == 1);
             }
         }
-    }
+    };
 }
 
 #[test]
@@ -412,7 +467,6 @@ fn less_than_u64() {
     generate_less_than_test!(u64);
 }
 
-#[cfg(feature = "i128")]
 #[test]
 fn less_than_u128() {
     generate_less_than_test!(u128);
@@ -420,8 +474,18 @@ fn less_than_u128() {
 
 #[test]
 fn less_than_ordering() {
-    assert_eq!(cmp::Ordering::Greater.ct_lt(&cmp::Ordering::Less).unwrap_u8(), 0);
-    assert_eq!(cmp::Ordering::Less.ct_lt(&cmp::Ordering::Greater).unwrap_u8(), 1);
+    assert_eq!(
+        cmp::Ordering::Greater
+            .ct_lt(&cmp::Ordering::Less)
+            .unwrap_u8(),
+        0
+    );
+    assert_eq!(
+        cmp::Ordering::Less
+            .ct_lt(&cmp::Ordering::Greater)
+            .unwrap_u8(),
+        1
+    );
 }
 
 #[test]
