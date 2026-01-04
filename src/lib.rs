@@ -688,6 +688,7 @@ impl<T> CtOption<T> {
     ///
     /// Panics if the value is none with a custom panic message provided by
     /// `msg`.
+    #[track_caller]
     pub fn expect(self, msg: &str) -> T {
         assert_eq!(self.is_some.unwrap_u8(), 1, "{}", msg);
 
@@ -697,6 +698,7 @@ impl<T> CtOption<T> {
     /// This returns the underlying value but panics if it
     /// is not `Some`.
     #[inline]
+    #[track_caller]
     pub fn unwrap(self) -> T {
         assert_eq!(self.is_some.unwrap_u8(), 1);
 
