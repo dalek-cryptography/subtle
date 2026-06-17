@@ -470,6 +470,44 @@ pub trait ConditionallySelectable: Copy {
         a.conditional_assign(&b, choice);
         b.conditional_assign(&t, choice);
     }
+
+    /// Constant-time indexing via a linear scan.
+    ///
+    /// This function should execute in constant time.
+    /// Returns None when given an invalid index.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
+    /// #
+    /// # fn main() {
+    /// let x: [u8; 3] = [13, 42, 67];
+    ///
+    /// let y = u8::ct_lookup(&x, &1);
+    /// let z = u8::ct_lookup(&x, &4);
+    /// assert_eq!(y.unwrap_or(u8::default()), 42);
+    /// assert!(bool::from(z.is_none()));
+    /// # }
+    /// ```
+    #[inline]
+    fn ct_lookup(array: &[Self], target: &usize) -> CtOption<Self>
+    where
+        Self: Default,
+    {
+        let mut target_entry = CtOption {
+            value: Self::default(),
+            is_some: Choice::from(0),
+        };
+        for (index, entry) in array.iter().enumerate() {
+            let is_target_entry = index.ct_eq(target);
+            target_entry
+                .value
+                .conditional_assign(entry, is_target_entry);
+            target_entry.is_some |= is_target_entry;
+        }
+        target_entry
+    }
 }
 
 macro_rules! to_signed_int {
@@ -532,6 +570,19 @@ macro_rules! generate_integer_conditional_select {
                 let t = mask & (*a ^ *b);
                 *a ^= t;
                 *b ^= t;
+            }
+            #[inline]
+            fn ct_lookup(array: &[Self], target: &usize) -> CtOption<Self> {
+                let mut target_entry = CtOption { value: Self::default(), is_some: Choice::from(0),};
+                for (index, entry) in array.iter().enumerate() {
+                    // if choice = 0, mask = (-0) = 0000...0000
+                    // if choice = 1, mask = (-1) = 1111...1111
+                    let found = index.ct_eq(target);
+                    let mask = -(found.unwrap_u8() as to_signed_int!($t)) as $t;
+                    target_entry.value ^= (entry & mask);
+                    target_entry.is_some ^= found;
+                }
+                target_entry
             }
          }
     )*)
