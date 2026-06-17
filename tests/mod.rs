@@ -75,6 +75,14 @@ macro_rules! generate_integer_conditional_select_tests {
         w.conditional_assign(&y, 0.into());
         assert_eq!(z, x);
         assert_eq!(w, x);
+
+        let xarr: [$t; 3] = [x, y, x];
+        let t = <$t>::ct_lookup(&xarr, &1);
+        let u = <$t>::ct_lookup(&xarr, &2);
+        let v = <$t>::ct_lookup(&xarr, &4);
+        assert_eq!(t.unwrap(), y);
+        assert_eq!(u.unwrap(), x);
+        assert!(bool::from(v.is_none()));
     )*)
 }
 
