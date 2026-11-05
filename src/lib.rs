@@ -255,9 +255,8 @@ impl From<u8> for Choice {
 /// assert_eq!(x.ct_eq(&y).unwrap_u8(), 0);
 /// assert_eq!(x.ct_eq(&x).unwrap_u8(), 1);
 /// ```
-//
-// #[inline] is specified on these function prototypes to signify that they
-#[allow(unused_attributes)] // should be in the actual implementation
+///
+/// Implementations should inline these methods.
 pub trait ConstantTimeEq {
     /// Determine if two items are equal.
     ///
@@ -266,9 +265,6 @@ pub trait ConstantTimeEq {
     /// # Returns
     ///
     /// * `Choice(1u8)` if `self == other`;
-    /// * `Choice(0u8)` if `self != other`.
-    #[inline]
-    #[allow(unused_attributes)]
     fn ct_eq(&self, other: &Self) -> Choice;
 
     /// Determine if two items are NOT equal.
@@ -386,9 +382,8 @@ impl ConstantTimeEq for cmp::Ordering {
 ///
 /// This trait also provides generic implementations of conditional
 /// assignment and conditional swaps.
-//
-// #[inline] is specified on these function prototypes to signify that they
-#[allow(unused_attributes)] // should be in the actual implementation
+///
+/// Implementations should inline these methods.
 pub trait ConditionallySelectable: Copy {
     /// Select `a` or `b` according to `choice`.
     ///
@@ -414,8 +409,6 @@ pub trait ConditionallySelectable: Copy {
     /// assert_eq!(z, y);
     /// # }
     /// ```
-    #[inline]
-    #[allow(unused_attributes)]
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self;
 
     /// Conditionally assign `other` to `self`, according to `choice`.
@@ -597,16 +590,13 @@ where
 /// A generic implementation of `ConditionallyNegatable` is provided
 /// for types `T` which are `ConditionallySelectable` and have `Neg`
 /// implemented on `&T`.
-//
-// #[inline] is specified on these function prototypes to signify that they
-#[allow(unused_attributes)] // should be in the actual implementation
+///
+/// Implementations should inline these methods.
 pub trait ConditionallyNegatable {
     /// Negate `self` if `choice == Choice(1)`; otherwise, leave it
     /// unchanged.
     ///
     /// This function should execute in constant time.
-    #[inline]
-    #[allow(unused_attributes)]
     fn conditional_negate(&mut self, choice: Choice);
 }
 
